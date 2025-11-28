@@ -1,36 +1,63 @@
 # ====================
-# Visual Studio
+# Visual Studio & .NET
 # ====================
 
-## Build results
-bin/
-obj/
-
-## Visual Studio workspace options
+## User-specific files
+*.rsuser
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
+*.vcxproj.user
+*.vs/
+.vscode/
 
-## Rider IDE
+## Build results
+[Bb]in/
+[Oo]bj/
+publish/
+
+## Rider
 .idea/
 
-# VS Code workspace settings
+## VS Code settings folder
 .vscode/
-.history/
+
+## Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+## Others
+*.cache
+*.ilk
+*.meta
+*.log
+*.tlog
+*.tmp
+*.tmp_proj
+*.lastbuildstate
+
+## NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+*.psmdcp
+*.xamarin.templates.cache
 
 # ====================
-# Node / Angular
+# Angular / Node.js
 # ====================
 
-# Node modules
+# Node dependencies
 node_modules/
 
-# Angular build / output folders
+# Angular build output
 dist/
 out-tsc/
 
-# Environment config files (if containing secrets or env-specific info)
+# Environment files (customize if needed)
 src/environments/*.ts
 
 # Logs
@@ -39,28 +66,36 @@ yarn-debug.log*
 yarn-error.log*
 
 # ====================
-# OS generated files
+# OS Generated Files
 # ====================
 
-# macOS
 .DS_Store
-
-# Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
 # ====================
-# Others
+# Others and caches
 # ====================
 
-# DotCover, ReSharper, Rider, others
+# DotCover, ReSharper, Rider, etc
 _ReSharper*/
 *.DotSettings.user
 *.DotSettings
 
-# User-specific files for Visual Studio Code
-.vscode/settings.json
-.vscode/tasks.json
-.vscode/launch.json
-.vscode/extensions.json
+# Visual Studio Code Workspace Storage
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
 
-EmployeeManager.API/ProjectEvaluation/
+# Azure Pipelines
+.vsts*
+
+# Temporary files
+*.orig
+*.rej
+
+# Git files
+.git

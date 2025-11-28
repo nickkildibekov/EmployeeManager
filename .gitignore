@@ -1,0 +1,64 @@
+# ====================
+# Visual Studio
+# ====================
+
+## Build results
+bin/
+obj/
+
+## Visual Studio workspace options
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Rider IDE
+.idea/
+
+# VS Code workspace settings
+.vscode/
+.history/
+
+# ====================
+# Node / Angular
+# ====================
+
+# Node modules
+node_modules/
+
+# Angular build / output folders
+dist/
+out-tsc/
+
+# Environment config files (if containing secrets or env-specific info)
+src/environments/*.ts
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ====================
+# OS generated files
+# ====================
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# ====================
+# Others
+# ====================
+
+# DotCover, ReSharper, Rider, others
+_ReSharper*/
+*.DotSettings.user
+*.DotSettings
+
+# User-specific files for Visual Studio Code
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json

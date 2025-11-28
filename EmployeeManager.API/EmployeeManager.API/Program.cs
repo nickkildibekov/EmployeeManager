@@ -13,9 +13,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddScoped<DataSeedHelper>();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var seeder = scope.ServiceProvider.GetRequiredService<DataSeedHelper>();
+
+    seeder.InsertData();
+}
 
 if (app.Environment.IsDevelopment())
 {

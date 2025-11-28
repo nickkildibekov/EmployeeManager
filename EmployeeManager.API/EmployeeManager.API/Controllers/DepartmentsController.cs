@@ -21,10 +21,25 @@ namespace EmployeeManager.Api.Controllers
         public async Task<IActionResult> GetAll()
         {
             var data = await _appDbContext.Departments
-                .Include(d => d.Positions)
-                .Include(d => d.Employees)
+                .Select(d => new DepartmentDTO
+                {                    
+                    Id = d.Id,
+                    Name =  d.Name,
+                    Description = d.Description,
+                    Positions = d.Positions.Select(p => new PositionDTO{
+                        Id = p.Id, 
+                        Title = p.Title 
+                    }).ToList(),
+                    Employees = d.Employees.Select(e => new EmployeeDTO{
+                        Id = e.Id, 
+                        FirstName = e.FirstName, 
+                        LastName = e.LastName,
+                        PhoneNumber = e.PhoneNumber
+                    }).ToList()
+                })
                 .AsNoTracking()
                 .ToListAsync();
+
             return Ok(data);
         }
 

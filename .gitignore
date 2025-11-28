@@ -1,0 +1,101 @@
+# ====================
+# Visual Studio & .NET
+# ====================
+
+## User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.vcxproj.user
+*.vs/
+.vscode/
+
+## Build results
+[Bb]in/
+[Oo]bj/
+publish/
+
+## Rider
+.idea/
+
+## VS Code settings folder
+.vscode/
+
+## Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+## Others
+*.cache
+*.ilk
+*.meta
+*.log
+*.tlog
+*.tmp
+*.tmp_proj
+*.lastbuildstate
+
+## NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+*.psmdcp
+*.xamarin.templates.cache
+
+# ====================
+# Angular / Node.js
+# ====================
+
+# Node dependencies
+node_modules/
+
+# Angular build output
+dist/
+out-tsc/
+
+# Environment files (customize if needed)
+src/environments/*.ts
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ====================
+# OS Generated Files
+# ====================
+
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ====================
+# Others and caches
+# ====================
+
+# DotCover, ReSharper, Rider, etc
+_ReSharper*/
+*.DotSettings.user
+*.DotSettings
+
+# Visual Studio Code Workspace Storage
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# Azure Pipelines
+.vsts*
+
+# Temporary files
+*.orig
+*.rej
+
+# Git files
+.git

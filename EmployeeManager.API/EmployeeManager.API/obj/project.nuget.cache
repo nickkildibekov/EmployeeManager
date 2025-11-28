@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "3kV8Dv5VBQQ=",
+  "dgSpecHash": "UfOIm6iyze0=",
   "success": true,
-  "projectFilePath": "D:\\Projects\\Angular\\Backend\\EmployeeManager.API\\EmployeeManager.API\\EmployeeManager.API.csproj",
+  "projectFilePath": "D:\\Projects\\EmployeeManager\\EmployeeManager.API\\EmployeeManager.API\\EmployeeManager.API.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\nkildibekov\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.11\\microsoft.aspnetcore.openapi.9.0.11.nupkg.sha512",
     "C:\\Users\\nkildibekov\\.nuget\\packages\\microsoft.entityframeworkcore\\9.0.0\\microsoft.entityframeworkcore.9.0.0.nupkg.sha512",

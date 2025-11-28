@@ -62,3 +62,5 @@ _ReSharper*/
 .vscode/tasks.json
 .vscode/launch.json
 .vscode/extensions.json
+
+EmployeeManager.API/ProjectEvaluation/

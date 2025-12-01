@@ -14,53 +14,65 @@ namespace EmployeeManager.API.Data
         {
             if (!dbContext.Departments.Any())
             {
-                dbContext.Departments.AddRange(
-                    new Models.Department { Name = "Human Resources" },
-                    new Models.Department { Name = "IT" },
-                    new Models.Department { Name = "Finance" }
-                );
-                dbContext.SaveChanges();
+                var hr = new Models.Department { Name = "Human Resources" };
+                var it = new Models.Department { Name = "IT" };
+                var finance = new Models.Department { Name = "Finance" };
+
+                dbContext.Departments.AddRange(hr, it, finance);
+                dbContext.SaveChanges(); 
             }
+
             if (!dbContext.Positions.Any())
             {
-                dbContext.Positions.AddRange(
-                    new Models.Position { Title = "Manager", DepartmentId = 1 },
-                    new Models.Position { Title = "Developer", DepartmentId = 2 },
-                    new Models.Position { Title = "Accountant", DepartmentId = 3 }
-                );
-                dbContext.SaveChanges();
+                var hrDept = dbContext.Departments.FirstOrDefault(d => d.Name == "Human Resources");
+                var itDept = dbContext.Departments.FirstOrDefault(d => d.Name == "IT");
+                var financeDept = dbContext.Departments.FirstOrDefault(d => d.Name == "Finance");
+
+                if (hrDept != null && itDept != null && financeDept != null)
+                {
+                   
+                    var manager = new Models.Position { Title = "Manager", DepartmentId = hrDept.Id };
+                    var developer = new Models.Position { Title = "Developer", DepartmentId = itDept.Id };
+                    var accountant = new Models.Position { Title = "Accountant", DepartmentId = financeDept.Id };
+
+                    dbContext.Positions.AddRange(manager, developer, accountant);
+                    dbContext.SaveChanges(); 
+                }
             }
+
 
             if (!dbContext.Employees.Any())
             {
-                dbContext.Employees.AddRange(
-                    new Models.Employee
-                    {
-                        FirstName = "John",
-                        LastName = "Doe",
-                        PhoneNumber = "123-456-7890",
-                        HireDate = DateTime.Now,
-                        PositionId = 1,
-                        DepartmentId = 1
-                    },
-                    new Models.Employee
-                    {
-                        FirstName = "Jane",
-                        LastName = "Smith",
-                        PhoneNumber = "987-654-3210",
-                        HireDate = DateTime.Now,
-                        PositionId = 2,
-                        DepartmentId = 1
-                    }
-                   
-                );
+                var managerPosition = dbContext.Positions.FirstOrDefault(p => p.Title == "Manager");
+                var hrDept = dbContext.Departments.FirstOrDefault(d => d.Name == "Human Resources");
+                var developerPosition = dbContext.Positions.FirstOrDefault(p => p.Title == "Developer");
 
-                dbContext.SaveChanges();    
+                if (managerPosition != null && hrDept != null && developerPosition != null)
+                {
+                    dbContext.Employees.AddRange(
+                        new Models.Employee
+                        {
+                            FirstName = "John",
+                            LastName = "Doe",
+                            PhoneNumber = "123-456-7890",
+                            HireDate = DateTime.Now,
+                            PositionId = managerPosition.Id,    
+                            DepartmentId = hrDept.Id            
+                        },
+                        new Models.Employee
+                        {
+                            FirstName = "Jane",
+                            LastName = "Smith",
+                            PhoneNumber = "987-654-3210",
+                            HireDate = DateTime.Now,
+                            PositionId = developerPosition.Id,  
+                            DepartmentId = hrDept.Id            
+                        }
+                    );
+                    dbContext.SaveChanges();
+                }
             }
-
-           
         }
-
 
     }
 }

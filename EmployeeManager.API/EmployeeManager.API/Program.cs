@@ -4,6 +4,21 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+string MyAllowSpecificOrigins = "CORS"; 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+                      policy =>
+                      {
+                          
+                          policy.WithOrigins("http://localhost:4200")
+                                .AllowAnyHeader()   
+                                .AllowAnyMethod()   
+                                .AllowCredentials(); 
+                      });
+});
+
 
 builder.Services.AddControllers();
 
@@ -33,6 +48,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseRouting();
+
+app.UseCors(MyAllowSpecificOrigins);
 
 app.UseAuthorization();
 

@@ -1,8 +1,21 @@
-import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { inject, Injectable, signal } from '@angular/core';
+import { Department } from '../../shared/models/department.model';
+import { catchError, map, Observable, throwError } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
-export class Department {
-  
+export class DepartmentService {
+  private readonly apiUrl = '/api/Departments';
+  private httpClient = inject(HttpClient);
+
+  getAllDepartments(): Observable<Department[]> {
+    return this.httpClient.get<Department[]>(this.apiUrl).pipe(
+      catchError((error) => {
+        console.log(error);
+        return throwError(() => new Error('Error to get departments!'));
+      })
+    );
+  }
 }

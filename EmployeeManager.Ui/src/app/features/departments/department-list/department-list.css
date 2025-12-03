@@ -70,10 +70,6 @@
   transition: background 0.2s ease;
 }
 
-.stat-item:hover {
-  background: #edf2f7;
-}
-
 .stat-icon {
   font-size: 2rem;
   width: 48px;

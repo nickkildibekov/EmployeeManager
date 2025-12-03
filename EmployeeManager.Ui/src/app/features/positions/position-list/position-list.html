@@ -1,1 +1,52 @@
-<p>position-list works!</p>
+<div class="section">
+  <div class="section-header">
+    <h2>💼 Positions ({{ department().positions?.length || 0 }})</h2>
+  </div>
+
+  @if (isEditMode()) {
+  <div class="add-button-container">
+    <button class="btn-add" (click)="toggleAddMode()">
+      {{ showAddForm() ? '✕ Cancel' : '➕ Add Position' }}
+    </button>
+  </div>
+  } @if(isEditMode() && showAddForm()){
+  <div class="add-form">
+    <input
+      type="text"
+      [(ngModel)]="newPositionTitle"
+      placeholder="Enter position title"
+      class="form-input"
+      (keyup.enter)="addPosition()"
+    />
+    <button class="btn-save" (click)="addPosition()" [disabled]="!newPositionTitle().trim()">
+      Add
+    </button>
+  </div>
+  } @if (department().positions && department().positions.length > 0) {
+  <table class="table">
+    <tbody>
+      @for(position of department().positions; track position.id) {
+      <tr>
+        <td>{{ position.title }}</td>
+        @if(isEditMode()){
+        <td>
+          <button
+            class="btn-delete"
+            (click)="deletePosition(position.id)"
+            [disabled]="!isEditMode()"
+            title="Delete position"
+          >
+            Delete
+          </button>
+        </td>
+        }
+      </tr>
+      }
+    </tbody>
+  </table>
+  } @else {
+  <div class="empty-state">
+    <p>No positions yet</p>
+  </div>
+  }
+</div>

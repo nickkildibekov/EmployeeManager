@@ -5,15 +5,12 @@
   <p class="fallback-text">{{ error() }}</p>
   } @else if (departments() && departments()!.length > 0) {
 
-  <h2>Department List</h2>
   <div class="container">
-    <header class="header">
-      <h1>Departments Overview</h1>
-    </header>
+    <header class="header"></header>
 
     <div class="departments-grid">
       @for(dep of departments(); track dep.id){
-      <div class="department-plate">
+      <div class="department-plate" (click)="onSelectedDepartment(dep)">
         <div class="plate-header">
           <h2>{{ dep.name }}</h2>
           <h2>{{ dep.description }}</h2>
@@ -31,7 +28,23 @@
             <div class="stat-icon">👥</div>
             <div class="stat-info">
               <div class="stat-value">{{ dep.employees.length }}</div>
-              <div class="stat-label">Employees</div>
+              <div class="stat-label">On Work Employees</div>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-icon">🏖️</div>
+            <div class="stat-info">
+              <div class="stat-value">N/A</div>
+              <div class="stat-label">In Vacation Employees</div>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-icon">🤒</div>
+            <div class="stat-info">
+              <div class="stat-value">N/A</div>
+              <div class="stat-label">On Illness Employees</div>
             </div>
           </div>
         </div>

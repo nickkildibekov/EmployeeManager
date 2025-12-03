@@ -4,6 +4,7 @@ import { DepartmentService } from '../department.service';
 import { Department } from '../../../shared/models/department.model';
 
 import { AsyncPipe } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-department-list',
@@ -13,13 +14,12 @@ import { AsyncPipe } from '@angular/common';
   styleUrls: ['./department-list.css'],
 })
 export class DepartmentListComponent implements OnInit {
+  private departmentService = inject(DepartmentService);
+  private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
   departments = signal<Department[] | undefined>(undefined);
   isFetching = signal(false);
   error = signal('');
-  empoyeesCount = 0;
-  positionsCount = 0;
-  private departmentService = inject(DepartmentService);
-  private destroyRef = inject(DestroyRef);
 
   ngOnInit(): void {
     this.isFetching.set(true);
@@ -38,5 +38,9 @@ export class DepartmentListComponent implements OnInit {
     this.destroyRef.onDestroy(() => {
       subscription.unsubscribe();
     });
+  }
+
+  onSelectedDepartment(dep: Department) {
+    this.router.navigate(['/departments', dep.id]);
   }
 }

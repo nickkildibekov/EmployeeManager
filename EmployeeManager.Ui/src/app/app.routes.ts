@@ -10,6 +10,11 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'employees/:id',
+    loadComponent: () =>
+      import('./features/employees/employee/employee').then((m) => m.EmployeeComponent),
+  },
+  {
     path: 'departments',
     loadComponent: () =>
       import('./features/departments/department-list/department-list').then(
@@ -17,7 +22,19 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'departments/:id',
+    loadComponent: () =>
+      import('./features/departments/department/department').then((m) => m.DepartmentComponent),
+  },
+  {
     path: 'positions',
+    loadComponent: () =>
+      import('./features/positions/position-list/position-list').then(
+        (m) => m.PositionListComponent
+      ),
+  },
+  {
+    path: 'positions/:depId',
     loadComponent: () =>
       import('./features/positions/position-list/position-list').then(
         (m) => m.PositionListComponent

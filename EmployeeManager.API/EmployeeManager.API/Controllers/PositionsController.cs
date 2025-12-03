@@ -82,11 +82,16 @@ namespace EmployeeManager.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, [FromQuery] int? departmentId)
         {
             var pos = await _appDbContext.Positions.FindAsync(id);
             if (pos == null)
                 return NotFound();
+
+            if (departmentId.HasValue && pos.DepartmentId != departmentId.Value)
+            {
+                return BadRequest(new { message = $"Position{id} does not belong to the specified department with id: {departmentId.Value}." });
+            }
 
             try
             {

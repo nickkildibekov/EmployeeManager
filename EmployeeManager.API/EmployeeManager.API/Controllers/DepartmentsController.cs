@@ -25,7 +25,6 @@ namespace EmployeeManager.Api.Controllers
                 {                    
                     Id = d.Id,
                     Name =  d.Name,
-                    Description = d.Description,
                     Positions = d.Positions.Select(p => new PositionDTO{
                         Id = p.Id, 
                         Title = p.Title 
@@ -47,8 +46,23 @@ namespace EmployeeManager.Api.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             var dep = await _appDbContext.Departments
-                .Include(d => d.Positions)
-                .Include(d => d.Employees)
+                .Select(d => new DepartmentDTO
+                {
+                    Id = d.Id,
+                    Name = d.Name,
+                    Positions = d.Positions.Select(p => new PositionDTO
+                    {
+                        Id = p.Id,
+                        Title = p.Title
+                    }).ToList(),
+                    Employees = d.Employees.Select(e => new EmployeeDTO
+                    {
+                        Id = e.Id,
+                        FirstName = e.FirstName,
+                        LastName = e.LastName,
+                        PhoneNumber = e.PhoneNumber
+                    }).ToList()
+                })
                 .AsNoTracking()
                 .FirstOrDefaultAsync(d => d.Id == id);
 
@@ -66,7 +80,6 @@ namespace EmployeeManager.Api.Controllers
             var dep = new Department
             {
                 Name = depDto.Name,
-                Description = depDto.Description ?? string.Empty
             };
             _appDbContext.Departments.Add(dep);
             await _appDbContext.SaveChangesAsync();
@@ -85,7 +98,6 @@ namespace EmployeeManager.Api.Controllers
             if (dep == null) return NotFound();
 
             dep.Name = depDto.Name;
-            dep.Description = depDto.Description ?? string.Empty;
 
             await _appDbContext.SaveChangesAsync();
             return Ok(dep);

@@ -1,1 +1,68 @@
-<p>department works!</p>
+<div class="container">
+  <div class="header-section">
+    <button class="back-button" (click)="goBack()">← Back to List</button>
+  </div>
+
+  @if (isFetching()) {
+  <div class="loading">
+    <p>Loading department details...</p>
+  </div>
+  } @else if (department()) {
+  <div class="content">
+    <div class="edit-section">
+      <div class="button-group">
+        <button class="btn btn-primary" (click)="toggleEditMode()" [disabled]="isSaving()">
+          {{ isEditMode() ? '✕ Cancel Editing' : '✏️ Edit Department' }}
+        </button>
+
+        @if (isEditMode()) {
+        <button
+          class="btn btn-success"
+          (click)="saveDepartment()"
+          [disabled]="isSaving() || !editedDepartment().name.trim()"
+        >
+          @if (isSaving()) { Saving... } @else { 💾 Save Changes }
+        </button>
+        }
+      </div>
+    </div>
+
+    <div class="department-form">
+      <div class="form-group">
+        <label>Department Name</label>
+        <input
+          type="text"
+          [(ngModel)]="editedDepartment().name"
+          [readonly]="!isEditMode()"
+          class="form-input"
+        />
+      </div>
+    </div>
+
+    <div class="sections-container">
+      <app-position-list
+        [department]="department()"
+        [isEditMode]="isEditMode()"
+        (onPositionAdded)="onPositionAdded($event)"
+        (onPositionDeleted)="onPositionDeleted($event)"
+      >
+      </app-position-list>
+
+      <app-employee-list
+        [department]="department()"
+        [positions]="department()!.positions || []"
+        [isEditMode]="isEditMode()"
+        (onEmployeeAdded)="onEmployeeAdded($event)"
+        (onEmployeeDeleted)="onEmployeeDeleted($event)"
+      >
+      </app-employee-list>
+    </div>
+  </div>
+  } @else {
+  <div class="loading">
+    <p style="color: #e53e3e; font-weight: 600">
+      ⚠️ Department not found or an error occurred: {{ error() }}
+    </p>
+  </div>
+  }
+</div>

@@ -3,7 +3,6 @@ import { FormsModule } from '@angular/forms';
 
 import { Department } from '../../../shared/models/department.model';
 import { Position } from '../../../shared/models/position.model';
-import { Employee } from '../../../shared/models/employee.model'; // Вважаємо, що Employee також використовується
 
 interface NewEmployeeData {
   firstName: string;
@@ -21,7 +20,7 @@ interface NewEmployeeData {
 })
 export class EmployeeListComponent {
   department = input.required<Department>();
-  positions = input<Position[]>([]);
+  positions = input.required<Position[]>();
   isEditMode = input.required<boolean>();
   isAddFormVisible = signal<boolean>(false);
 
@@ -37,16 +36,7 @@ export class EmployeeListComponent {
 
   isFormValid(): boolean {
     const data = this.newEmployee();
-    console.log('Current Form Data:', data);
-    console.log(
-      'Validation Result:',
-      !!(
-        data.firstName.trim() &&
-        data.lastName.trim() &&
-        data.phoneNumber.trim() &&
-        data.positionId !== null
-      )
-    );
+
     return !!(
       data.firstName.trim() &&
       data.lastName.trim() &&
@@ -89,6 +79,4 @@ export class EmployeeListComponent {
     this.resetForm();
     this.isAddFormVisible.set(false);
   }
-
-  // ... інші методи додавання/видалення співробітників ...
 }

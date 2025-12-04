@@ -55,15 +55,36 @@ namespace EmployeeManager.API.Controllers
 
             _appDbContext.Employees.Add(employee);
             await _appDbContext.SaveChangesAsync();
-
-        //    var createdEmployee = await _appDbContext.Employees
-        //.Include(e => e.Position)
-        //.Include(e => e.Department)
-        //.FirstOrDefaultAsync(e => e.Id == employee.Id);
+         
 
             if (employee == null) return NotFound();
 
             return CreatedAtAction(nameof(Get), new { id = employee.Id }, employee);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id, [FromQuery] int? departmentId)
+        {
+            var emp = await _appDbContext.Employees.FindAsync(id);
+            if (emp == null)
+                return NotFound();
+
+            if (departmentId.HasValue && emp.DepartmentId != departmentId.Value)
+            {
+                return BadRequest(new { message = $"Employee {id} does not belong to the specified department with id: {departmentId.Value}." });
+            }
+
+            try
+            {
+                _appDbContext.Employees.Remove(emp);
+                await _appDbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { message = "Cannot delete employee with linked records." });
+            }
+
+            return NoContent();
         }
     }
 }

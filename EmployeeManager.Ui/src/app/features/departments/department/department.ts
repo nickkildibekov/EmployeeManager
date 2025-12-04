@@ -131,8 +131,6 @@ export class DepartmentComponent implements OnInit {
     });
   }
 
-  // --- CHILD COMPONENT HANDLERS: POSITIONS ---
-
   onPositionAdded(title: string): void {
     const deptId = this.departmentId;
     if (!deptId) return;

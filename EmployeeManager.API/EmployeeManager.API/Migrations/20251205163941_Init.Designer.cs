@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EmployeeManager.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251128144038_InitMigration")]
-    partial class InitMigration
+    [Migration("20251205163941_Init")]
+    partial class Init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -33,17 +33,29 @@ namespace EmployeeManager.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Departments");
+                });
+
+            modelBuilder.Entity("EmployeeManager.API.Models.DepartmentPosition", b =>
+                {
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PositionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("DepartmentId", "PositionId");
+
+                    b.HasIndex("PositionId");
+
+                    b.ToTable("DepartmentPositions");
                 });
 
             modelBuilder.Entity("EmployeeManager.API.Models.Employee", b =>
@@ -96,9 +108,6 @@ namespace EmployeeManager.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("DepartmentId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -108,8 +117,6 @@ namespace EmployeeManager.API.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
 
                     b.ToTable("Positions");
                 });
@@ -138,6 +145,25 @@ namespace EmployeeManager.API.Migrations
                     b.ToTable("WorkShifts");
                 });
 
+            modelBuilder.Entity("EmployeeManager.API.Models.DepartmentPosition", b =>
+                {
+                    b.HasOne("EmployeeManager.API.Models.Department", "Department")
+                        .WithMany("DepartmentPositions")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("EmployeeManager.API.Models.Position", "Position")
+                        .WithMany("DepartmentPositions")
+                        .HasForeignKey("PositionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Position");
+                });
+
             modelBuilder.Entity("EmployeeManager.API.Models.Employee", b =>
                 {
                     b.HasOne("EmployeeManager.API.Models.Department", "Department")
@@ -157,17 +183,6 @@ namespace EmployeeManager.API.Migrations
                     b.Navigation("Position");
                 });
 
-            modelBuilder.Entity("EmployeeManager.API.Models.Position", b =>
-                {
-                    b.HasOne("EmployeeManager.API.Models.Department", "Department")
-                        .WithMany("Positions")
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Department");
-                });
-
             modelBuilder.Entity("EmployeeManager.API.Models.WorkShift", b =>
                 {
                     b.HasOne("EmployeeManager.API.Models.Employee", "Employee")
@@ -181,13 +196,15 @@ namespace EmployeeManager.API.Migrations
 
             modelBuilder.Entity("EmployeeManager.API.Models.Department", b =>
                 {
-                    b.Navigation("Employees");
+                    b.Navigation("DepartmentPositions");
 
-                    b.Navigation("Positions");
+                    b.Navigation("Employees");
                 });
 
             modelBuilder.Entity("EmployeeManager.API.Models.Position", b =>
                 {
+                    b.Navigation("DepartmentPositions");
+
                     b.Navigation("Employees");
                 });
 #pragma warning restore 612, 618

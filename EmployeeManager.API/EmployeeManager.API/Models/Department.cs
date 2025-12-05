@@ -7,10 +7,13 @@ namespace EmployeeManager.API.Models
         public int Id { get; set; }
 
         [Required]
+        [MaxLength(100)]
         public string Name { get; set; } = string.Empty;
 
-        public ICollection<Employee> Employees { get; set; } = new List<Employee>();
+        // Many-to-Many: Departments <-> Positions (via join table)
+        public ICollection<DepartmentPosition>? DepartmentPositions { get; set; }
 
-        public ICollection<Position> Positions { get; set; } = new List<Position>();
+        // Employees remain one-to-many
+        public ICollection<Employee>? Employees { get; set; }
     }
 }

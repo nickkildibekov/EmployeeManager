@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManager.API.Controllers
 {
-
     [ApiController]
     [Route("api/[controller]")]
     public class EmployeesController : ControllerBase
@@ -19,22 +18,53 @@ namespace EmployeeManager.API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> GetAll()
         {
-            return Ok(new { message = "Server is running" });
+            var employees = await _appDbContext.Employees
+                .Include(e => e.Position)
+                .Include(e => e.Department)
+                .AsNoTracking()
+                .Select(e => new EmployeeDTO
+                {
+                    Id = e.Id,
+                    FirstName = e.FirstName,
+                    LastName = e.LastName,
+                    PhoneNumber = e.PhoneNumber,
+                    PositionId = e.PositionId,
+                    PositionName = e.Position != null ? e.Position.Title : string.Empty,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty
+                })
+                .ToListAsync();
+
+            return Ok(employees);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var position = await _appDbContext.Positions
+            var employee = await _appDbContext.Employees
+                .Include(e => e.Position)
+                .Include(e => e.Department)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .Where(e => e.Id == id)
+                .Select(e => new EmployeeDTO
+                {
+                    Id = e.Id,
+                    FirstName = e.FirstName,
+                    LastName = e.LastName,
+                    PhoneNumber = e.PhoneNumber,
+                    PositionId = e.PositionId,
+                    PositionName = e.Position != null ? e.Position.Title : string.Empty,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty
+                })
+                .FirstOrDefaultAsync();
 
-            if (position == null)
+            if (employee == null)
                 return NotFound();
 
-            return Ok(position);
+            return Ok(employee);
         }
 
         [HttpPost]
@@ -50,16 +80,13 @@ namespace EmployeeManager.API.Controllers
                 PhoneNumber = employeeDto.PhoneNumber,
                 PositionId = employeeDto.PositionId,
                 DepartmentId = employeeDto.DepartmentId,
-                HireDate = DateTime.Now
+                HireDate = DateTime.UtcNow
             };
 
             _appDbContext.Employees.Add(employee);
             await _appDbContext.SaveChangesAsync();
-         
 
-            if (employee == null) return NotFound();
-
-            return CreatedAtAction(nameof(Get), new { id = employee.Id }, employee);
+            return CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee);
         }
 
         [HttpDelete("{id}")]

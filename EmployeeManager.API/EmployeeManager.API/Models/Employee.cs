@@ -15,8 +15,12 @@ namespace EmployeeManager.API.Models
         [Phone]
         public string PhoneNumber { get; set; } = string.Empty;
         public DateTime HireDate { get; set; }
+
+        // Employee still points to a single Position
         public int PositionId { get; set; }
         public Position? Position { get; set; }
+
+        // Employee still belongs to a single Department
         public int DepartmentId { get; set; }
         public Department? Department { get; set; }
         public string Role { get; set; } = "Worker";

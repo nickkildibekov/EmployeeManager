@@ -14,25 +14,44 @@ namespace EmployeeManager.API.Data
         public DbSet<Department> Departments => Set<Department>();
         public DbSet<WorkShift> WorkShifts => Set<WorkShift>();
 
+        // NEW: DbSet for the Many-to-Many Join Entity
+        public DbSet<DepartmentPosition> DepartmentPositions => Set<DepartmentPosition>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Department has many Employees
+            // -----------------------------------------------------------------
+            // 1. Department <-> Position (Many-to-Many configuration)
+            // -----------------------------------------------------------------
+
+            // Configure the composite primary key for the join table
+            modelBuilder.Entity<DepartmentPosition>()
+                .HasKey(dp => new { dp.DepartmentId, dp.PositionId });
+
+            // Define the relationships for DepartmentPosition
+            modelBuilder.Entity<DepartmentPosition>()
+                .HasOne(dp => dp.Department)
+                .WithMany(d => d.DepartmentPositions) // Department now links to the join table
+                .HasForeignKey(dp => dp.DepartmentId);
+
+            modelBuilder.Entity<DepartmentPosition>()
+                .HasOne(dp => dp.Position)
+                .WithMany(p => p.DepartmentPositions) // Position now links to the join table
+                .HasForeignKey(dp => dp.PositionId);
+
+            // -----------------------------------------------------------------
+            // 2. Department <-> Employee (One-to-Many)
+            // -----------------------------------------------------------------
             modelBuilder.Entity<Department>()
                 .HasMany(d => d.Employees)
                 .WithOne(e => e.Department)
                 .HasForeignKey(e => e.DepartmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Department has many Positions
-            modelBuilder.Entity<Department>()
-                .HasMany(d => d.Positions)
-                .WithOne(p => p.Department)
-                .HasForeignKey(p => p.DepartmentId)                
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // Employee has one Position
+            // -----------------------------------------------------------------
+            // 3. Employee <-> Position (One-to-Many)
+            // -----------------------------------------------------------------
             modelBuilder.Entity<Employee>()
                 .HasOne(e => e.Position)
                 .WithMany(p => p.Employees)
@@ -40,10 +59,12 @@ namespace EmployeeManager.API.Data
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // WorkShift has one Employee
+            // -----------------------------------------------------------------
+            // 4. WorkShift <-> Employee (One-to-Many)
+            // -----------------------------------------------------------------
             modelBuilder.Entity<WorkShift>()
                 .HasOne(ws => ws.Employee)
-                .WithMany()
+                .WithMany() // Assuming Employee does not have a navigation property back to WorkShift
                 .HasForeignKey(ws => ws.EmployeeId)
                 .OnDelete(DeleteBehavior.Cascade);
         }

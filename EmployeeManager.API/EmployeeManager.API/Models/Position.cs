@@ -9,8 +9,11 @@ namespace EmployeeManager.API.Models
         [Required]
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
+
+        // One-to-Many relationship: Position has many Employees
         public ICollection<Employee>? Employees { get; set; }
-        public int DepartmentId { get; set; }
-        public Department? Department { get; set; }
+
+        // Many-to-Many: Positions <-> Departments (via join table)
+        public ICollection<DepartmentPosition>? DepartmentPositions { get; set; }
     }
 }

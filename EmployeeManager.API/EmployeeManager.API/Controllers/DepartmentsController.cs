@@ -17,26 +17,48 @@ namespace EmployeeManager.Api.Controllers
             _appDbContext = appDbContext;
         }
 
+        private IQueryable<Department> GetDepartmentQuery()
+        {
+            return _appDbContext.Departments
+                // Eager load the available positions via the join table
+                .Include(d => d.DepartmentPositions!)
+                    .ThenInclude(dp => dp.Position)
+                // Eager load employees and their specific position
+                .Include(d => d.Employees!)
+                    .ThenInclude(e => e.Position)
+                .AsNoTracking();
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var data = await _appDbContext.Departments
+            var data = await GetDepartmentQuery()
                 .Select(d => new DepartmentDTO
-                {                    
+                {
                     Id = d.Id,
-                    Name =  d.Name,
-                    Positions = d.Positions.Select(p => new PositionDTO{
-                        Id = p.Id, 
-                        Title = p.Title 
-                    }).ToList(),
-                    Employees = d.Employees.Select(e => new EmployeeDTO{
-                        Id = e.Id, 
-                        FirstName = e.FirstName, 
+                    Name = d.Name,
+                    // Project available positions using the join table
+                    AvailablePositions = d.DepartmentPositions!
+                        .Select(dp => new PositionDTO
+                        {
+                            Id = dp.Position!.Id,
+                            Title = dp.Position.Title,
+                            Description = dp.Position.Description
+                        }).ToList(),
+
+                    // Project employees
+                    Employees = d.Employees!.Select(e => new EmployeeDTO
+                    {
+                        Id = e.Id,
+                        FirstName = e.FirstName,
                         LastName = e.LastName,
-                        PhoneNumber = e.PhoneNumber
+                        PhoneNumber = e.PhoneNumber,
+                        DepartmentId = e.DepartmentId,
+                        DepartmentName = d.Name,
+                        PositionId = e.PositionId,
+                        PositionName = e.Position != null ? e.Position.Title : string.Empty // Employee's specific position
                     }).ToList()
                 })
-                .AsNoTracking()
                 .ToListAsync();
 
             return Ok(data);
@@ -45,34 +67,41 @@ namespace EmployeeManager.Api.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
-            var dep = await _appDbContext.Departments
+            var dep = await GetDepartmentQuery()
+                .Where(d => d.Id == id)
                 .Select(d => new DepartmentDTO
                 {
                     Id = d.Id,
                     Name = d.Name,
-                    Positions = d.Positions.Select(p => new PositionDTO
-                    {
-                        Id = p.Id,
-                        Title = p.Title
-                    }).ToList(),
-                    Employees = d.Employees.Select(e => new EmployeeDTO
+                    AvailablePositions = d.DepartmentPositions!
+                        .Select(dp => new PositionDTO
+                        {
+                            Id = dp.Position!.Id,
+                            Title = dp.Position.Title,
+                            Description = dp.Position.Description
+                        }).ToList(),
+
+                    Employees = d.Employees!.Select(e => new EmployeeDTO
                     {
                         Id = e.Id,
                         FirstName = e.FirstName,
                         LastName = e.LastName,
-                        PhoneNumber = e.PhoneNumber
+                        PhoneNumber = e.PhoneNumber,
+                        DepartmentId = e.DepartmentId,
+                        DepartmentName = d.Name,
+                        PositionId = e.PositionId,
+                        PositionName = e.Position != null ? e.Position.Title : string.Empty
                     }).ToList()
                 })
-                .AsNoTracking()
-                .FirstOrDefaultAsync(d => d.Id == id);
+                .FirstOrDefaultAsync();
 
             if (dep == null) return NotFound();
 
             return Ok(dep);
         }
 
-         [HttpPost]
-        public async Task<IActionResult> Create( DepartmentDTO depDto)
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] DepartmentDTO depDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -84,12 +113,11 @@ namespace EmployeeManager.Api.Controllers
             _appDbContext.Departments.Add(dep);
             await _appDbContext.SaveChangesAsync();
 
-            // Return 201 Created with route to new resource
-            return Ok(dep);
+            return CreatedAtAction(nameof(GetById), new { id = dep.Id }, dep);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, DepartmentDTO depDto)
+        public async Task<IActionResult> Update(int id, [FromBody] DepartmentDTO depDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -109,10 +137,16 @@ namespace EmployeeManager.Api.Controllers
             var dep = await _appDbContext.Departments.FindAsync(id);
             if (dep == null) return NotFound();
 
-            _appDbContext.Departments.Remove(dep);
-            await _appDbContext.SaveChangesAsync();
-            return Ok();
+            try
+            {
+                _appDbContext.Departments.Remove(dep);
+                await _appDbContext.SaveChangesAsync();
+                return NoContent();
+            }
+            catch (DbUpdateException)
+            {
+                return Conflict(new { message = "Cannot delete department with linked records (positions or employees)." });
+            }
         }
     }
 }
-

@@ -1,4 +1,5 @@
 ﻿using EmployeeManager.API.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManager.API.Data
 {
@@ -13,20 +14,23 @@ namespace EmployeeManager.API.Data
 
         public void InsertData()
         {
-            
-            Department hrDept = null!;
-            Department itDept = null!;
-            Department financeDept = null!;
-            Department unemployedDept = null!;
+            // Ensure the database is created before seeding
+            dbContext.Database.EnsureCreated();
+
+            // 1. Seed Departments
+            Department hrDept;
+            Department itDept;
+            Department financeDept;
+            Department salesDept; // Changed from Unemployed to Sales for more realistic data
 
             if (!dbContext.Departments.Any())
             {
-                hrDept = new Department { Name = "Human Resources"};
+                hrDept = new Department { Name = "Human Resources" };
                 itDept = new Department { Name = "IT" };
-                financeDept = new Department { Name = "Finances"};
-                unemployedDept = new Department { Name = "Unemployed" };
+                financeDept = new Department { Name = "Finances" };
+                salesDept = new Department { Name = "Sales" };
 
-                dbContext.Departments.AddRange(hrDept, itDept, financeDept, unemployedDept);
+                dbContext.Departments.AddRange(hrDept, itDept, financeDept, salesDept);
                 dbContext.SaveChanges();
             }
             else
@@ -34,42 +38,39 @@ namespace EmployeeManager.API.Data
                 hrDept = dbContext.Departments.First(d => d.Name == "Human Resources");
                 itDept = dbContext.Departments.First(d => d.Name == "IT");
                 financeDept = dbContext.Departments.First(d => d.Name == "Finances");
-                unemployedDept = dbContext.Departments.First(d => d.Name == "Unemployed");
+                salesDept = dbContext.Departments.First(d => d.Name == "Sales");
             }
 
+            // 2. Seed a central pool of Positions (No DepartmentId needed anymore)
             List<Position> allPositions = new List<Position>();
-
             if (!dbContext.Positions.Any())
             {
+                // Create 15 generic positions
                 allPositions.AddRange(new List<Position>
                 {
-                    new Position { Title = "HR Manager", DepartmentId = hrDept.Id },
-                    new Position { Title = "Recruiter", DepartmentId = hrDept.Id },
-                    new Position { Title = "Benefits Specialist", DepartmentId = hrDept.Id },
-                    new Position { Title = "Training Coordinator", DepartmentId = hrDept.Id },
-                    new Position { Title = "Payroll Administrator", DepartmentId = hrDept.Id }
-                });
+                    // Common roles
+                    new Position { Title = "Manager", Description = "Leads a team." },
+                    new Position { Title = "Senior Analyst", Description = "Expert in data evaluation." },
+                    new Position { Title = "Team Lead", Description = "Manages project delivery." },
+                    new Position { Title = "Specialist", Description = "Focuses on a niche area." },
+                    new Position { Title = "Associate", Description = "Entry-level professional." },
+                    
+                    // Specific roles (IT)
+                    new Position { Title = "Software Developer", Description = "Writes and maintains code." },
+                    new Position { Title = "IT Support", Description = "Provides technical assistance." },
+                    new Position { Title = "Database Admin", Description = "Manages data infrastructure." },
 
-                allPositions.AddRange(new List<Position>
-                {
-                    new Position { Title = "Lead Developer", DepartmentId = itDept.Id },
-                    new Position { Title = "Software Engineer", DepartmentId = itDept.Id },
-                    new Position { Title = "IT Support Analyst", DepartmentId = itDept.Id },
-                    new Position { Title = "Database Administrator", DepartmentId = itDept.Id },
-                    new Position { Title = "Cloud Architect", DepartmentId = itDept.Id }
-                });
+                    // Specific roles (Finance/HR)
+                    new Position { Title = "Accountant", Description = "Handles fiscal records." },
+                    new Position { Title = "Recruiter", Description = "Sources and hires talent." },
+                    new Position { Title = "Budget Analyst", Description = "Forecasts and tracks spending." },
 
-                allPositions.AddRange(new List<Position>
-                {
-                    new Position { Title = "Finance Director", DepartmentId = financeDept.Id },
-                    new Position { Title = "Senior Accountant", DepartmentId = financeDept.Id },
-                    new Position { Title = "Budget Analyst", DepartmentId = financeDept.Id },
-                    new Position { Title = "Bookkeeper", DepartmentId = financeDept.Id },
-                    new Position { Title = "Auditor", DepartmentId = financeDept.Id }
+                    // Specific roles (Sales)
+                    new Position { Title = "Sales Executive", Description = "Closes major deals." },
+                    new Position { Title = "Marketing Coordinator", Description = "Executes marketing campaigns." },
+                    new Position { Title = "Client Relations", Description = "Manages customer satisfaction." },
+                    new Position { Title = "Intern", Description = "Trainee position." },
                 });
-
-                Position spare = new Position { Title = "Spare", DepartmentId = unemployedDept.Id };
-                allPositions.Add(spare);
 
                 dbContext.Positions.AddRange(allPositions);
                 dbContext.SaveChanges();
@@ -79,19 +80,56 @@ namespace EmployeeManager.API.Data
                 allPositions = dbContext.Positions.ToList();
             }
 
+            // 3. Seed DepartmentPosition (The Many-to-Many links)
+            // Goal: Each of the 4 departments has 10 positions assigned.
+            if (!dbContext.DepartmentPositions.Any())
+            {
+                var departments = new List<Department> { hrDept, itDept, financeDept, salesDept };
+                var departmentPositions = new List<DepartmentPosition>();
+                int positionCount = allPositions.Count;
+
+                // Use a rotating index to assign 10 positions to each department, ensuring overlap.
+                for (int i = 0; i < departments.Count; i++)
+                {
+                    var currentDept = departments[i];
+                    for (int j = 0; j < 10; j++)
+                    {
+                        // Use modulo to cycle through available positions
+                        var pos = allPositions[(i * 2 + j) % positionCount];
+
+                        departmentPositions.Add(new DepartmentPosition
+                        {
+                            DepartmentId = currentDept.Id,
+                            PositionId = pos.Id
+                        });
+                    }
+                }
+
+                dbContext.DepartmentPositions.AddRange(departmentPositions.DistinctBy(dp => new { dp.DepartmentId, dp.PositionId }));
+                dbContext.SaveChanges();
+            }
+
+            // 4. Seed Employees
             if (!dbContext.Employees.Any())
             {
                 List<Employee> allEmployees = new List<Employee>();
                 var now = DateTime.Now;
 
+                // Helper to get the Position IDs available to a specific department
+                var availablePositionsMap = dbContext.DepartmentPositions
+                    .Include(dp => dp.Position)
+                    .GroupBy(dp => dp.DepartmentId)
+                    .ToDictionary(g => g.Key, g => g.Select(dp => dp.Position!).ToList());
+
+
+                // Function to assign an Employee to a valid Position within their Department
                 Position GetPositionForDept(Department dept, int index)
                 {
-                    return allPositions
-                        .Where(p => p.DepartmentId == dept.Id)
-                        .Skip(index % allPositions.Count(p => p.DepartmentId == dept.Id))
-                        .First();
+                    var positions = availablePositionsMap[dept.Id];
+                    return positions[index % positions.Count];
                 }
 
+                // Seed HR Employees (10 employees)
                 for (int i = 0; i < 10; i++)
                 {
                     var pos = GetPositionForDept(hrDept, i);
@@ -106,6 +144,7 @@ namespace EmployeeManager.API.Data
                     });
                 }
 
+                // Seed IT Employees (10 employees)
                 for (int i = 0; i < 10; i++)
                 {
                     var pos = GetPositionForDept(itDept, i);
@@ -120,6 +159,7 @@ namespace EmployeeManager.API.Data
                     });
                 }
 
+                // Seed Finance Employees (10 employees)
                 for (int i = 0; i < 10; i++)
                 {
                     var pos = GetPositionForDept(financeDept, i);
@@ -134,17 +174,18 @@ namespace EmployeeManager.API.Data
                     });
                 }
 
-                var sparePosition = allPositions.First(p => p.Title == "Spare");
-                for (int i = 0; i < 5; i++)
+                // Seed Sales Employees (10 employees)
+                for (int i = 0; i < 10; i++)
                 {
+                    var pos = GetPositionForDept(salesDept, i);
                     allEmployees.Add(new Employee
                     {
-                        FirstName = $"Spare_User_{i + 1}",
-                        LastName = $"Unassigned_{i + 1}",
+                        FirstName = $"Sales_Rep_{i + 1}",
+                        LastName = $"Closer_{i + 1}",
                         PhoneNumber = $"444-000-{4000 + i}",
                         HireDate = now.AddDays(-i),
-                        PositionId = sparePosition.Id,
-                        DepartmentId = unemployedDept.Id
+                        PositionId = pos.Id,
+                        DepartmentId = salesDept.Id
                     });
                 }
 

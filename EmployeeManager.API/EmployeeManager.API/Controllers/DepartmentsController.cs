@@ -20,10 +20,8 @@ namespace EmployeeManager.Api.Controllers
         private IQueryable<Department> GetDepartmentQuery()
         {
             return _appDbContext.Departments
-                // Eager load the available positions via the join table
                 .Include(d => d.DepartmentPositions!)
                     .ThenInclude(dp => dp.Position)
-                // Eager load employees and their specific position
                 .Include(d => d.Employees!)
                     .ThenInclude(e => e.Position)
                 .AsNoTracking();
@@ -37,16 +35,13 @@ namespace EmployeeManager.Api.Controllers
                 {
                     Id = d.Id,
                     Name = d.Name,
-                    // Project available positions using the join table
-                    AvailablePositions = d.DepartmentPositions!
+                    Positions = d.DepartmentPositions!
                         .Select(dp => new PositionDTO
                         {
                             Id = dp.Position!.Id,
-                            Title = dp.Position.Title,
-                            Description = dp.Position.Description
+                            Title = dp.Position.Title                            
                         }).ToList(),
 
-                    // Project employees
                     Employees = d.Employees!.Select(e => new EmployeeDTO
                     {
                         Id = e.Id,
@@ -56,7 +51,7 @@ namespace EmployeeManager.Api.Controllers
                         DepartmentId = e.DepartmentId,
                         DepartmentName = d.Name,
                         PositionId = e.PositionId,
-                        PositionName = e.Position != null ? e.Position.Title : string.Empty // Employee's specific position
+                        PositionName = e.Position != null ? e.Position.Title : string.Empty
                     }).ToList()
                 })
                 .ToListAsync();
@@ -73,12 +68,11 @@ namespace EmployeeManager.Api.Controllers
                 {
                     Id = d.Id,
                     Name = d.Name,
-                    AvailablePositions = d.DepartmentPositions!
+                    Positions = d.DepartmentPositions!
                         .Select(dp => new PositionDTO
                         {
                             Id = dp.Position!.Id,
-                            Title = dp.Position.Title,
-                            Description = dp.Position.Description
+                            Title = dp.Position.Title
                         }).ToList(),
 
                     Employees = d.Employees!.Select(e => new EmployeeDTO
@@ -143,9 +137,14 @@ namespace EmployeeManager.Api.Controllers
                 await _appDbContext.SaveChangesAsync();
                 return NoContent();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
-                return Conflict(new { message = "Cannot delete department with linked records (positions or employees)." });
+                // Conflict if employees or department positions are still linked
+                if (ex.InnerException?.Message?.Contains("foreign key") == true || ex.InnerException?.Message?.Contains("The DELETE statement conflicted with the REFERENCE constraint") == true)
+                {
+                    return Conflict(new { message = "Cannot delete department with linked records (positions or employees)." });
+                }
+                throw;
             }
         }
     }

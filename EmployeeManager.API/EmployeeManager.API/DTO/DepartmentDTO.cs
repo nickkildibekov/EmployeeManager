@@ -10,7 +10,7 @@ namespace EmployeeManager.API.DTO
         public string Name { get; set; } = string.Empty;
 
         // Changed Positions to AvailablePositions for clarity
-        public List<PositionDTO> AvailablePositions { get; set; } = new();
+        public List<PositionDTO> Positions { get; set; } = new();
         public List<EmployeeDTO> Employees { get; set; } = new();
     }
 }

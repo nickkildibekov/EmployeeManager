@@ -8,7 +8,7 @@
         public string PhoneNumber { get; set; } = string.Empty;
 
         public int PositionId { get; set; }
-        public string PositionName { get; set; } = string.Empty;
+        public required string PositionName { get; set; } 
 
         public int DepartmentId { get; set; }
         public string DepartmentName { get; set; } = string.Empty;

@@ -14,14 +14,13 @@ namespace EmployeeManager.API.Data
 
         public void InsertData()
         {
-            // Ensure the database is created before seeding
             dbContext.Database.EnsureCreated();
 
             // 1. Seed Departments
             Department hrDept;
             Department itDept;
             Department financeDept;
-            Department salesDept; // Changed from Unemployed to Sales for more realistic data
+            Department salesDept; 
 
             if (!dbContext.Departments.Any())
             {
@@ -49,27 +48,27 @@ namespace EmployeeManager.API.Data
                 allPositions.AddRange(new List<Position>
                 {
                     // Common roles
-                    new Position { Title = "Manager", Description = "Leads a team." },
-                    new Position { Title = "Senior Analyst", Description = "Expert in data evaluation." },
-                    new Position { Title = "Team Lead", Description = "Manages project delivery." },
-                    new Position { Title = "Specialist", Description = "Focuses on a niche area." },
-                    new Position { Title = "Associate", Description = "Entry-level professional." },
+                    new Position { Title = "Manager" },
+                    new Position { Title = "Senior Analyst"},
+                    new Position { Title = "Team Lead" },
+                    new Position { Title = "Specialist" },
+                    new Position { Title = "Associate"},
                     
                     // Specific roles (IT)
-                    new Position { Title = "Software Developer", Description = "Writes and maintains code." },
-                    new Position { Title = "IT Support", Description = "Provides technical assistance." },
-                    new Position { Title = "Database Admin", Description = "Manages data infrastructure." },
+                    new Position { Title = "Software Developer"},
+                    new Position { Title = "IT Support"},
+                    new Position { Title = "Database Admin"},
 
                     // Specific roles (Finance/HR)
-                    new Position { Title = "Accountant", Description = "Handles fiscal records." },
-                    new Position { Title = "Recruiter", Description = "Sources and hires talent." },
-                    new Position { Title = "Budget Analyst", Description = "Forecasts and tracks spending." },
+                    new Position { Title = "Accountant"},
+                    new Position { Title = "Recruiter"},
+                    new Position { Title = "Budget Analyst"},
 
                     // Specific roles (Sales)
-                    new Position { Title = "Sales Executive", Description = "Closes major deals." },
-                    new Position { Title = "Marketing Coordinator", Description = "Executes marketing campaigns." },
-                    new Position { Title = "Client Relations", Description = "Manages customer satisfaction." },
-                    new Position { Title = "Intern", Description = "Trainee position." },
+                    new Position { Title = "Sales Executive"},
+                    new Position { Title = "Marketing Coordinator"},
+                    new Position { Title = "Client Relations"},
+                    new Position { Title = "Intern"},
                 });
 
                 dbContext.Positions.AddRange(allPositions);

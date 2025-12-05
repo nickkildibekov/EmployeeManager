@@ -1,0 +1,227 @@
+/* -------------------------------------------------------------------------- */
+/* Base Styling and Containers                                   */
+/* -------------------------------------------------------------------------- */
+
+:host {
+  display: block;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Common container for Positions and Employees */
+.section,
+.list-section {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  margin-bottom: 30px;
+  transition: all 0.3s ease;
+}
+
+.section-header h2,
+.list-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937; /* Dark text */
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f3f4f6;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Form and Buttons Styling                             */
+/* -------------------------------------------------------------------------- */
+
+.add-button-container {
+  margin-bottom: 15px;
+  text-align: right;
+}
+
+.add-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.form-input,
+.form-control,
+.form-select {
+  padding: 10px 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  flex-grow: 1;
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background-color: #f9fafb;
+}
+
+.form-input:focus,
+.form-control:focus,
+.form-select:focus {
+  border-color: #3b82f6; /* Blue focus */
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  outline: none;
+  background-color: #ffffff;
+}
+
+/* Base Button Styling */
+button {
+  cursor: pointer;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.2s, box-shadow 0.2s, opacity 0.2s;
+  white-space: nowrap;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-add {
+  background-color: #34d399; /* Emerald Green */
+  color: white;
+}
+.btn-add:not([disabled]):hover {
+  background-color: #10b981;
+  box-shadow: 0 4px 6px rgba(52, 211, 153, 0.4);
+}
+
+.btn-save,
+.btn-primary {
+  background-color: #2563eb; /* Primary Blue */
+  color: white;
+}
+.btn-save:not([disabled]):hover,
+.btn-primary:not([disabled]):hover {
+  background-color: #1d4ed8;
+  box-shadow: 0 4px 6px rgba(37, 99, 235, 0.4);
+}
+
+.btn-delete,
+.btn-danger {
+  background-color: #ef4444; /* Red */
+  color: white;
+  padding: 8px 14px;
+}
+.btn-delete:not([disabled]):hover,
+.btn-danger:not([disabled]):hover {
+  background-color: #dc2626;
+  box-shadow: 0 4px 6px rgba(239, 68, 68, 0.4);
+}
+
+.btn-secondary {
+  background-color: #e5e7eb;
+  color: #374151;
+}
+.btn-secondary:hover {
+  background-color: #d1d5db;
+}
+
+/* Small button for list items */
+.btn-small {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+
+.item-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 0;
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s;
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.employee-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.employee-name {
+  font-weight: 600;
+  color: #1f2937;
+  font-size: 1.1rem;
+}
+
+.employee-position {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* Hover effect for list items */
+.list-item:hover {
+  background-color: #f9fafb;
+  border-radius: 4px; /* Slight rounding on hover */
+  padding-left: 10px;
+  padding-right: 10px;
+  margin-left: -10px;
+  margin-right: -10px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Empty State                                 */
+/* -------------------------------------------------------------------------- */
+
+.empty-state,
+.empty-list {
+  text-align: center;
+  padding: 30px 20px;
+  color: #9ca3af;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  margin-top: 20px;
+  font-style: italic;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Media Queries (Responsiveness)                             */
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .section,
+  .list-section {
+    padding: 15px;
+  }
+
+  .section-header h2,
+  .list-section h2 {
+    font-size: 1.3rem;
+  }
+
+  /* Stack form elements vertically on small screens */
+  .add-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .add-form .form-input {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+
+  .add-form .btn-save {
+    width: 100%;
+    margin-top: 5px;
+  }
+
+  /* Adjust button padding */
+  button {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+}

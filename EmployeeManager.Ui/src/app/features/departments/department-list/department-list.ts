@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { DepartmentService } from '../department.service';
 import { Department } from '../../../shared/models/department.model';
 
-import { AsyncPipe } from '@angular/common';
 import { Router } from '@angular/router';
 
 @Component({

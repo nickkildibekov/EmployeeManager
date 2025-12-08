@@ -4,8 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs';
 
 import { Department } from '../../../shared/models/department.model';
-import { Employee } from '../../../shared/models/employee.model';
-import { Position } from '../../../shared/models/position.model';
 
 import { DepartmentService } from '../department.service';
 import { PositionService } from '../../positions/position.service';
@@ -24,6 +22,7 @@ interface NewEmployeeData {
   lastName: string;
   phoneNumber: string;
   positionId: number | null;
+  departmentId: number;
 }
 
 @Component({
@@ -136,7 +135,7 @@ export class DepartmentComponent implements OnInit {
     if (!deptId) return;
 
     const newPositionPayload = {
-      id: 0, // Placeholder ID (API ignores this but TS requires it for the Position interface)
+      id: 0,
       title: title,
       description: '',
       departmentId: deptId,
@@ -162,7 +161,6 @@ export class DepartmentComponent implements OnInit {
     const deptId = this.departmentId;
     if (!deptId) return;
 
-    // Call service to delete the position
     this.positionService.deletePosition(deptId, positionId).subscribe({
       next: () => {
         this.department.update((dept) => {
@@ -180,10 +178,10 @@ export class DepartmentComponent implements OnInit {
   }
 
   onEmployeeAdded(newEmployee: NewEmployeeData): void {
-    const deptid = this.departmentId;
-    if (!deptid) return;
+    newEmployee.departmentId = this.departmentId;
+    if (!newEmployee.departmentId) return;
 
-    this.employeeService.addEmployee(deptid, newEmployee).subscribe({
+    this.employeeService.addEmployee(newEmployee).subscribe({
       next: (updatedemployee) => {
         this.department.update((dept) => {
           if (!dept) return dept;
@@ -203,14 +201,12 @@ export class DepartmentComponent implements OnInit {
     const deptId = this.departmentId;
     if (!deptId) return;
 
-    // Call service to delete the employee
     this.employeeService.deleteEmployee(employeeId).subscribe({
       next: () => {
         this.department.update((dept) => {
           if (!dept) return dept;
           return {
             ...dept,
-            // Filter out the deleted employee
             employees: dept.employees ? dept.employees.filter((e) => e.id !== employeeId) : [],
           };
         });

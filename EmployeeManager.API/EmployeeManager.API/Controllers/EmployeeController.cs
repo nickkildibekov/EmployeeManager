@@ -31,7 +31,6 @@ namespace EmployeeManager.API.Controllers
                     LastName = e.LastName,
                     PhoneNumber = e.PhoneNumber,
                     PositionId = e.PositionId,
-                    PositionName = e.Position != null ? e.Position.Title : string.Empty,
                     DepartmentId = e.DepartmentId,
                     DepartmentName = e.Department != null ? e.Department.Name : string.Empty
                 })
@@ -55,7 +54,6 @@ namespace EmployeeManager.API.Controllers
                     LastName = e.LastName,
                     PhoneNumber = e.PhoneNumber,
                     PositionId = e.PositionId,
-                    PositionName = e.Position != null ? e.Position.Title : string.Empty,
                     DepartmentId = e.DepartmentId,
                     DepartmentName = e.Department != null ? e.Department.Name : string.Empty
                 })
@@ -68,7 +66,7 @@ namespace EmployeeManager.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] EmployeeDTO employeeDto)
+        public async Task<IActionResult> Create(EmployeeDTO employeeDto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

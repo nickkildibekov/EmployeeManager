@@ -9,6 +9,7 @@ interface NewEmployeeData {
   lastName: string;
   phoneNumber: string;
   positionId: number | null;
+  departmentId: number | null;
 }
 
 @Component({
@@ -29,6 +30,7 @@ export class EmployeeListComponent {
     lastName: '',
     phoneNumber: '',
     positionId: null,
+    departmentId: null,
   });
 
   onEmployeeAdded = output<NewEmployeeData>();
@@ -51,6 +53,7 @@ export class EmployeeListComponent {
       lastName: '',
       phoneNumber: '',
       positionId: null,
+      departmentId: null,
     });
   }
 
@@ -75,7 +78,6 @@ export class EmployeeListComponent {
 
     this.onEmployeeAdded.emit(this.newEmployee());
 
-    // 2. Reset local state
     this.resetForm();
     this.isAddFormVisible.set(false);
   }

@@ -8,6 +8,7 @@ interface EmployeeCreationPayload {
   lastName: string;
   phoneNumber: string;
   positionId: number | null;
+  departmentId: number;
 }
 
 @Injectable({
@@ -17,15 +18,20 @@ export class EmployeeService {
   private readonly apiUrl = '/api/Employees/';
   private httpClient = inject(HttpClient);
 
-  addEmployee(departmentId: number, employeeData: EmployeeCreationPayload): Observable<Employee> {
+  addEmployee(employeeData: EmployeeCreationPayload): Observable<Employee> {
     const payload = {
-      ...employeeData,
-      departmentId: departmentId,
+      firstName: employeeData.firstName,
+      lastName: employeeData.lastName,
+      phoneNumber: employeeData.phoneNumber,
+      positionId: employeeData.positionId,
+      departmentId: employeeData.departmentId,
     };
+
     return this.httpClient.post<Employee>(this.apiUrl, payload).pipe(
       catchError((error) => {
-        console.error('Error in addEmployeeToDepartment:', error);
-        return throwError(() => new Error('Error adding employee.'));
+        console.error('Error in addEmployee:', error);
+        const errorMessage = error.error?.message || 'Error adding employee.';
+        return throwError(() => new Error(errorMessage));
       })
     );
   }

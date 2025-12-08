@@ -16,7 +16,7 @@ namespace EmployeeManager.API.Models
         public string PhoneNumber { get; set; } = string.Empty;
         public DateTime HireDate { get; set; }
 
-        public int PositionId { get; set; }
+        public int? PositionId { get; set; }
         public Position? Position { get; set; }
 
         public int DepartmentId { get; set; }

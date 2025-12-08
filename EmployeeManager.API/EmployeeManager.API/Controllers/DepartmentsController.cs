@@ -51,7 +51,6 @@ namespace EmployeeManager.Api.Controllers
                         DepartmentId = e.DepartmentId,
                         DepartmentName = d.Name,
                         PositionId = e.PositionId,
-                        PositionName = e.Position != null ? e.Position.Title : string.Empty
                     }).ToList()
                 })
                 .ToListAsync();
@@ -83,8 +82,7 @@ namespace EmployeeManager.Api.Controllers
                         PhoneNumber = e.PhoneNumber,
                         DepartmentId = e.DepartmentId,
                         DepartmentName = d.Name,
-                        PositionId = e.PositionId,
-                        PositionName = e.Position != null ? e.Position.Title : string.Empty
+                        PositionId = e.PositionId
                     }).ToList()
                 })
                 .FirstOrDefaultAsync();

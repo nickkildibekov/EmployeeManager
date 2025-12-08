@@ -1,5 +1,5 @@
 <div class="list-section employee-list-section">
-  <h2>Співробітники ({{ department().employees.length }})</h2>
+  <h2>Employees ({{ department().employees.length }})</h2>
 
   @if (isEditMode()) {
   <div class="add-button-container">
@@ -9,7 +9,7 @@
   </div>
   } @if (isEditMode() && isAddFormVisible()) {
   <div class="add-form card p-3 mb-4">
-    <h5 class="card-title">➕ Add New Employee</h5>
+    <h5 class="card-title"></h5>
     <div class="row g-2">
       <div class="col-md-3">
         <input

@@ -9,10 +9,8 @@ namespace EmployeeManager.API.Models
         [Required]
         public string Title { get; set; } = string.Empty;
 
-        // One-to-Many relationship: Position has many Employees
         public ICollection<Employee>? Employees { get; set; }
 
-        // Many-to-Many: Positions <-> Departments (via join table)
         public ICollection<DepartmentPosition>? DepartmentPositions { get; set; }
     }
 }

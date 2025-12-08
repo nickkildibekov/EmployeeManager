@@ -16,7 +16,6 @@ namespace EmployeeManager.API.Data
         {
             dbContext.Database.EnsureCreated();
 
-            // 1. Seed Departments
             Department hrDept;
             Department itDept;
             Department financeDept;
@@ -40,31 +39,25 @@ namespace EmployeeManager.API.Data
                 salesDept = dbContext.Departments.First(d => d.Name == "Sales");
             }
 
-            // 2. Seed a central pool of Positions (No DepartmentId needed anymore)
             List<Position> allPositions = new List<Position>();
             if (!dbContext.Positions.Any())
             {
-                // Create 15 generic positions
                 allPositions.AddRange(new List<Position>
                 {
-                    // Common roles
                     new Position { Title = "Manager" },
                     new Position { Title = "Senior Analyst"},
                     new Position { Title = "Team Lead" },
                     new Position { Title = "Specialist" },
                     new Position { Title = "Associate"},
                     
-                    // Specific roles (IT)
                     new Position { Title = "Software Developer"},
                     new Position { Title = "IT Support"},
                     new Position { Title = "Database Admin"},
 
-                    // Specific roles (Finance/HR)
                     new Position { Title = "Accountant"},
                     new Position { Title = "Recruiter"},
                     new Position { Title = "Budget Analyst"},
 
-                    // Specific roles (Sales)
                     new Position { Title = "Sales Executive"},
                     new Position { Title = "Marketing Coordinator"},
                     new Position { Title = "Client Relations"},
@@ -79,21 +72,18 @@ namespace EmployeeManager.API.Data
                 allPositions = dbContext.Positions.ToList();
             }
 
-            // 3. Seed DepartmentPosition (The Many-to-Many links)
-            // Goal: Each of the 4 departments has 10 positions assigned.
+            
             if (!dbContext.DepartmentPositions.Any())
             {
                 var departments = new List<Department> { hrDept, itDept, financeDept, salesDept };
                 var departmentPositions = new List<DepartmentPosition>();
                 int positionCount = allPositions.Count;
 
-                // Use a rotating index to assign 10 positions to each department, ensuring overlap.
                 for (int i = 0; i < departments.Count; i++)
                 {
                     var currentDept = departments[i];
                     for (int j = 0; j < 10; j++)
                     {
-                        // Use modulo to cycle through available positions
                         var pos = allPositions[(i * 2 + j) % positionCount];
 
                         departmentPositions.Add(new DepartmentPosition
@@ -108,27 +98,23 @@ namespace EmployeeManager.API.Data
                 dbContext.SaveChanges();
             }
 
-            // 4. Seed Employees
             if (!dbContext.Employees.Any())
             {
                 List<Employee> allEmployees = new List<Employee>();
                 var now = DateTime.Now;
 
-                // Helper to get the Position IDs available to a specific department
                 var availablePositionsMap = dbContext.DepartmentPositions
                     .Include(dp => dp.Position)
                     .GroupBy(dp => dp.DepartmentId)
                     .ToDictionary(g => g.Key, g => g.Select(dp => dp.Position!).ToList());
 
 
-                // Function to assign an Employee to a valid Position within their Department
                 Position GetPositionForDept(Department dept, int index)
                 {
                     var positions = availablePositionsMap[dept.Id];
                     return positions[index % positions.Count];
                 }
 
-                // Seed HR Employees (10 employees)
                 for (int i = 0; i < 10; i++)
                 {
                     var pos = GetPositionForDept(hrDept, i);
@@ -143,7 +129,6 @@ namespace EmployeeManager.API.Data
                     });
                 }
 
-                // Seed IT Employees (10 employees)
                 for (int i = 0; i < 10; i++)
                 {
                     var pos = GetPositionForDept(itDept, i);
@@ -158,7 +143,6 @@ namespace EmployeeManager.API.Data
                     });
                 }
 
-                // Seed Finance Employees (10 employees)
                 for (int i = 0; i < 10; i++)
                 {
                     var pos = GetPositionForDept(financeDept, i);
@@ -173,7 +157,6 @@ namespace EmployeeManager.API.Data
                     });
                 }
 
-                // Seed Sales Employees (10 employees)
                 for (int i = 0; i < 10; i++)
                 {
                     var pos = GetPositionForDept(salesDept, i);

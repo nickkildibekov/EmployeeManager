@@ -12,7 +12,8 @@ namespace EmployeeManager.API.Data
         public DbSet<Employee> Employees => Set<Employee>();
         public DbSet<Position> Positions => Set<Position>();
         public DbSet<Department> Departments => Set<Department>();
-        public DbSet<WorkShift> WorkShifts => Set<WorkShift>();
+        public DbSet<Equipment> Equipments => Set<Equipment>();
+        public DbSet<EquipmentCategory> EquipmentCategories => Set<EquipmentCategory>();
 
         public DbSet<DepartmentPosition> DepartmentPositions => Set<DepartmentPosition>();
 
@@ -33,7 +34,7 @@ namespace EmployeeManager.API.Data
                 .WithMany(p => p.DepartmentPositions) 
                 .HasForeignKey(dp => dp.PositionId);
 
-                        modelBuilder.Entity<Department>()
+            modelBuilder.Entity<Department>()
                 .HasMany(d => d.Employees)
                 .WithOne(e => e.Department)
                 .HasForeignKey(e => e.DepartmentId)
@@ -45,12 +46,14 @@ namespace EmployeeManager.API.Data
                 .HasForeignKey(e => e.PositionId)
                 .IsRequired()
                 .OnDelete(DeleteBehavior.Restrict);
-            
-            modelBuilder.Entity<WorkShift>()
-                .HasOne(ws => ws.Employee)
-                .WithMany() 
-                .HasForeignKey(ws => ws.EmployeeId)
-                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Equipment>()
+                .HasOne(e => e.Category)
+                .WithMany(c => c.Equipments)
+                .HasForeignKey(e => e.CategoryId)
+                .IsRequired() 
+                .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

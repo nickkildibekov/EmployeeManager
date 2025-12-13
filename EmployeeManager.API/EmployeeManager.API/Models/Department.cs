@@ -13,5 +13,7 @@ namespace EmployeeManager.API.Models
         public ICollection<DepartmentPosition>? DepartmentPositions { get; set; }
 
         public ICollection<Employee>? Employees { get; set; }
+
+        public ICollection<Equipment>? Equipments { get; set; }
     }
 }

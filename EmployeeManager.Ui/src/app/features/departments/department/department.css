@@ -158,7 +158,8 @@
 }
 
 app-position-list,
-app-employee-list {
+app-employee-list,
+app-equipment-list {
   flex: 1 1 45%;
   min-width: 320px;
 }

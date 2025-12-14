@@ -11,6 +11,6 @@
         public int CategoryId { get; set; }
         public string CategoryName { get; set; } = string.Empty;
         public int DepartmentId { get; set; }
-        public string DepartmentName { get; set; }
+        public string DepartmentName { get; set; } = string.Empty;
     }
 }

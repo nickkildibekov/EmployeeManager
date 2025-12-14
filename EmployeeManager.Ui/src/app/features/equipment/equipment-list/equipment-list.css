@@ -1,0 +1,29 @@
+/* -------------------------------------------------------------------------- */
+/* Base Styling and Containers                                   */
+/* -------------------------------------------------------------------------- */
+
+:host {
+  display: block;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Common container for Positions and Employees */
+.section,
+.list-section {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  margin-bottom: 30px;
+  transition: all 0.3s ease;
+}
+
+.section-header h2,
+.list-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937; /* Dark text */
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f3f4f6;
+}

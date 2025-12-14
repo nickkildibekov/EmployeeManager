@@ -11,5 +11,6 @@ namespace EmployeeManager.API.DTO
 
         public List<PositionDTO> Positions { get; set; } = new();
         public List<EmployeeDTO> Employees { get; set; } = new();
+        public List<EquipmentDTO> Equipments { get; set; } = new();
     }
 }

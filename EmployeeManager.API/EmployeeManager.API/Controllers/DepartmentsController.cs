@@ -51,7 +51,22 @@ namespace EmployeeManager.Api.Controllers
                         DepartmentId = e.DepartmentId,
                         DepartmentName = d.Name,
                         PositionId = e.PositionId,
-                    }).ToList()
+                    }).ToList(),
+
+                    Equipments = d.Equipments!
+                        .Select(eq => new EquipmentDTO
+                        {
+                            Id = eq.Id,
+                            Name = eq.Name,
+                            SerialNumber = eq.SerialNumber,
+                            PurchaseDate = eq.PurchaseDate,
+                            IsWork = eq.IsWork,
+                            Description = eq.Description,
+                            CategoryId = eq.CategoryId,
+                            CategoryName = eq.Category!.Name,
+                            DepartmentId = eq.DepartmentId,
+                            DepartmentName = d.Name,
+                        }).ToList()
                 })
                 .ToListAsync();
 
@@ -83,7 +98,22 @@ namespace EmployeeManager.Api.Controllers
                         DepartmentId = e.DepartmentId,
                         DepartmentName = d.Name,
                         PositionId = e.PositionId
-                    }).ToList()
+                    }).ToList(),
+
+                    Equipments = d.Equipments!
+                        .Select(eq => new EquipmentDTO
+                        {
+                            Id = eq.Id,
+                            Name = eq.Name,
+                            SerialNumber = eq.SerialNumber,
+                            PurchaseDate = eq.PurchaseDate,
+                            IsWork = eq.IsWork,
+                            Description = eq.Description,
+                            CategoryId = eq.CategoryId,
+                            CategoryName = eq.Category!.Name,
+                            DepartmentId = eq.DepartmentId,
+                            DepartmentName = d.Name,
+                        }).ToList()
                 })
                 .FirstOrDefaultAsync();
 

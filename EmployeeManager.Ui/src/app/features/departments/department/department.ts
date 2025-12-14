@@ -11,6 +11,7 @@ import { EmployeeService } from '../../employees/employee.service';
 
 import { PositionListComponent } from '../../positions/position-list/position-list';
 import { EmployeeListComponent } from '../../employees/employee-list/employee-list';
+import { EquipmentListComponent } from '../../equipment/equipment-list/equipment-list';
 
 interface DepartmentUpdateDTO {
   id: number;
@@ -28,7 +29,7 @@ interface NewEmployeeData {
 @Component({
   selector: 'app-department',
   standalone: true,
-  imports: [FormsModule, PositionListComponent, EmployeeListComponent],
+  imports: [FormsModule, PositionListComponent, EmployeeListComponent, EquipmentListComponent],
   templateUrl: './department.html',
   styleUrl: './department.css',
 })
@@ -70,6 +71,7 @@ export class DepartmentComponent implements OnInit {
       )
       .subscribe({
         next: (dept) => {
+          console.log(dept);
           this.department.set(dept);
           this.editedDepartment.set({
             id: dept.id,

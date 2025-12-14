@@ -24,6 +24,7 @@ export class DepartmentListComponent implements OnInit {
     this.isFetching.set(true);
     const subscription = this.departmentService.getAllDepartments().subscribe({
       next: (departments) => {
+        console.log(departments);
         this.departments.set(departments);
       },
       error: (error: Error) => {

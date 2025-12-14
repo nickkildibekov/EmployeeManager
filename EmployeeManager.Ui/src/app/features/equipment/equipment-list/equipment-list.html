@@ -1,0 +1,25 @@
+<div class="list-section employee-list-section">
+  <h2>Eqquipment ({{ department().equipments.length }})</h2>
+
+  <table class="table">
+    <tbody>
+      @for(equipment of department().equipments; track equipment.id) {
+      <tr>
+        <td>{{ equipment.name }}</td>
+        <!-- @if(isEditMode()){
+      <td>
+        <button
+          class="btn-delete"
+          (click)="deletePosition(position.id)"
+          [disabled]="!isEditMode()"
+          title="Delete position"
+        >
+          Delete
+        </button>
+      </td>
+      } -->
+      </tr>
+      }
+    </tbody>
+  </table>
+</div>

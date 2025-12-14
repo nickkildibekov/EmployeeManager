@@ -40,5 +40,12 @@ export const routes: Routes = [
         (m) => m.PositionListComponent
       ),
   },
+  {
+    path: 'equipment',
+    loadComponent: () =>
+      import('./features/equipment/equipment-list/equipment-list').then(
+        (m) => m.EquipmentListComponent
+      ),
+  },
   { path: '**', redirectTo: 'departments' },
 ];

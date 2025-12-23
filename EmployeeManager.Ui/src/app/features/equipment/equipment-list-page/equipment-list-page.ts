@@ -53,7 +53,7 @@ export class EquipmentListPageComponent implements OnInit {
     isWork: true,
     description: '',
     categoryId: 0,
-    departmentId: 0,
+    departmentId: null,
   });
 
   Math = Math;
@@ -150,7 +150,7 @@ export class EquipmentListPageComponent implements OnInit {
       isWork: true,
       description: '',
       categoryId: 0,
-      departmentId: 0,
+      departmentId: null,
     });
   }
 

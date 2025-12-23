@@ -13,16 +13,8 @@
   <!-- Add Form -->
   <div *ngIf="isAddFormVisible()" class="add-form">
     <div class="form-row">
-      <input
-        class="form-control"
-        placeholder="First Name"
-        [(ngModel)]="newEmployee().firstName"
-      />
-      <input
-        class="form-control"
-        placeholder="Last Name"
-        [(ngModel)]="newEmployee().lastName"
-      />
+      <input class="form-control" placeholder="First Name" [(ngModel)]="newEmployee().firstName" />
+      <input class="form-control" placeholder="Last Name" [(ngModel)]="newEmployee().lastName" />
     </div>
     <div class="form-row">
       <input
@@ -30,10 +22,7 @@
         placeholder="Phone Number"
         [(ngModel)]="newEmployee().phoneNumber"
       />
-      <select
-        class="form-control"
-        [(ngModel)]="newEmployee().positionId"
-      >
+      <select class="form-control" [(ngModel)]="newEmployee().positionId">
         <option [value]="null">Select Position</option>
         <option *ngFor="let pos of positions()" [value]="pos.id">
           {{ pos.title }}
@@ -41,10 +30,7 @@
       </select>
     </div>
     <div class="form-row">
-      <select
-        class="form-control"
-        [(ngModel)]="newEmployee().departmentId"
-      >
+      <select class="form-control" [(ngModel)]="newEmployee().departmentId">
         <option [value]="null">Select Department</option>
         <option *ngFor="let dep of departments()" [value]="dep.id">
           {{ dep.name }}
@@ -52,11 +38,7 @@
       </select>
     </div>
     <div class="button-row">
-      <button
-        class="btn btn-success"
-        (click)="addEmployee()"
-        [disabled]="!isFormValid()"
-      >
+      <button class="btn btn-success" (click)="addEmployee()" [disabled]="!isFormValid()">
         Add
       </button>
       <button class="btn btn-secondary" (click)="cancelAdd()">Cancel</button>
@@ -65,10 +47,7 @@
 
   <!-- Filters -->
   <div class="filters">
-    <select
-      class="filter-select"
-      (change)="onDepartmentChange($event.target.value)"
-    >
+    <select class="filter-select" (change)="onDepartmentChange($event.target.value)">
       <option value="">All Departments</option>
       <option *ngFor="let dept of departments()" [value]="dept.id">
         {{ dept.name }}
@@ -87,19 +66,17 @@
 
   <!-- List -->
   <div *ngIf="!isLoading()" class="list-container">
-    <div
-      *ngIf="employees().length === 0"
-      class="empty-message"
-    >
-      No employees found.
-    </div>
+    <div *ngIf="employees().length === 0" class="empty-message">No employees found.</div>
 
     <div *ngFor="let emp of employees()" class="list-item" (click)="openEmployee(emp.id)">
       <div class="item-content">
         @if (selectedDepartmentId() === null) {
-          <h4>{{ emp.firstName }} {{ emp.lastName }} - {{ emp.departmentName }} - {{ emp.positionName || 'N/A' }}</h4>
+        <h4>
+          {{ emp.firstName }} {{ emp.lastName }} - {{ emp.departmentName }} -
+          {{ emp.positionName || 'N/A' }}
+        </h4>
         } @else {
-          <h4>{{ emp.firstName }} {{ emp.lastName }} - {{ emp.positionName || 'N/A' }}</h4>
+        <h4>{{ emp.firstName }} {{ emp.lastName }} - {{ emp.positionName || 'N/A' }}</h4>
         }
       </div>
       <button
@@ -113,11 +90,7 @@
 
   <!-- Pagination -->
   <div *ngIf="employees().length > 0" class="pagination">
-    <button
-      class="btn btn-sm"
-      (click)="changePage(page() - 1)"
-      [disabled]="page() === 1"
-    >
+    <button class="btn btn-sm" (click)="changePage(page() - 1)" [disabled]="page() === 1">
       ← Previous
     </button>
     <span class="page-info">

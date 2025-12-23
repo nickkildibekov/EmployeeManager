@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
- import { CommonModule } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs';
@@ -29,14 +29,14 @@ export class EmployeeComponent implements OnInit {
   employee = signal<Employee | undefined>(undefined);
   departments = signal<Department[]>([]);
   positions = signal<Position[]>([]);
-  
+
   editedEmployee = signal<EmployeeUpdateData>({
     id: 0,
     firstName: '',
     lastName: '',
     phoneNumber: '',
     positionId: null,
-    departmentId: 0
+    departmentId: 0,
   });
 
   isFetching = signal(false);
@@ -49,7 +49,7 @@ export class EmployeeComponent implements OnInit {
   ngOnInit(): void {
     this.loadDepartments();
     this.loadPositions();
-    
+
     const subscription = this.route.paramMap
       .pipe(
         switchMap((params) => {
@@ -76,7 +76,7 @@ export class EmployeeComponent implements OnInit {
             lastName: emp.lastName,
             phoneNumber: emp.phoneNumber,
             positionId: emp.positionId,
-            departmentId: emp.departmentId
+            departmentId: emp.departmentId,
           });
           this.isFetching.set(false);
         },
@@ -117,7 +117,7 @@ export class EmployeeComponent implements OnInit {
         lastName: currentEmp.lastName,
         phoneNumber: currentEmp.phoneNumber,
         positionId: currentEmp.positionId,
-        departmentId: currentEmp.departmentId
+        departmentId: currentEmp.departmentId,
       });
     }
   }

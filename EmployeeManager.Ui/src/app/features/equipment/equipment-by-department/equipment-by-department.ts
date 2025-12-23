@@ -39,18 +39,20 @@ export class EquipmentByDepartmentComponent implements OnInit {
 
   private loadEquipment(depId: number) {
     this.isLoading.set(true);
-    this.equipmentService.getEquipmentByDepartment(depId, this.page(), this.pageSize(), this.search()).subscribe({
-      next: (res) => {
-        this.equipment.set(res.items);
-        this.total.set(res.total);
-        this.applyFilter();
-      },
-      error: (err: Error) => {
-        console.error(err);
-        this.error.set(err.message);
-      },
-      complete: () => this.isLoading.set(false),
-    });
+    this.equipmentService
+      .getEquipmentByDepartment(depId, this.page(), this.pageSize(), this.search())
+      .subscribe({
+        next: (res) => {
+          this.equipment.set(res.items);
+          this.total.set(res.total);
+          this.applyFilter();
+        },
+        error: (err: Error) => {
+          console.error(err);
+          this.error.set(err.message);
+        },
+        complete: () => this.isLoading.set(false),
+      });
   }
 
   applyFilter() {

@@ -158,11 +158,11 @@
   .form-row {
     flex-direction: column;
   }
-  
+
   .button-group {
     flex-direction: column;
   }
-  
+
   .btn {
     width: 100%;
   }

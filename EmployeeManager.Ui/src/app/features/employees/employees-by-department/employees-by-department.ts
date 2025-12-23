@@ -70,7 +70,16 @@ export class EmployeesByDepartmentComponent implements OnInit {
       .subscribe({
         next: (res) => {
           // set a minimal department object so EmployeeListComponent can consume employees
-          const dep = this.department() || ({ id: depId, name: '', description: '', positions: [], employees: [], equipments: [] } as Department);
+          const dep =
+            this.department() ||
+            ({
+              id: depId,
+              name: '',
+              description: '',
+              positions: [],
+              employees: [],
+              equipments: [],
+            } as Department);
           dep.employees = res.items;
           this.department.set(dep);
           this.total.set(res.total);

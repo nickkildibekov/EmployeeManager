@@ -25,11 +25,11 @@ export class PositionComponent implements OnInit {
 
   position = signal<Position | undefined>(undefined);
   departments = signal<Department[]>([]);
-  
+
   editedPosition = signal<PositionUpdatePayload>({
     id: 0,
     title: '',
-    departmentId: 0
+    departmentId: 0,
   });
 
   isFetching = signal(false);
@@ -41,7 +41,7 @@ export class PositionComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDepartments();
-    
+
     const subscription = this.route.paramMap
       .pipe(
         switchMap((params) => {
@@ -65,7 +65,7 @@ export class PositionComponent implements OnInit {
           this.editedPosition.set({
             id: pos.id,
             title: pos.title,
-            departmentId: pos.departmentId
+            departmentId: pos.departmentId,
           });
           this.isFetching.set(false);
         },
@@ -95,7 +95,7 @@ export class PositionComponent implements OnInit {
       this.editedPosition.set({
         id: currentPos.id,
         title: currentPos.title,
-        departmentId: currentPos.departmentId
+        departmentId: currentPos.departmentId,
       });
     }
   }

@@ -44,15 +44,13 @@ export class PositionService {
       params = params.set('search', search.trim());
     }
 
-    return this.httpClient
-      .get<{ items: Position[]; total: number }>(this.apiUrl, { params })
-      .pipe(
-        catchError((error) => {
-          console.error('Error fetching positions by department:', error);
-          const message = error.error?.message || 'Error fetching positions.';
-          return throwError(() => new Error(message));
-        })
-      );
+    return this.httpClient.get<{ items: Position[]; total: number }>(this.apiUrl, { params }).pipe(
+      catchError((error) => {
+        console.error('Error fetching positions by department:', error);
+        const message = error.error?.message || 'Error fetching positions.';
+        return throwError(() => new Error(message));
+      })
+    );
   }
 
   addPosition(positionData: PositionCreationPayload): Observable<Position> {

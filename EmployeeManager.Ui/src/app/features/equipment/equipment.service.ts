@@ -35,15 +35,13 @@ export class EquipmentService {
       params = params.set('search', search.trim());
     }
 
-    return this.httpClient
-      .get<{ items: Equipment[]; total: number }>(this.apiUrl, { params })
-      .pipe(
-        catchError((error) => {
-          console.error('Error fetching equipment by department:', error);
-          const message = error.error?.message || 'Error fetching equipment.';
-          return throwError(() => new Error(message));
-        })
-      );
+    return this.httpClient.get<{ items: Equipment[]; total: number }>(this.apiUrl, { params }).pipe(
+      catchError((error) => {
+        console.error('Error fetching equipment by department:', error);
+        const message = error.error?.message || 'Error fetching equipment.';
+        return throwError(() => new Error(message));
+      })
+    );
   }
 
   addEquipment(equipmentData: EquipmentCreationPayload): Observable<Equipment> {

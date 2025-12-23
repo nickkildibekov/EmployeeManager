@@ -1,4 +1,18 @@
-.positions-container { padding:12px }
-.controls { display:flex; gap:12px; align-items:center; margin-bottom:12px }
-.controls input { flex:1; padding:6px 8px }
-.pagination { display:flex; gap:8px; align-items:center }
+.positions-container {
+  padding: 12px;
+}
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.controls input {
+  flex: 1;
+  padding: 6px 8px;
+}
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

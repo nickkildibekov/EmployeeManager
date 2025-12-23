@@ -53,15 +53,13 @@ export class EmployeeService {
       params = params.set('search', search.trim());
     }
 
-    return this.httpClient
-      .get<{ items: Employee[]; total: number }>(this.apiUrl, { params })
-      .pipe(
-        catchError((error) => {
-          console.error('Error fetching employees by department:', error);
-          const message = error.error?.message || 'Error fetching employees.';
-          return throwError(() => new Error(message));
-        })
-      );
+    return this.httpClient.get<{ items: Employee[]; total: number }>(this.apiUrl, { params }).pipe(
+      catchError((error) => {
+        console.error('Error fetching employees by department:', error);
+        const message = error.error?.message || 'Error fetching employees.';
+        return throwError(() => new Error(message));
+      })
+    );
   }
 
   getEmployee(id: number): Observable<Employee> {

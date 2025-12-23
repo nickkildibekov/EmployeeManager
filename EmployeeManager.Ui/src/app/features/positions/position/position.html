@@ -24,8 +24,12 @@
           @if (isSaving()) { Saving... } @else { 💾 Save Changes }
         </button>
         }
-        
-        <button class="btn btn-danger" (click)="deletePosition()" [disabled]="isEditMode() || isSaving()">
+
+        <button
+          class="btn btn-danger"
+          (click)="deletePosition()"
+          [disabled]="isEditMode() || isSaving()"
+        >
           🗑️ Delete Position
         </button>
       </div>

@@ -3,11 +3,17 @@
   <p class="text-muted">{{ department()?.description }}</p>
 
   <div class="controls">
-    <input type="text" placeholder="Search employees" (input)="onSearch($any($event.target).value)" />
+    <input
+      type="text"
+      placeholder="Search employees"
+      (input)="onSearch($any($event.target).value)"
+    />
     <div class="pagination">
       <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Prev</button>
       <span>Page {{ page() }} / {{ Math.ceil(total() / pageSize()) || 1 }}</span>
-      <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= total()">Next</button>
+      <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= total()">
+        Next
+      </button>
     </div>
   </div>
 

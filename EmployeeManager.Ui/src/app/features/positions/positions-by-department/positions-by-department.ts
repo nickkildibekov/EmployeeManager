@@ -29,7 +29,9 @@ export class PositionsByDepartmentComponent implements OnInit {
   Math = Math;
 
   ngOnInit(): void {
-    const depId = Number(this.route.snapshot.paramMap.get('id')) || Number(this.route.snapshot.paramMap.get('depId'));
+    const depId =
+      Number(this.route.snapshot.paramMap.get('id')) ||
+      Number(this.route.snapshot.paramMap.get('depId'));
     if (!depId) {
       this.error.set('Invalid department id');
       return;

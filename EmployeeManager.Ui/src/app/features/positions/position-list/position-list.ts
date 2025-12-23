@@ -41,6 +41,6 @@ export class PositionListComponent {
   }
 
   getDisplayPositions() {
-    return this.positions() || (this.department()?.positions || []);
+    return this.positions() || this.department()?.positions || [];
   }
 }

@@ -1,11 +1,17 @@
 <div class="positions-container">
   <h3>Positions</h3>
   <div class="controls">
-    <input type="text" placeholder="Search positions" (input)="onSearch($any($event.target).value)" />
+    <input
+      type="text"
+      placeholder="Search positions"
+      (input)="onSearch($any($event.target).value)"
+    />
     <div class="pagination">
       <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Prev</button>
-      <span>Page {{ page() }} / {{ Math.ceil((total()||0) / pageSize()) || 1 }}</span>
-      <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= (total()||0)">Next</button>
+      <span>Page {{ page() }} / {{ Math.ceil((total() || 0) / pageSize()) || 1 }}</span>
+      <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= (total() || 0)">
+        Next
+      </button>
     </div>
   </div>
 

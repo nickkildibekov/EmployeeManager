@@ -13,11 +13,7 @@
   <!-- Add Form -->
   <div *ngIf="isAddFormVisible()" class="add-form">
     <div class="form-row">
-      <input
-        class="form-control"
-        placeholder="Equipment Name"
-        [(ngModel)]="newEquipment().name"
-      />
+      <input class="form-control" placeholder="Equipment Name" [(ngModel)]="newEquipment().name" />
       <input
         class="form-control"
         placeholder="Serial Number"
@@ -31,10 +27,7 @@
         placeholder="Purchase Date"
         [(ngModel)]="newEquipment().purchaseDate"
       />
-      <select
-        class="form-control"
-        [(ngModel)]="newEquipment().departmentId"
-      >
+      <select class="form-control" [(ngModel)]="newEquipment().departmentId">
         <option [value]="null">Select Department</option>
         <option *ngFor="let dep of departments()" [value]="dep.id">
           {{ dep.name }}
@@ -48,19 +41,12 @@
         [(ngModel)]="newEquipment().description"
       />
       <label class="form-check">
-        <input
-          type="checkbox"
-          [(ngModel)]="newEquipment().isWork"
-        />
+        <input type="checkbox" [(ngModel)]="newEquipment().isWork" />
         Is Work Equipment
       </label>
     </div>
     <div class="button-row">
-      <button
-        class="btn btn-success"
-        (click)="addEquipment()"
-        [disabled]="!isFormValid()"
-      >
+      <button class="btn btn-success" (click)="addEquipment()" [disabled]="!isFormValid()">
         Add
       </button>
       <button class="btn btn-secondary" (click)="cancelAdd()">Cancel</button>
@@ -69,10 +55,7 @@
 
   <!-- Filters -->
   <div class="filters">
-    <select
-      class="filter-select"
-      (change)="onDepartmentChange($event.target.value)"
-    >
+    <select class="filter-select" (change)="onDepartmentChange($event.target.value)">
       <option value="">All Departments</option>
       <option *ngFor="let dept of departments()" [value]="dept.id">
         {{ dept.name }}
@@ -91,12 +74,7 @@
 
   <!-- List -->
   <div *ngIf="!isLoading()" class="list-container">
-    <div
-      *ngIf="equipment().length === 0"
-      class="empty-message"
-    >
-      No equipment found.
-    </div>
+    <div *ngIf="equipment().length === 0" class="empty-message">No equipment found.</div>
 
     <div *ngFor="let item of equipment()" class="list-item" (click)="openEquipment(item.id)">
       <div class="item-content">
@@ -114,11 +92,7 @@
 
   <!-- Pagination -->
   <div *ngIf="equipment().length > 0" class="pagination">
-    <button
-      class="btn btn-sm"
-      (click)="changePage(page() - 1)"
-      [disabled]="page() === 1"
-    >
+    <button class="btn btn-sm" (click)="changePage(page() - 1)" [disabled]="page() === 1">
       ← Previous
     </button>
     <span class="page-info">

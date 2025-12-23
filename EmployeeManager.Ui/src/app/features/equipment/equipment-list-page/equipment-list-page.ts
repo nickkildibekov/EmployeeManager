@@ -146,11 +146,10 @@ export class EquipmentListPageComponent implements OnInit {
       error: (err: Error) => this.error.set(err.message),
     });
   }
-openEquipment(id: number) {
+  openEquipment(id: number) {
     this.router.navigate(['/equipment', id]);
   }
 
-  
   getDepartmentName(depId: number | null): string {
     if (!depId) return 'N/A';
     const dep = this.departments().find((d) => d.id === depId);

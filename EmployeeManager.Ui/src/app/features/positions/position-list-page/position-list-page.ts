@@ -149,8 +149,8 @@ export class PositionListPageComponent implements OnInit {
   }
 
   getEmployeeCount(posId: number): number {
-    const dept = this.departments().find(d => d.id === this.selectedDepartmentId());
+    const dept = this.departments().find((d) => d.id === this.selectedDepartmentId());
     if (!dept || !dept.employees) return 0;
-    return dept.employees.filter(e => e.positionId === posId).length;
+    return dept.employees.filter((e) => e.positionId === posId).length;
   }
 }

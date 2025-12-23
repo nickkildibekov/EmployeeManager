@@ -7,7 +7,7 @@ import { ThemeService, Theme } from '../../services/theme.service';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './theme-toggle.html',
-  styleUrl: './theme-toggle.css'
+  styleUrl: './theme-toggle.css',
 })
 export class ThemeToggleComponent {
   themeService = inject(ThemeService);
@@ -21,7 +21,7 @@ export class ThemeToggleComponent {
     return {
       light: '☀️',
       dark: '🌙',
-      auto: '🌓'
+      auto: '🌓',
     }[theme];
   }
 
@@ -35,7 +35,7 @@ export class ThemeToggleComponent {
     return {
       light: 'Light Mode',
       dark: 'Dark Mode',
-      auto: 'Auto Mode (System)'
+      auto: 'Auto Mode (System)',
     }[theme];
   }
 }

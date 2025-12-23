@@ -6,7 +6,37 @@
   } @else if (departments() && departments()!.length > 0) {
 
   <div class="container">
-    <header class="header"></header>
+    <header class="header">
+      <h1>Departments</h1>
+      <button class="btn btn-primary" (click)="toggleAddForm()">
+        {{ isAddFormVisible() ? 'Cancel' : '+ Add Department' }}
+      </button>
+    </header>
+
+    <!-- Add Form -->
+    @if (isAddFormVisible()) {
+    <div class="add-form">
+      <div class="form-row">
+        <input
+          class="form-control"
+          placeholder="Department Name"
+          [(ngModel)]="newDepartmentName"
+          [ngModelOptions]="{ updateOn: 'change' }"
+          (keyup.enter)="addDepartment()"
+        />
+      </div>
+      <div class="button-row">
+        <button
+          class="btn btn-success"
+          (click)="addDepartment()"
+          [disabled]="!isFormValid() || isSubmitting()"
+        >
+          {{ isSubmitting() ? 'Creating...' : 'Add' }}
+        </button>
+        <button class="btn btn-secondary" (click)="cancelAdd()">Cancel</button>
+      </div>
+    </div>
+    }
 
     <div class="departments-grid">
       @for(dep of departments(); track dep.id){

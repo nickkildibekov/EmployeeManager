@@ -42,7 +42,7 @@ export class Equipment implements OnInit {
     purchaseDate: '',
     isWork: true,
     description: '',
-    departmentId: 0,
+    departmentId: null,
     categoryId: 0,
     departmentName: '',
     categoryName: '',
@@ -58,7 +58,7 @@ export class Equipment implements OnInit {
     return (
       eq.name.trim().length > 0 &&
       eq.serialNumber.trim().length > 0 &&
-      eq.departmentId > 0 &&
+      (eq.departmentId ?? 0) > 0 &&
       eq.categoryId > 0 &&
       eq.purchaseDate.length > 0
     );
@@ -97,7 +97,7 @@ export class Equipment implements OnInit {
             purchaseDate: (eq.purchaseDate || '').slice(0, 10),
             isWork: eq.isWork,
             description: eq.description,
-            departmentId: eq.departmentId,
+            departmentId: eq.departmentId && eq.departmentId > 0 ? eq.departmentId : null,
             categoryId: eq.categoryId,
             departmentName: eq.departmentName,
             categoryName: eq.categoryName,
@@ -138,7 +138,7 @@ export class Equipment implements OnInit {
         purchaseDate: (current.purchaseDate || '').slice(0, 10),
         isWork: current.isWork,
         description: current.description,
-        departmentId: current.departmentId,
+        departmentId: current.departmentId && current.departmentId > 0 ? current.departmentId : null,
         categoryId: current.categoryId,
         departmentName: current.departmentName,
         categoryName: current.categoryName,
@@ -199,7 +199,7 @@ export class Equipment implements OnInit {
       title: 'Delete Equipment',
       message: 'Are you sure you want to delete this equipment? This action cannot be undone.',
       confirmText: 'Delete',
-      variant: 'danger'
+      variant: 'danger',
     });
     if (!confirmed) return;
 

@@ -140,7 +140,9 @@ export class PositionListPageComponent implements OnInit {
   }
 
   async deletePosition(id: number): Promise<void> {
-    const confirmed = await this.dialogService.confirm('Are you sure you want to delete this position?');
+    const confirmed = await this.dialogService.confirm(
+      'Are you sure you want to delete this position?'
+    );
     if (!confirmed) return;
 
     this.positionService.deletePosition(id).subscribe({
@@ -169,16 +171,16 @@ export class PositionListPageComponent implements OnInit {
   toggleDepartment(departmentId: number): void {
     const currentIds = [...this.newPosition().departmentIds];
     const index = currentIds.indexOf(departmentId);
-    
+
     if (index > -1) {
       currentIds.splice(index, 1);
     } else {
       currentIds.push(departmentId);
     }
-    
-    this.newPosition.update(pos => ({
+
+    this.newPosition.update((pos) => ({
       ...pos,
-      departmentIds: currentIds
+      departmentIds: currentIds,
     }));
   }
 

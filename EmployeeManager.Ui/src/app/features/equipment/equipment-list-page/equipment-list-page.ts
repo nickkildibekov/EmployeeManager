@@ -29,7 +29,7 @@ export class EquipmentListPageComponent implements OnInit {
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
   private dialogService = inject(DialogService);
-  
+
   private searchSubject = new Subject<string>();
 
   equipment = signal<Equipment[]>([]);
@@ -61,19 +61,16 @@ export class EquipmentListPageComponent implements OnInit {
   ngOnInit(): void {
     this.loadDepartments();
     this.loadEquipment();
-    
+
     // Setup debounced search
     const searchSub = this.searchSubject
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      )
-      .subscribe(term => {
+      .pipe(debounceTime(300), distinctUntilChanged())
+      .subscribe((term) => {
         this.searchTerm.set(term);
         this.page.set(1);
         this.loadEquipment();
       });
-    
+
     this.destroyRef.onDestroy(() => searchSub.unsubscribe());
   }
 
@@ -187,7 +184,9 @@ export class EquipmentListPageComponent implements OnInit {
   }
 
   async deleteEquipment(id: number): Promise<void> {
-    const confirmed = await this.dialogService.confirm('Are you sure you want to delete this equipment?');
+    const confirmed = await this.dialogService.confirm(
+      'Are you sure you want to delete this equipment?'
+    );
     if (!confirmed) return;
 
     this.equipmentService.deleteEquipment(id).subscribe({

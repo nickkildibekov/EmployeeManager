@@ -17,9 +17,7 @@ export class DialogService {
   config = this.dialogConfig.asReadonly();
 
   async confirm(config: DialogConfig | string): Promise<boolean> {
-    const dialogConfig: DialogConfig = typeof config === 'string' 
-      ? { message: config }
-      : config;
+    const dialogConfig: DialogConfig = typeof config === 'string' ? { message: config } : config;
 
     return new Promise((resolve) => {
       this.resolveCallback = resolve;
@@ -28,7 +26,7 @@ export class DialogService {
         message: dialogConfig.message,
         confirmText: dialogConfig.confirmText || 'OK',
         cancelText: dialogConfig.cancelText || 'Cancel',
-        variant: dialogConfig.variant || 'warning'
+        variant: dialogConfig.variant || 'warning',
       });
       this.isOpen.set(true);
     });

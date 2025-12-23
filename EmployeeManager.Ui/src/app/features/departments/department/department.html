@@ -77,9 +77,7 @@
           @if (equipmentList().length > 0) { @for (eq of equipmentList(); track eq.id) {
           <div class="info-item" (click)="navigateToEquipment(eq.id)" style="cursor: pointer">
             <span class="info-label">{{ eq.name }}</span>
-            <span class="info-value">
-              {{ eq.count }} unit(s) - {{ eq.statusText }}
-            </span>
+            <span class="info-value"> {{ eq.count }} unit(s) - {{ eq.statusText }} </span>
           </div>
           } } @else {
           <p class="no-data">No equipment available</p>

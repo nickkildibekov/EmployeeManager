@@ -165,7 +165,7 @@ export class EmployeeComponent implements OnInit {
       title: 'Delete Employee',
       message: 'Are you sure you want to delete this employee? This action cannot be undone.',
       confirmText: 'Delete',
-      variant: 'danger'
+      variant: 'danger',
     });
     if (!confirmed) return;
 

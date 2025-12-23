@@ -37,4 +37,23 @@ export class DepartmentService {
       })
     );
   }
+
+  createDepartment(name: string): Observable<Department> {
+    const createPayload = { name };
+    return this.httpClient.post<Department>(this.apiUrl, createPayload).pipe(
+      catchError((error) => {
+        console.error('Error in createDepartment:', error);
+        return throwError(() => new Error('Error creating department'));
+      })
+    );
+  }
+
+  deleteDepartment(id: number): Observable<void> {
+    return this.httpClient.delete<void>(this.apiUrl + id).pipe(
+      catchError((error) => {
+        console.error('Error in deleteDepartment:', error);
+        return throwError(() => new Error('Error deleting department: ' + id));
+      })
+    );
+  }
 }

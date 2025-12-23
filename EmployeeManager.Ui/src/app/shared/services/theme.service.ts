@@ -5,13 +5,13 @@ export type Theme = 'light' | 'dark' | 'auto';
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly THEME_KEY = 'app-theme';
-  
+
   theme = signal<Theme>(this.getStoredTheme());
   activeTheme = signal<'light' | 'dark'>('light');
 
   constructor() {
     this.applyTheme(this.theme());
-    
+
     effect(() => {
       const theme = this.theme();
       this.applyTheme(theme);
@@ -19,13 +19,12 @@ export class ThemeService {
     });
 
     if (window.matchMedia) {
-      window.matchMedia('(prefers-color-scheme: dark)')
-        .addEventListener('change', (e) => {
-          if (this.theme() === 'auto') {
-            this.activeTheme.set(e.matches ? 'dark' : 'light');
-            this.updateDocumentTheme();
-          }
-        });
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+        if (this.theme() === 'auto') {
+          this.activeTheme.set(e.matches ? 'dark' : 'light');
+          this.updateDocumentTheme();
+        }
+      });
     }
   }
 
@@ -38,9 +37,7 @@ export class ThemeService {
     let resolvedTheme: 'light' | 'dark';
 
     if (theme === 'auto') {
-      resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches 
-        ? 'dark' 
-        : 'light';
+      resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     } else {
       resolvedTheme = theme;
     }

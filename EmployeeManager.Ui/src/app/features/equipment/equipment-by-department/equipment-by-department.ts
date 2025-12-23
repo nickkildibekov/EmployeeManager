@@ -19,7 +19,7 @@ export class EquipmentByDepartmentComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private equipmentService = inject(EquipmentService);
-  
+
   private searchSubject = new Subject<string>();
 
   equipment = signal<Equipment[] | undefined>(undefined);
@@ -43,18 +43,13 @@ export class EquipmentByDepartmentComponent implements OnInit {
     }
 
     this.loadEquipment(depId);
-    
+
     // Setup debounced search
-    this.searchSubject
-      .pipe(
-        debounceTime(300),
-        distinctUntilChanged()
-      )
-      .subscribe(term => {
-        this.search.set(term);
-        this.page.set(1);
-        this.loadEquipment(depId);
-      });
+    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((term) => {
+      this.search.set(term);
+      this.page.set(1);
+      this.loadEquipment(depId);
+    });
   }
 
   private loadEquipment(depId: number) {

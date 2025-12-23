@@ -11,12 +11,12 @@ import { ThemeService } from './shared/services/theme.service';
 @Component({
   selector: 'app-root',
   imports: [
-    RouterOutlet, 
-    ToastComponent, 
-    BreadcrumbComponent, 
-    QuickActionsComponent, 
+    RouterOutlet,
+    ToastComponent,
+    BreadcrumbComponent,
+    QuickActionsComponent,
     ConfirmationDialogComponent,
-    ThemeToggleComponent
+    ThemeToggleComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.css',

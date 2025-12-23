@@ -56,11 +56,10 @@ export class DepartmentComponent implements OnInit {
     if (!dept || !dept.employees) return [];
 
     return dept.employees.map((emp) => {
-      const position = dept.positions?.find((p) => p.id === emp.positionId);
       return {
         id: emp.id,
         fullName: `${emp.firstName} ${emp.lastName}`,
-        position: position?.title || 'N/A',
+        position: emp.positionName || 'N/A',
       };
     });
   });
@@ -70,9 +69,17 @@ export class DepartmentComponent implements OnInit {
     if (!dept || !dept.equipments) return [];
 
     // Group equipment by name and count operational/non-operational status
-    const groupedMap = new Map<string, { count: number; firstId: number; operational: number; nonOperational: number }>();
+    const groupedMap = new Map<
+      string,
+      { count: number; firstId: number; operational: number; nonOperational: number }
+    >();
     dept.equipments.forEach((eq) => {
-      const existing = groupedMap.get(eq.name) || { count: 0, firstId: eq.id, operational: 0, nonOperational: 0 };
+      const existing = groupedMap.get(eq.name) || {
+        count: 0,
+        firstId: eq.id,
+        operational: 0,
+        nonOperational: 0,
+      };
       groupedMap.set(eq.name, {
         count: existing.count + 1,
         firstId: existing.firstId,

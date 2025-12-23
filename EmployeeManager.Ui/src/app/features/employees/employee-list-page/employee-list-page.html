@@ -29,7 +29,7 @@
         (change)="onNewDepartmentChange($event.target.value)"
         [ngModel]="newEmployee().departmentId"
       >
-        <option [value]="null">Select Department</option>
+        <option [ngValue]="null" disabled>Select Department</option>
         <option *ngFor="let dep of departments()" [value]="dep.id">
           {{ dep.name }}
         </option>
@@ -41,7 +41,7 @@
         [(ngModel)]="newEmployee().positionId"
         [disabled]="!newEmployee().departmentId"
       >
-        <option [value]="null">Select Position</option>
+        <option [ngValue]="null" disabled>Select Position</option>
         <option *ngFor="let pos of formPositions()" [value]="pos.id">
           {{ pos.title }}
         </option>

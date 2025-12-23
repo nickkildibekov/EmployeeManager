@@ -3,15 +3,15 @@
 <app-theme-toggle></app-theme-toggle>
 
 @if (dialogService.isOpen()) {
-  <app-confirmation-dialog
-    [title]="dialogService.config()?.title || ''"
-    [message]="dialogService.config()?.message || ''"
-    [confirmText]="dialogService.config()?.confirmText || 'OK'"
-    [cancelText]="dialogService.config()?.cancelText || 'Cancel'"
-    [variant]="dialogService.config()?.variant || 'warning'"
-    (confirm)="dialogService.handleConfirm()"
-    (cancel)="dialogService.handleCancel()"
-  ></app-confirmation-dialog>
+<app-confirmation-dialog
+  [title]="dialogService.config()?.title || ''"
+  [message]="dialogService.config()?.message || ''"
+  [confirmText]="dialogService.config()?.confirmText || 'OK'"
+  [cancelText]="dialogService.config()?.cancelText || 'Cancel'"
+  [variant]="dialogService.config()?.variant || 'warning'"
+  (confirm)="dialogService.handleConfirm()"
+  (cancel)="dialogService.handleCancel()"
+></app-confirmation-dialog>
 }
 
 <main class="app-container">

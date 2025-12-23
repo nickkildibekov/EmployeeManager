@@ -7,7 +7,7 @@ import { Router } from '@angular/router';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './quick-actions.html',
-  styleUrl: './quick-actions.css'
+  styleUrl: './quick-actions.css',
 })
 export class QuickActionsComponent {
   private router = inject(Router);
@@ -26,6 +26,6 @@ export class QuickActionsComponent {
   }
 
   toggleMenu() {
-    this.isOpen.update(v => !v);
+    this.isOpen.update((v) => !v);
   }
 }

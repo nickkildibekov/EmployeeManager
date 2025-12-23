@@ -1,5 +1,6 @@
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { DepartmentService } from '../department.service';
 import { Department } from '../../../shared/models/department.model';
 import { NavigationService } from '../../../shared/services/navigation.service';
@@ -10,7 +11,7 @@ import { Router } from '@angular/router';
 @Component({
   selector: 'app-department-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './department-list.html',
   styleUrls: ['./department-list.css'],
 })
@@ -23,6 +24,9 @@ export class DepartmentListComponent implements OnInit {
   departments = signal<Department[] | undefined>(undefined);
   isFetching = signal(false);
   error = signal('');
+  isAddFormVisible = signal(false);
+  newDepartmentName = signal('');
+  isSubmitting = signal(false);
 
   ngOnInit(): void {
     this.isFetching.set(true);
@@ -46,5 +50,50 @@ export class DepartmentListComponent implements OnInit {
 
   onSelectedDepartment(dep: Department) {
     this.router.navigate(['/departments', dep.id]);
+  }
+
+  toggleAddForm() {
+    this.isAddFormVisible.update((v) => !v);
+    if (!this.isAddFormVisible()) {
+      this.resetForm();
+    }
+  }
+
+  resetForm() {
+    this.newDepartmentName.set('');
+  }
+
+  isFormValid(): boolean {
+    return this.newDepartmentName().trim().length > 0;
+  }
+
+  addDepartment() {
+    if (!this.isFormValid() || this.isSubmitting()) return;
+
+    this.isSubmitting.set(true);
+    const subscription = this.departmentService
+      .createDepartment(this.newDepartmentName())
+      .subscribe({
+        next: (newDepartment) => {
+          this.departments.update((deps) => [...(deps || []), newDepartment]);
+          this.toastService.success('Department created successfully!');
+          this.resetForm();
+          this.isAddFormVisible.set(false);
+          this.isSubmitting.set(false);
+        },
+        error: (error: Error) => {
+          this.toastService.error(error.message || 'Failed to create department');
+          this.isSubmitting.set(false);
+        },
+      });
+
+    this.destroyRef.onDestroy(() => {
+      subscription.unsubscribe();
+    });
+  }
+
+  cancelAdd() {
+    this.resetForm();
+    this.isAddFormVisible.set(false);
   }
 }

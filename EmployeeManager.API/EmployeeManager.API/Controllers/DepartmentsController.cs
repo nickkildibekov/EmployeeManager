@@ -52,6 +52,7 @@ namespace EmployeeManager.Api.Controllers
                         DepartmentId = e.DepartmentId,
                         DepartmentName = d.Name,
                         PositionId = e.PositionId,
+                        PositionName = e.Position != null ? e.Position.Title : null
                     }).ToList(),
 
                     Equipments = d.Equipments!
@@ -98,7 +99,8 @@ namespace EmployeeManager.Api.Controllers
                         PhoneNumber = e.PhoneNumber,
                         DepartmentId = e.DepartmentId,
                         DepartmentName = d.Name,
-                        PositionId = e.PositionId
+                        PositionId = e.PositionId,
+                        PositionName = e.Position != null ? e.Position.Title : null
                     }).ToList(),
 
                     Equipments = d.Equipments!

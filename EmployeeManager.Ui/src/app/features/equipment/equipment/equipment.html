@@ -83,7 +83,8 @@
             [disabled]="!isEditMode()"
             class="form-input"
           >
-            <option *ngFor="let dep of departments()" [value]="dep.id">
+            <option [ngValue]="null" disabled>Select Department</option>
+            <option *ngFor="let dep of departments()" [ngValue]="dep.id">
               {{ dep.name }}
             </option>
           </select>

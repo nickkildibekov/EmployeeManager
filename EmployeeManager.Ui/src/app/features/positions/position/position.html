@@ -55,29 +55,23 @@
       <div class="form-group">
         <label>Departments</label>
         @if (isEditMode()) {
-          <div class="departments-checkboxes">
-            @for (dep of departments(); track dep.id) {
-              <label class="checkbox-label">
-                <input
-                  type="checkbox"
-                  [checked]="isDepartmentSelected(dep.id)"
-                  (change)="toggleDepartment(dep.id)"
-                  class="checkbox-input"
-                />
-                <span>{{ dep.name }}</span>
-              </label>
-            }
-            @if (departments().length === 0) {
-              <p class="text-muted">No departments available</p>
-            }
-          </div>
+        <div class="departments-checkboxes">
+          @for (dep of departments(); track dep.id) {
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              [checked]="isDepartmentSelected(dep.id)"
+              (change)="toggleDepartment(dep.id)"
+              class="checkbox-input"
+            />
+            <span>{{ dep.name }}</span>
+          </label>
+          } @if (departments().length === 0) {
+          <p class="text-muted">No departments available</p>
+          }
+        </div>
         } @else {
-          <input
-            type="text"
-            [value]="currentDepartments()"
-            readonly
-            class="form-input"
-          />
+        <input type="text" [value]="currentDepartments()" readonly class="form-input" />
         }
       </div>
     </div>

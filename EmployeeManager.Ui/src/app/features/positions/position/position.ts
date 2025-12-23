@@ -36,14 +36,14 @@ export class PositionComponent implements OnInit {
     title: '',
     departmentIds: [],
   });
-  
+
   // Computed property to show department names from position data
   currentDepartments = computed(() => {
     const pos = this.position();
     if (!pos || !pos.departments || pos.departments.length === 0) {
       return 'No departments assigned';
     }
-    return pos.departments.map(d => d.name).join(', ');
+    return pos.departments.map((d) => d.name).join(', ');
   });
 
   isFetching = signal(false);
@@ -76,7 +76,7 @@ export class PositionComponent implements OnInit {
       .subscribe({
         next: (pos) => {
           this.position.set(pos);
-          const deptIds = pos.departments ? pos.departments.map(d => d.id) : [];
+          const deptIds = pos.departments ? pos.departments.map((d) => d.id) : [];
           this.editedPosition.set({
             id: pos.id,
             title: pos.title,
@@ -111,7 +111,7 @@ export class PositionComponent implements OnInit {
     this.isEditMode.update((val) => !val);
     if (!this.isEditMode() && this.position()) {
       const currentPos = this.position()!;
-      const deptIds = currentPos.departments ? currentPos.departments.map(d => d.id) : [];
+      const deptIds = currentPos.departments ? currentPos.departments.map((d) => d.id) : [];
       this.editedPosition.set({
         id: currentPos.id,
         title: currentPos.title,
@@ -127,16 +127,16 @@ export class PositionComponent implements OnInit {
   toggleDepartment(departmentId: number): void {
     const currentIds = [...this.editedPosition().departmentIds];
     const index = currentIds.indexOf(departmentId);
-    
+
     if (index > -1) {
       currentIds.splice(index, 1);
     } else {
       currentIds.push(departmentId);
     }
-    
-    this.editedPosition.update(pos => ({
+
+    this.editedPosition.update((pos) => ({
       ...pos,
-      departmentIds: currentIds
+      departmentIds: currentIds,
     }));
   }
 
@@ -169,7 +169,7 @@ export class PositionComponent implements OnInit {
       title: 'Delete Position',
       message: 'Are you sure you want to delete this position? This action cannot be undone.',
       confirmText: 'Delete',
-      variant: 'danger'
+      variant: 'danger',
     });
     if (!confirmed) return;
 

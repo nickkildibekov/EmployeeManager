@@ -92,8 +92,8 @@ export class NavigationService {
 
   // Navigate to list
   toList(entityType: string, filters?: any) {
-    this.router.navigate([`/${entityType}s`], { 
-      queryParams: filters 
+    this.router.navigate([`/${entityType}s`], {
+      queryParams: filters,
     });
   }
 

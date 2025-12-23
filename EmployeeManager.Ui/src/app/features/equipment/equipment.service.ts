@@ -14,9 +14,9 @@ export class EquipmentService {
   private errorHandler = inject(ErrorHandlerService);
 
   getAllEquipment(): Observable<Equipment[]> {
-    return this.httpClient.get<Equipment[]>(this.apiUrl).pipe(
-      catchError(this.errorHandler.handleError.bind(this.errorHandler))
-    );
+    return this.httpClient
+      .get<Equipment[]>(this.apiUrl)
+      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
   }
 
   getEquipmentByDepartment(
@@ -39,9 +39,9 @@ export class EquipmentService {
       params = params.set('isWork', String(isWork));
     }
 
-    return this.httpClient.get<{ items: Equipment[]; total: number }>(this.apiUrl, { params }).pipe(
-      catchError(this.errorHandler.handleError.bind(this.errorHandler))
-    );
+    return this.httpClient
+      .get<{ items: Equipment[]; total: number }>(this.apiUrl, { params })
+      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
   }
 
   addEquipment(equipmentData: EquipmentCreationPayload): Observable<Equipment> {
@@ -54,21 +54,21 @@ export class EquipmentService {
       categoryId: equipmentData.categoryId,
       departmentId: equipmentData.departmentId,
     };
-    return this.httpClient.post<Equipment>(this.apiUrl, payload).pipe(
-      catchError(this.errorHandler.handleError.bind(this.errorHandler))
-    );
+    return this.httpClient
+      .post<Equipment>(this.apiUrl, payload)
+      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
   }
 
   deleteEquipment(equipmentId: number): Observable<any> {
-    return this.httpClient.delete(`${this.apiUrl}${equipmentId}`).pipe(
-      catchError(this.errorHandler.handleError.bind(this.errorHandler))
-    );
+    return this.httpClient
+      .delete(`${this.apiUrl}${equipmentId}`)
+      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
   }
 
   getEquipmentById(equipmentId: number): Observable<Equipment> {
-    return this.httpClient.get<Equipment>(`${this.apiUrl}${equipmentId}`).pipe(
-      catchError(this.errorHandler.handleError.bind(this.errorHandler))
-    );
+    return this.httpClient
+      .get<Equipment>(`${this.apiUrl}${equipmentId}`)
+      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
   }
 
   updateEquipment(equipmentData: EquipmentUpdatePayload): Observable<Equipment> {

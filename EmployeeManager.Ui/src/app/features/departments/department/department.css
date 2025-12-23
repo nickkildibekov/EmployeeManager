@@ -1,5 +1,5 @@
 .container {
-  max-width: 960px;
+  max-width: 1360px;
   margin: 20px auto;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   padding: 0 16px 40px;
@@ -193,7 +193,7 @@
   .sections-container {
     flex-direction: column;
   }
-  
+
   .info-section {
     min-width: 100%;
   }

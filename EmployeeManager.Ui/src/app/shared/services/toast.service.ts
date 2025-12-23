@@ -15,8 +15,8 @@ export class ToastService {
   show(message: string, type: Toast['type'] = 'info', duration = 3000) {
     const id = this.nextId++;
     const toast: Toast = { id, message, type, duration };
-    
-    this.toasts.update(toasts => [...toasts, toast]);
+
+    this.toasts.update((toasts) => [...toasts, toast]);
 
     if (duration > 0) {
       setTimeout(() => this.remove(id), duration);
@@ -40,6 +40,6 @@ export class ToastService {
   }
 
   remove(id: number) {
-    this.toasts.update(toasts => toasts.filter(t => t.id !== id));
+    this.toasts.update((toasts) => toasts.filter((t) => t.id !== id));
   }
 }

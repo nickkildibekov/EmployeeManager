@@ -37,7 +37,7 @@ export interface EquipmentCreationPayload {
   isWork: boolean;
   description: string;
   categoryId: number;
-  departmentId: number;
+  departmentId: number | null;
 }
 
 export interface EquipmentUpdatePayload {
@@ -48,7 +48,7 @@ export interface EquipmentUpdatePayload {
   isWork: boolean;
   description: string;
   categoryId: number;
-  departmentId: number;
+  departmentId: number | null;
 }
 
 export interface DepartmentUpdateDTO {

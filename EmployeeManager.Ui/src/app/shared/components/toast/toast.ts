@@ -7,7 +7,7 @@ import { ToastService } from '../../services/toast.service';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './toast.html',
-  styleUrl: './toast.css'
+  styleUrl: './toast.css',
 })
 export class ToastComponent {
   toastService = inject(ToastService);
@@ -17,7 +17,7 @@ export class ToastComponent {
       success: '✓',
       error: '✕',
       info: 'ℹ',
-      warning: '⚠'
+      warning: '⚠',
     };
     return icons[type as keyof typeof icons] || 'ℹ';
   }

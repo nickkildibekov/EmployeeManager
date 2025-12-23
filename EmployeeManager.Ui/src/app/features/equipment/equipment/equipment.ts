@@ -8,6 +8,7 @@ import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { DialogService } from '../../../shared/services/dialog.service';
 import { Equipment as EquipmentModel } from '../../../shared/models/equipment.model';
+import { EquipmentCategory } from '../../../shared/models/equipmentCategory.model';
 import { EquipmentUpdatePayload } from '../../../shared/models/payloads';
 import { EquipmentService } from '../equipment.service';
 import { DepartmentService } from '../../departments/department.service';
@@ -32,6 +33,11 @@ export class Equipment implements OnInit {
 
   equipment = signal<EquipmentModel | undefined>(undefined);
   departments = signal<Department[]>([]);
+  categories = signal<EquipmentCategory[]>([]);
+
+  isAddingNewCategory = signal(false);
+  newCategoryName = signal('');
+  newCategoryDescription = signal('');
 
   editedEquipment = signal<
     EquipmentUpdatePayload & { departmentName?: string; categoryName?: string }
@@ -43,7 +49,7 @@ export class Equipment implements OnInit {
     isWork: true,
     description: '',
     departmentId: null,
-    categoryId: 0,
+    categoryId: null,
     departmentName: '',
     categoryName: '',
   });
@@ -59,7 +65,7 @@ export class Equipment implements OnInit {
       eq.name.trim().length > 0 &&
       eq.serialNumber.trim().length > 0 &&
       (eq.departmentId ?? 0) > 0 &&
-      eq.categoryId > 0 &&
+      (eq.categoryId ?? 0) > 0 &&
       eq.purchaseDate.length > 0
     );
   });
@@ -68,6 +74,7 @@ export class Equipment implements OnInit {
 
   ngOnInit(): void {
     this.loadDepartments();
+    this.loadCategories();
 
     const subscription = this.route.paramMap
       .pipe(
@@ -127,6 +134,52 @@ export class Equipment implements OnInit {
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
+  private loadCategories() {
+    const sub = this.equipmentService.getAllCategories().subscribe({
+      next: (cats) => this.categories.set(cats),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  toggleAddNewCategory() {
+    this.isAddingNewCategory.update((val) => !val);
+    if (this.isAddingNewCategory()) {
+      this.editedEquipment().categoryId = null;
+    }
+    this.newCategoryName.set('');
+    this.newCategoryDescription.set('');
+  }
+
+  async createAndSelectCategory() {
+    const name = this.newCategoryName().trim();
+    if (!name) {
+      this.toastService.error('Category name is required');
+      return;
+    }
+
+    try {
+      const newCategory = await this.equipmentService
+        .createCategory(name, this.newCategoryDescription())
+        .toPromise();
+      
+      if (newCategory) {
+        this.categories.update(cats => [...cats, newCategory]);
+        this.editedEquipment().categoryId = newCategory.id;
+        this.isAddingNewCategory.set(false);
+        this.newCategoryName.set('');
+        this.newCategoryDescription.set('');
+        this.toastService.success('Category created successfully');
+      }
+    } catch (err: any) {
+      this.error.set(err.message);
+      this.toastService.error(err.message);
+    }
+  }
+
   toggleEditMode(): void {
     this.isEditMode.update((val) => !val);
     if (!this.isEditMode() && this.equipment()) {
@@ -139,7 +192,7 @@ export class Equipment implements OnInit {
         isWork: current.isWork,
         description: current.description,
         departmentId: current.departmentId && current.departmentId > 0 ? current.departmentId : null,
-        categoryId: current.categoryId,
+        categoryId: current.categoryId && current.categoryId > 0 ? current.categoryId : null,
         departmentName: current.departmentName,
         categoryName: current.categoryName,
       });

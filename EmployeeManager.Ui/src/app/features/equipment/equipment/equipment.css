@@ -79,6 +79,31 @@
   gap: 16px;
 }
 
+.select-with-button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.select-with-button select {
+  flex: 1;
+}
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.inline-form .form-input {
+  flex: 1;
+}
+
+.inline-form .btn {
+  white-space: nowrap;
+  padding: 8px 12px;
+}
+
 .form-group {
   flex: 1;
   display: flex;

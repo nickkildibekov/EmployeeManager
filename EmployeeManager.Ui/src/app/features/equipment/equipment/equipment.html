@@ -93,6 +93,46 @@
 
       <div class="form-row">
         <div class="form-group">
+          <label>Category</label>
+          @if (!isEditMode()) {
+          <input
+            type="text"
+            [value]="editedEquipment().categoryName"
+            readonly
+            class="form-input"
+          />
+          } @else {
+            @if (!isAddingNewCategory()) {
+            <div class="select-with-button">
+              <select
+                [(ngModel)]="editedEquipment().categoryId"
+                class="form-input"
+              >
+                <option [ngValue]="null" disabled>Select Category</option>
+                <option *ngFor="let cat of categories()" [ngValue]="cat.id">
+                  {{ cat.name }}
+                </option>
+              </select>
+              <button class="btn btn-secondary btn-sm" type="button" (click)="toggleAddNewCategory()">
+                + New
+              </button>
+            </div>
+            } @else {
+            <div class="inline-form">
+              <input class="form-input" placeholder="Category Name" [(ngModel)]="newCategoryName" />
+              <input class="form-input" placeholder="Description" [(ngModel)]="newCategoryDescription" />
+              <button class="btn btn-success btn-sm" type="button" (click)="createAndSelectCategory()">
+                Create
+              </button>
+              <button class="btn btn-secondary btn-sm" type="button" (click)="toggleAddNewCategory()">
+                Cancel
+              </button>
+            </div>
+            }
+          }
+        </div>
+
+        <div class="form-group">
           <label>Description</label>
           <input
             type="text"
@@ -101,7 +141,9 @@
             class="form-input"
           />
         </div>
+      </div>
 
+      <div class="form-row">
         <div class="form-group">
           <label class="form-check-label">
             <input

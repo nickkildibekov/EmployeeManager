@@ -1,28 +1,22 @@
 import { Component, input, output, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 import { Department } from '../../../shared/models/department.model';
 import { Position } from '../../../shared/models/position.model';
-
-interface NewEmployeeData {
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  positionId: number | null;
-  departmentId: number | null;
-}
+import { NewEmployeeData } from '../../../shared/models/payloads';
 
 @Component({
   selector: 'app-employee-list',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './employee-list.html',
   styleUrl: './employee-list.css',
 })
 export class EmployeeListComponent {
-  department = input.required<Department>();
-  positions = input.required<Position[]>();
-  isEditMode = input.required<boolean>();
+  department = input<Department | undefined>();
+  positions = input<Position[] | undefined>();
+  isEditMode = input<boolean>(false);
   isAddFormVisible = signal<boolean>(false);
 
   newEmployee = signal<NewEmployeeData>({
@@ -69,8 +63,13 @@ export class EmployeeListComponent {
   getPositionTitle(positionId: number | null): string {
     if (!positionId) return 'No position assigned';
 
-    const position = this.positions().find((p) => p.id === positionId);
+    const list = this.positions() || [];
+    const position = list.find((p) => p.id === positionId);
     return position ? position.title : 'Position not found';
+  }
+
+  getEmployees() {
+    return this.department()?.employees || [];
   }
 
   addEmployee() {

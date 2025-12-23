@@ -93,3 +93,15 @@ _ReSharper*/
 
 # Git files
 .git
+
+# ====================
+# Documentation & Generated Files
+# ====================
+
+# Generated documentation and optimization reports
+CODE_ARCHITECTURE.md
+IMPLEMENTATION_SUMMARY.md
+OPTIMIZATION_REPORT.md
+OPTIMIZATION_SUMMARY.md
+QUICK_REFERENCE.md
+README_OPTIMIZATIONS.md

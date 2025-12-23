@@ -11,6 +11,7 @@ import { EquipmentService } from '../equipment.service';
 import { DepartmentService } from '../../departments/department.service';
 import { Equipment } from '../../../shared/models/equipment.model';
 import { Department } from '../../../shared/models/department.model';
+import { EquipmentCategory } from '../../../shared/models/equipmentCategory.model';
 import { EquipmentCreationPayload } from '../../../shared/models/payloads';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
@@ -34,6 +35,7 @@ export class EquipmentListPageComponent implements OnInit {
 
   equipment = signal<Equipment[]>([]);
   departments = signal<Department[]>([]);
+  categories = signal<EquipmentCategory[]>([]);
 
   selectedDepartmentId = signal<number | null>(null);
   statusFilter = signal<'all' | 'operational' | 'out_of_service'>('all');
@@ -52,7 +54,7 @@ export class EquipmentListPageComponent implements OnInit {
     purchaseDate: new Date().toISOString().split('T')[0],
     isWork: true,
     description: '',
-    categoryId: 0,
+    categoryId: null,
     departmentId: null,
   });
 
@@ -60,6 +62,7 @@ export class EquipmentListPageComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadDepartments();
+    this.loadCategories();
     this.loadEquipment();
 
     // Setup debounced search
@@ -77,6 +80,17 @@ export class EquipmentListPageComponent implements OnInit {
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
       next: (depts) => this.departments.set(depts),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  private loadCategories() {
+    const sub = this.equipmentService.getAllCategories().subscribe({
+      next: (cats) => this.categories.set(cats),
       error: (err: Error) => {
         this.error.set(err.message);
         this.toastService.error(err.message);
@@ -149,7 +163,7 @@ export class EquipmentListPageComponent implements OnInit {
       purchaseDate: new Date().toISOString().split('T')[0],
       isWork: true,
       description: '',
-      categoryId: 0,
+      categoryId: null,
       departmentId: null,
     });
   }
@@ -160,6 +174,7 @@ export class EquipmentListPageComponent implements OnInit {
       eq.name.trim() &&
       eq.serialNumber.trim() &&
       eq.departmentId !== null &&
+      eq.categoryId !== null &&
       eq.purchaseDate
     );
   }

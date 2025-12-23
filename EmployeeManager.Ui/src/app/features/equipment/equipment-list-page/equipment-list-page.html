@@ -35,11 +35,12 @@
       </select>
     </div>
     <div class="form-row">
-      <input
-        class="form-control"
-        placeholder="Description"
-        [(ngModel)]="newEquipment().description"
-      />
+      <select class="form-control" [(ngModel)]="newEquipment().categoryId">
+        <option [ngValue]="null" disabled>Select Category</option>
+        <option *ngFor="let cat of categories()" [ngValue]="cat.id">
+          {{ cat.name }}
+        </option>
+      </select>
       <label class="form-check">
         <input type="checkbox" [(ngModel)]="newEquipment().isWork" />
         Is Work Equipment

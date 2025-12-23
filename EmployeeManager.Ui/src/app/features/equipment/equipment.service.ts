@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Equipment } from '../../shared/models/equipment.model';
+import { EquipmentCategory } from '../../shared/models/equipmentCategory.model';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import { EquipmentCreationPayload, EquipmentUpdatePayload } from '../../shared/models/payloads';
 import { ErrorHandlerService } from '../../shared/services/error-handler.service';
@@ -10,6 +11,7 @@ import { ErrorHandlerService } from '../../shared/services/error-handler.service
 })
 export class EquipmentService {
   private readonly apiUrl = '/api/Equipment/';
+  private readonly categoryUrl = '/api/EquipmentCategories/';
   private httpClient = inject(HttpClient);
   private errorHandler = inject(ErrorHandlerService);
 
@@ -76,5 +78,11 @@ export class EquipmentService {
       map((res) => res || (equipmentData as unknown as Equipment)),
       catchError(this.errorHandler.handleError.bind(this.errorHandler))
     );
+  }
+
+  getAllCategories(): Observable<EquipmentCategory[]> {
+    return this.httpClient
+      .get<EquipmentCategory[]>(this.categoryUrl)
+      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
   }
 }

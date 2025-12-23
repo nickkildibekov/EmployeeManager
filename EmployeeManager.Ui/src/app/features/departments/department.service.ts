@@ -20,7 +20,6 @@ export class DepartmentService {
   }
 
   getDepartmentById(id: number): Observable<Department> {
-    console.log(this.apiUrl + id);
     return this.httpClient.get<Department>(this.apiUrl + id).pipe(
       catchError((error) => {
         console.error('Error in getDepartmentById:', error);

@@ -69,7 +69,8 @@
           <label>Purchase Date</label>
           <input
             type="date"
-            [(ngModel)]="editedEquipment().purchaseDate"
+            [value]="editedEquipment().purchaseDate | date: 'yyyy-MM-dd'"
+            (change)="editedEquipment().purchaseDate = $any($event.target).value"
             [readonly]="!isEditMode()"
             class="form-input"
           />

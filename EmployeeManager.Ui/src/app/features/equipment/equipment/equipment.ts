@@ -30,12 +30,14 @@ export class Equipment implements OnInit {
     id: 0,
     name: '',
     serialNumber: '',
-    purchaseDate: '',
+    purchaseDate: new Date(),
     isWork: true,
     description: '',
     departmentId: 0,
     category: '',
     categoryId: 0,
+    departmentName: '',
+    categoryName: '',
   });
 
   isFetching = signal(false);

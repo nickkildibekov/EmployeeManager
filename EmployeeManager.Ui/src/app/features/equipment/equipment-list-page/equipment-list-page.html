@@ -79,7 +79,7 @@
     <div *ngFor="let item of equipment()" class="list-item" (click)="openEquipment(item.id)">
       <div class="item-content">
         <h4>{{ item.name }}</h4>
-        <p>🏢 {{ item.departmentName }}</p>
+        <p>🏢 {{ item.departmentName }} {{ item.isWork ? '✓ Work Equipment' : '' }}</p>
       </div>
       <button
         class="btn btn-danger btn-sm"

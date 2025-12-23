@@ -26,7 +26,7 @@
     <li class="equipment-item" (click)="onEquipmentSelected(eq.id)">
       <div class="equipment-info">
         <strong>{{ eq.name }}</strong>
-        <span class="category">{{ eq.category }}</span>
+        <span class="category">{{ eq.category }} {{ eq.isWork ? '✓' : '' }}</span>
       </div>
       <button (click)="onDelete(eq.id); $event.stopPropagation()" class="btn btn-danger btn-sm">Delete</button>
     </li>

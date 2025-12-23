@@ -120,7 +120,12 @@ export class EquipmentListPageComponent implements OnInit {
 
   isFormValid(): boolean {
     const eq = this.newEquipment();
-    return !!(eq.name.trim() && eq.departmentId !== null);
+    return !!(
+      eq.name.trim() &&
+      eq.serialNumber.trim() &&
+      eq.departmentId !== null &&
+      eq.purchaseDate
+    );
   }
 
   addEquipment() {

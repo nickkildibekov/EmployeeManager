@@ -32,7 +32,7 @@ export class Equipment implements OnInit {
       id: 0,
       name: '',
       serialNumber: '',
-      purchaseDate: new Date().toISOString().split('T')[0],
+      purchaseDate: '',
       isWork: true,
       description: '',
       departmentId: 0,
@@ -76,7 +76,7 @@ export class Equipment implements OnInit {
             id: eq.id,
             name: eq.name,
             serialNumber: eq.serialNumber,
-            purchaseDate: new Date(eq.purchaseDate).toISOString().split('T')[0],
+            purchaseDate: (eq.purchaseDate || '').slice(0, 10),
             isWork: eq.isWork,
             description: eq.description,
             departmentId: eq.departmentId,
@@ -113,7 +113,7 @@ export class Equipment implements OnInit {
         id: current.id,
         name: current.name,
         serialNumber: current.serialNumber,
-        purchaseDate: new Date(current.purchaseDate).toISOString().split('T')[0],
+        purchaseDate: (current.purchaseDate || '').slice(0, 10),
         isWork: current.isWork,
         description: current.description,
         departmentId: current.departmentId,
@@ -126,8 +126,8 @@ export class Equipment implements OnInit {
 
   saveEquipment(): void {
     const eq = this.editedEquipment();
-    if (!eq.name.trim()) {
-      alert('Please fill all required fields.');
+    if (!eq.name.trim() || !eq.serialNumber.trim() || !eq.departmentId || !eq.purchaseDate) {
+      alert('Please fill required fields (name, serial, department, purchase date).');
       return;
     }
 

@@ -79,7 +79,9 @@
     <div *ngFor="let item of equipment()" class="list-item" (click)="openEquipment(item.id)">
       <div class="item-content">
         <h4>{{ item.name }}</h4>
-        <p>🏢 {{ item.departmentName }} {{ item.isWork ? '✓ Work Equipment' : '' }}</p>
+        <p>🔢 {{ item.serialNumber }}</p>
+        <p>🏢 {{ item.departmentName }}</p>
+        <p>Status: {{ item.isWork ? 'Operational' : 'Out of Service' }}</p>
       </div>
       <button
         class="btn btn-danger btn-sm"

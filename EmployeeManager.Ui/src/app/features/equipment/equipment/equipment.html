@@ -69,7 +69,7 @@
           <label>Purchase Date</label>
           <input
             type="date"
-            [value]="editedEquipment().purchaseDate | date: 'yyyy-MM-dd'"
+            [value]="editedEquipment().purchaseDate"
             (change)="editedEquipment().purchaseDate = $any($event.target).value"
             [readonly]="!isEditMode()"
             class="form-input"

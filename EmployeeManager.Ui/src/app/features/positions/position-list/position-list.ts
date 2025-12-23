@@ -1,17 +1,20 @@
 import { Component, input, output, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Department } from '../../../shared/models/department.model';
+import { Position } from '../../../shared/models/position.model';
 
 @Component({
   selector: 'app-position-list',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: '../position-list/position-list.html',
   styleUrl: '../position-list/position-list.css',
 })
 export class PositionListComponent {
-  department = input.required<Department>();
-  isEditMode = input.required<boolean>();
+  department = input<Department | undefined>();
+  positions = input<Position[] | undefined>();
+  isEditMode = input<boolean>(false);
 
   onPositionAdded = output<string>();
   onPositionDeleted = output<number>();
@@ -35,5 +38,9 @@ export class PositionListComponent {
 
   deletePosition(positionId: number) {
     this.onPositionDeleted.emit(positionId);
+  }
+
+  getDisplayPositions() {
+    return this.positions() || (this.department()?.positions || []);
   }
 }

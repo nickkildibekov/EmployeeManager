@@ -11,36 +11,12 @@
     <div class="departments-grid">
       @for(dep of departments(); track dep.id){
       <div class="department-plate" (click)="onSelectedDepartment(dep)">
-        <div class="plate-header">
-          <h2>{{ dep.name }}</h2>
-          <h2>{{ dep.description }}</h2>
+        <div class="plate-image">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
         </div>
-
-        <div class="plate-body">
-          <div class="stat-item">
-            <div class="stat-icon">💼</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ dep.positions.length }}</div>
-              <div class="stat-label">Positions</div>
-            </div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-icon">💼</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ dep.employees.length }}</div>
-              <div class="stat-label">Employees</div>
-            </div>
-          </div>
-
-          <div class="stat-item">
-            <div class="stat-icon">💼</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ dep.equipments.length }}</div>
-              <div class="stat-label">Equipment</div>
-            </div>
-          </div>
-        </div>
+        <h2 class="department-name">{{ dep.name }}</h2>
       </div>
       }
     </div>

@@ -1,42 +1,23 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs';
 
 import { Department } from '../../../shared/models/department.model';
+import { DepartmentUpdateDTO } from '../../../shared/models/payloads';
 
 import { DepartmentService } from '../department.service';
-import { PositionService } from '../../positions/position.service';
-import { EmployeeService } from '../../employees/employee.service';
-
-import { PositionListComponent } from '../../positions/position-list/position-list';
-import { EmployeeListComponent } from '../../employees/employee-list/employee-list';
-import { EquipmentListComponent } from '../../equipment/equipment-list/equipment-list';
-
-interface DepartmentUpdateDTO {
-  id: number;
-  name: string;
-}
-
-interface NewEmployeeData {
-  firstName: string;
-  lastName: string;
-  phoneNumber: string;
-  positionId: number | null;
-  departmentId: number;
-}
 
 @Component({
   selector: 'app-department',
   standalone: true,
-  imports: [FormsModule, PositionListComponent, EmployeeListComponent, EquipmentListComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './department.html',
   styleUrl: './department.css',
 })
 export class DepartmentComponent implements OnInit {
   private departmentService = inject(DepartmentService);
-  private positionService = inject(PositionService);
-  private employeeService = inject(EmployeeService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
@@ -50,6 +31,50 @@ export class DepartmentComponent implements OnInit {
   error = signal('');
 
   departmentId: number | undefined;
+
+  // Computed properties for display
+  positionsList = computed(() => {
+    const dept = this.department();
+    if (!dept || !dept.positions) return [];
+    
+    return dept.positions.map(pos => {
+      const empCount = dept.employees?.filter(e => e.positionId === pos.id).length || 0;
+      return {
+        name: pos.title,
+        count: empCount
+      };
+    });
+  });
+
+  employeesList = computed(() => {
+    const dept = this.department();
+    if (!dept || !dept.employees) return [];
+    
+    return dept.employees.map(emp => {
+      const position = dept.positions?.find(p => p.id === emp.positionId);
+      return {
+        fullName: `${emp.firstName} ${emp.lastName}`,
+        position: position?.title || 'N/A'
+      };
+    });
+  });
+
+  equipmentList = computed(() => {
+    const dept = this.department();
+    if (!dept || !dept.equipments) return [];
+    
+    // Group equipment by name and count
+    const groupedMap = new Map<string, number>();
+    dept.equipments.forEach(eq => {
+      const count = groupedMap.get(eq.name) || 0;
+      groupedMap.set(eq.name, count + 1);
+    });
+    
+    return Array.from(groupedMap.entries()).map(([name, count]) => ({
+      name,
+      count
+    }));
+  });
 
   ngOnInit(): void {
     const subscription = this.route.paramMap
@@ -71,7 +96,6 @@ export class DepartmentComponent implements OnInit {
       )
       .subscribe({
         next: (dept) => {
-          console.log(dept);
           this.department.set(dept);
           this.editedDepartment.set({
             id: dept.id,
@@ -128,93 +152,6 @@ export class DepartmentComponent implements OnInit {
       error: (err: Error) => {
         console.error('Error updating department:', err);
         this.isSaving.set(false);
-      },
-    });
-  }
-
-  onPositionAdded(title: string): void {
-    const deptId = this.departmentId;
-    if (!deptId) return;
-
-    const newPositionPayload = {
-      id: 0,
-      title: title,
-      description: '',
-      departmentId: deptId,
-    };
-
-    this.positionService.addPosition(newPositionPayload).subscribe({
-      next: (updatedPosition) => {
-        this.department.update((dept) => {
-          if (!dept) return dept;
-          return {
-            ...dept,
-            positions: [...(dept.positions || []), updatedPosition],
-          };
-        });
-      },
-      error: (err) => {
-        console.error('Error adding position:', err);
-      },
-    });
-  }
-
-  onPositionDeleted(positionId: number): void {
-    const deptId = this.departmentId;
-    if (!deptId) return;
-
-    this.positionService.deletePosition(deptId, positionId).subscribe({
-      next: () => {
-        this.department.update((dept) => {
-          if (!dept) return dept;
-          return {
-            ...dept,
-            positions: dept.positions ? dept.positions.filter((p) => p.id !== positionId) : [],
-          };
-        });
-      },
-      error: (err) => {
-        console.error('Error deleting position:', err);
-      },
-    });
-  }
-
-  onEmployeeAdded(newEmployee: NewEmployeeData): void {
-    newEmployee.departmentId = this.departmentId;
-    if (!newEmployee.departmentId) return;
-
-    this.employeeService.addEmployee(newEmployee).subscribe({
-      next: (updatedemployee) => {
-        this.department.update((dept) => {
-          if (!dept) return dept;
-          return {
-            ...dept,
-            employees: [...(dept.employees || []), updatedemployee],
-          };
-        });
-      },
-      error: (err) => {
-        console.error('error adding employee:', err);
-      },
-    });
-  }
-
-  onEmployeeDeleted(employeeId: number): void {
-    const deptId = this.departmentId;
-    if (!deptId) return;
-
-    this.employeeService.deleteEmployee(employeeId).subscribe({
-      next: () => {
-        this.department.update((dept) => {
-          if (!dept) return dept;
-          return {
-            ...dept,
-            employees: dept.employees ? dept.employees.filter((e) => e.id !== employeeId) : [],
-          };
-        });
-      },
-      error: (err) => {
-        console.error('Error deleting employee:', err);
       },
     });
   }

@@ -27,79 +27,47 @@
 }
 
 .department-plate {
-  background: white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   overflow: hidden;
   border: 1px solid #e2e8f0;
-}
-
-.department-plate:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-  transform: translateY(-4px);
-}
-
-.plate-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 24px;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  cursor: pointer;
   color: white;
 }
 
-.plate-header h2 {
+.department-plate:hover {
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+  transform: translateY(-8px);
+}
+
+.plate-image {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 16px;
+}
+
+.plate-image svg {
+  width: 100%;
+  height: 100%;
+  stroke: white;
+  opacity: 0.9;
+}
+
+.department-name {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 600;
   letter-spacing: -0.5px;
-}
-
-.plate-body {
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 16px;
-  background: #f7fafc;
-  border-radius: 8px;
-  transition: background 0.2s ease;
-}
-
-.stat-icon {
-  font-size: 2rem;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-value {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #2d3748;
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.stat-label {
-  font-size: 0.875rem;
-  color: #718096;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  text-align: center;
+  color: white;
 }
 
 @media (max-width: 1200px) {
@@ -133,10 +101,6 @@
   .plate-body {
     padding: 20px;
   }
-
-  .stat-value {
-    font-size: 1.5rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -144,13 +108,7 @@
     font-size: 1.75rem;
   }
 
-  .stat-item {
+  .stat-block {
     padding: 12px;
-  }
-
-  .stat-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 1.5rem;
   }
 }

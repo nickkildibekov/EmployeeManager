@@ -40,24 +40,56 @@
     </div>
 
     <div class="sections-container">
-      <app-position-list
-        [department]="department()"
-        [isEditMode]="isEditMode()"
-        (onPositionAdded)="onPositionAdded($event)"
-        (onPositionDeleted)="onPositionDeleted($event)"
-      >
-      </app-position-list>
+      <!-- Positions Section -->
+      <div class="info-section">
+        <h3>Positions</h3>
+        <div class="info-list">
+          @if (positionsList().length > 0) {
+            @for (pos of positionsList(); track pos.name) {
+              <div class="info-item">
+                <span class="info-label">{{ pos.name }}</span>
+                <span class="info-value">{{ pos.count }} employee(s)</span>
+              </div>
+            }
+          } @else {
+            <p class="no-data">No positions available</p>
+          }
+        </div>
+      </div>
 
-      <app-employee-list
-        [department]="department()"
-        [positions]="department()!.positions || []"
-        [isEditMode]="isEditMode()"
-        (onEmployeeAdded)="onEmployeeAdded($event)"
-        (onEmployeeDeleted)="onEmployeeDeleted($event)"
-      >
-      </app-employee-list>
+      <!-- Employees Section -->
+      <div class="info-section">
+        <h3>Employees</h3>
+        <div class="info-list">
+          @if (employeesList().length > 0) {
+            @for (emp of employeesList(); track emp.fullName) {
+              <div class="info-item">
+                <span class="info-label">{{ emp.fullName }}</span>
+                <span class="info-value">{{ emp.position }}</span>
+              </div>
+            }
+          } @else {
+            <p class="no-data">No employees available</p>
+          }
+        </div>
+      </div>
 
-      <app-equipment-list [department]="department()"> </app-equipment-list>
+      <!-- Equipment Section -->
+      <div class="info-section">
+        <h3>Equipment</h3>
+        <div class="info-list">
+          @if (equipmentList().length > 0) {
+            @for (eq of equipmentList(); track eq.name) {
+              <div class="info-item">
+                <span class="info-label">{{ eq.name }}</span>
+                <span class="info-value">{{ eq.count }} unit(s)</span>
+              </div>
+            }
+          } @else {
+            <p class="no-data">No equipment available</p>
+          }
+        </div>
+      </div>
     </div>
   </div>
   } @else {

@@ -1,6 +1,6 @@
 <div class="section">
   <div class="section-header">
-    <h2>💼 Positions ({{ department().positions?.length || 0 }})</h2>
+    <h2>💼 Positions ({{ getDisplayPositions()?.length || 0 }})</h2>
   </div>
 
   @if (isEditMode()) {
@@ -22,10 +22,10 @@
       Add
     </button>
   </div>
-  } @if (department().positions && department().positions.length > 0) {
+  } @if (getDisplayPositions() && getDisplayPositions().length > 0) {
   <table class="table">
     <tbody>
-      @for(position of department().positions; track position.id) {
+      @for(position of getDisplayPositions(); track position.id) {
       <tr>
         <td>{{ position.title }}</td>
         @if(isEditMode()){

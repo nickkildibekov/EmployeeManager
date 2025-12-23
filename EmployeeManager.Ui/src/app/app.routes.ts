@@ -1,18 +1,46 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'departments', pathMatch: 'full' },
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  {
+    path: 'dashboard',
+    loadComponent: () =>
+      import('./features/dashboard/dashboard').then(
+        (m) => m.DashboardComponent
+      ),
+  },
   {
     path: 'employees',
     loadComponent: () =>
-      import('./features/employees/employee-list/employee-list').then(
-        (m) => m.EmployeeListComponent
+      import('./features/employees/employee-list-page/employee-list-page').then(
+        (m) => m.EmployeeListPageComponent
       ),
   },
   {
     path: 'employees/:id',
     loadComponent: () =>
       import('./features/employees/employee/employee').then((m) => m.EmployeeComponent),
+  },
+  {
+    path: 'departments/:id/employees',
+    loadComponent: () =>
+      import('./features/employees/employees-by-department/employees-by-department').then(
+        (m) => m.EmployeesByDepartmentComponent
+      ),
+  },
+  {
+    path: 'departments/:id/positions',
+    loadComponent: () =>
+      import('./features/positions/positions-by-department/positions-by-department').then(
+        (m) => m.PositionsByDepartmentComponent
+      ),
+  },
+  {
+    path: 'departments/:id/equipment',
+    loadComponent: () =>
+      import('./features/equipment/equipment-by-department/equipment-by-department').then(
+        (m) => m.EquipmentByDepartmentComponent
+      ),
   },
   {
     path: 'departments',
@@ -29,22 +57,20 @@ export const routes: Routes = [
   {
     path: 'positions',
     loadComponent: () =>
-      import('./features/positions/position-list/position-list').then(
-        (m) => m.PositionListComponent
+      import('./features/positions/position-list-page/position-list-page').then(
+        (m) => m.PositionListPageComponent
       ),
   },
   {
-    path: 'positions/:depId',
+    path: 'positions/:id',
     loadComponent: () =>
-      import('./features/positions/position-list/position-list').then(
-        (m) => m.PositionListComponent
-      ),
+      import('./features/positions/position/position').then((m) => m.PositionComponent),
   },
   {
     path: 'equipment',
     loadComponent: () =>
-      import('./features/equipment/equipment-list/equipment-list').then(
-        (m) => m.EquipmentListComponent
+      import('./features/equipment/equipment-list-page/equipment-list-page').then(
+        (m) => m.EquipmentListPageComponent
       ),
   },
   { path: '**', redirectTo: 'departments' },

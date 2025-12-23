@@ -1,0 +1,33 @@
+<div class="equipment-container">
+  <h3>Equipment</h3>
+  <div class="controls">
+    <input type="text" placeholder="Search equipment" (input)="onSearch($any($event.target).value)" />
+    <div class="pagination">
+      <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Prev</button>
+      <span>Page {{ page() }} / {{ Math.ceil((total()||0) / pageSize()) || 1 }}</span>
+      <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= (total()||0)">Next</button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <p>Loading...</p>
+  } @else if (error()) {
+  <p class="text-danger">{{ error() }}</p>
+  } @else if (filtered() && filtered()!.length > 0) {
+
+  <ul class="equipment-list">
+    @for (eq of filtered(); track eq.id) {
+    <li class="equipment-item">
+      <div class="equipment-info">
+        <strong>{{ eq.name }}</strong>
+        <span class="category">{{ eq.category }}</span>
+      </div>
+      <button (click)="onDelete(eq.id)" class="btn btn-danger btn-sm">Delete</button>
+    </li>
+    }
+  </ul>
+
+  } @else {
+  <p class="empty-list">No equipment in this department</p>
+  }
+</div>

@@ -1,0 +1,107 @@
+<div class="container">
+  <div class="header">
+    <h2>Positions</h2>
+    <button class="btn btn-primary" (click)="toggleAddForm()">
+      {{ isAddFormVisible() ? 'Cancel' : '+ Add Position' }}
+    </button>
+  </div>
+
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+  </div>
+
+  <!-- Add Form -->
+  <div *ngIf="isAddFormVisible()" class="add-form">
+    <div class="form-row">
+      <input
+        class="form-control"
+        placeholder="Position Title"
+        [(ngModel)]="newPosition().title"
+      />
+      <select
+        class="form-control"
+        [(ngModel)]="newPosition().departmentId"
+      >
+        <option [value]="null">Select Department</option>
+        <option *ngFor="let dep of departments()" [value]="dep.id">
+          {{ dep.name }}
+        </option>
+      </select>
+    </div>
+    <div class="button-row">
+      <button
+        class="btn btn-success"
+        (click)="addPosition()"
+        [disabled]="!isFormValid()"
+      >
+        Add
+      </button>
+      <button class="btn btn-secondary" (click)="cancelAdd()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <select
+      class="filter-select"
+      (change)="onDepartmentChange($event.target.value)"
+    >
+      <option value="">All Departments</option>
+      <option *ngFor="let dept of departments()" [value]="dept.id">
+        {{ dept.name }}
+      </option>
+    </select>
+    <input
+      type="text"
+      class="filter-search"
+      placeholder="Search by title..."
+      (keyup)="onSearch($event.target.value)"
+    />
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading">Loading...</div>
+
+  <!-- List -->
+  <div *ngIf="!isLoading()" class="list-container">
+    <div
+      *ngIf="positions().length === 0"
+      class="empty-message"
+    >
+      No positions found.
+    </div>
+
+    <div *ngFor="let pos of positions()" class="list-item" (click)="openPosition(pos.id)">
+      <div class="item-content">
+        <h4>{{ pos.title }}</h4>
+      </div>
+      <button
+        class="btn btn-danger btn-sm"
+        (click)="deletePosition(pos.id); $event.stopPropagation()"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="positions().length > 0" class="pagination">
+    <button
+      class="btn btn-sm"
+      (click)="changePage(page() - 1)"
+      [disabled]="page() === 1"
+    >
+      ← Previous
+    </button>
+    <span class="page-info">
+      Page {{ page() }} of {{ Math.ceil(total() / pageSize()) }} (Total: {{ total() }})
+    </span>
+    <button
+      class="btn btn-sm"
+      (click)="changePage(page() + 1)"
+      [disabled]="page() >= Math.ceil(total() / pageSize())"
+    >
+      Next →
+    </button>
+  </div>
+</div>

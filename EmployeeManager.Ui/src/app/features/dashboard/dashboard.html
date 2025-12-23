@@ -1,0 +1,48 @@
+<div class="dashboard-container">
+  <div class="dashboard-header">
+    <h1>Employee Manager Dashboard</h1>
+    <p>Manage your organization structure and resources</p>
+  </div>
+
+  <div class="features-grid">
+    <!-- Departments Plate -->
+    <div class="feature-plate" (click)="navigateTo('/departments')">
+      <div class="plate-content">
+        <div class="plate-icon">🏢</div>
+        <h2>Departments</h2>
+        <p>View and manage all departments</p>
+        <div class="plate-action">Click to browse →</div>
+      </div>
+    </div>
+
+    <!-- Employees Plate -->
+    <div class="feature-plate" (click)="navigateTo('/employees')">
+      <div class="plate-content">
+        <div class="plate-icon">👥</div>
+        <h2>Employees</h2>
+        <p>View and manage all employees</p>
+        <div class="plate-action">Click to browse →</div>
+      </div>
+    </div>
+
+    <!-- Positions Plate -->
+    <div class="feature-plate" (click)="navigateTo('/positions')">
+      <div class="plate-content">
+        <div class="plate-icon">💼</div>
+        <h2>Positions</h2>
+        <p>Manage job positions and roles</p>
+        <div class="plate-action">Click to browse →</div>
+      </div>
+    </div>
+
+    <!-- Equipment Plate -->
+    <div class="feature-plate" (click)="navigateTo('/equipment')">
+      <div class="plate-content">
+        <div class="plate-icon">⚙️</div>
+        <h2>Equipment</h2>
+        <p>Track and manage equipment assets</p>
+        <div class="plate-action">Click to browse →</div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,135 @@
+<div class="container">
+  <div class="header">
+    <h2>Equipment</h2>
+    <button class="btn btn-primary" (click)="toggleAddForm()">
+      {{ isAddFormVisible() ? 'Cancel' : '+ Add Equipment' }}
+    </button>
+  </div>
+
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+  </div>
+
+  <!-- Add Form -->
+  <div *ngIf="isAddFormVisible()" class="add-form">
+    <div class="form-row">
+      <input
+        class="form-control"
+        placeholder="Equipment Name"
+        [(ngModel)]="newEquipment().name"
+      />
+      <input
+        class="form-control"
+        placeholder="Serial Number"
+        [(ngModel)]="newEquipment().serialNumber"
+      />
+    </div>
+    <div class="form-row">
+      <input
+        class="form-control"
+        type="date"
+        placeholder="Purchase Date"
+        [(ngModel)]="newEquipment().purchaseDate"
+      />
+      <select
+        class="form-control"
+        [(ngModel)]="newEquipment().departmentId"
+      >
+        <option [value]="null">Select Department</option>
+        <option *ngFor="let dep of departments()" [value]="dep.id">
+          {{ dep.name }}
+        </option>
+      </select>
+    </div>
+    <div class="form-row">
+      <input
+        class="form-control"
+        placeholder="Description"
+        [(ngModel)]="newEquipment().description"
+      />
+      <label class="form-check">
+        <input
+          type="checkbox"
+          [(ngModel)]="newEquipment().isWork"
+        />
+        Is Work Equipment
+      </label>
+    </div>
+    <div class="button-row">
+      <button
+        class="btn btn-success"
+        (click)="addEquipment()"
+        [disabled]="!isFormValid()"
+      >
+        Add
+      </button>
+      <button class="btn btn-secondary" (click)="cancelAdd()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <select
+      class="filter-select"
+      (change)="onDepartmentChange($event.target.value)"
+    >
+      <option value="">All Departments</option>
+      <option *ngFor="let dept of departments()" [value]="dept.id">
+        {{ dept.name }}
+      </option>
+    </select>
+    <input
+      type="text"
+      class="filter-search"
+      placeholder="Search by name..."
+      (keyup)="onSearch($event.target.value)"
+    />
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading">Loading...</div>
+
+  <!-- List -->
+  <div *ngIf="!isLoading()" class="list-container">
+    <div
+      *ngIf="equipment().length === 0"
+      class="empty-message"
+    >
+      No equipment found.
+    </div>
+
+    <div *ngFor="let item of equipment()" class="list-item" (click)="openEquipment(item.id)">
+      <div class="item-content">
+        <h4>{{ item.name }}</h4>
+        <p>🏢 {{ item.departmentName }}</p>
+      </div>
+      <button
+        class="btn btn-danger btn-sm"
+        (click)="deleteEquipment(item.id); $event.stopPropagation()"
+      >
+        Delete
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="equipment().length > 0" class="pagination">
+    <button
+      class="btn btn-sm"
+      (click)="changePage(page() - 1)"
+      [disabled]="page() === 1"
+    >
+      ← Previous
+    </button>
+    <span class="page-info">
+      Page {{ page() }} of {{ Math.ceil(total() / pageSize()) }} (Total: {{ total() }})
+    </span>
+    <button
+      class="btn btn-sm"
+      (click)="changePage(page() + 1)"
+      [disabled]="page() >= Math.ceil(total() / pageSize())"
+    >
+      Next →
+    </button>
+  </div>
+</div>

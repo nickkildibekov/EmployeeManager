@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs';
 
 import { Equipment as EquipmentModel } from '../../../shared/models/equipment.model';
+import { EquipmentUpdatePayload } from '../../../shared/models/payloads';
 import { EquipmentService } from '../equipment.service';
 import { DepartmentService } from '../../departments/department.service';
 import { Department } from '../../../shared/models/department.model';
@@ -26,19 +27,20 @@ export class Equipment implements OnInit {
   equipment = signal<EquipmentModel | undefined>(undefined);
   departments = signal<Department[]>([]);
 
-  editedEquipment = signal<EquipmentModel>({
-    id: 0,
-    name: '',
-    serialNumber: '',
-    purchaseDate: new Date(),
-    isWork: true,
-    description: '',
-    departmentId: 0,
-    category: '',
-    categoryId: 0,
-    departmentName: '',
-    categoryName: '',
-  });
+  editedEquipment = signal<EquipmentUpdatePayload & { departmentName?: string; categoryName?: string }>(
+    {
+      id: 0,
+      name: '',
+      serialNumber: '',
+      purchaseDate: new Date().toISOString().split('T')[0],
+      isWork: true,
+      description: '',
+      departmentId: 0,
+      categoryId: 0,
+      departmentName: '',
+      categoryName: '',
+    }
+  );
 
   isFetching = signal(false);
   isSaving = signal(false);
@@ -70,7 +72,18 @@ export class Equipment implements OnInit {
       .subscribe({
         next: (eq) => {
           this.equipment.set(eq);
-          this.editedEquipment.set(eq);
+          this.editedEquipment.set({
+            id: eq.id,
+            name: eq.name,
+            serialNumber: eq.serialNumber,
+            purchaseDate: new Date(eq.purchaseDate).toISOString().split('T')[0],
+            isWork: eq.isWork,
+            description: eq.description,
+            departmentId: eq.departmentId,
+            categoryId: eq.categoryId,
+            departmentName: eq.departmentName,
+            categoryName: eq.categoryName,
+          });
           this.isFetching.set(false);
         },
         error: (error: Error) => {
@@ -95,7 +108,19 @@ export class Equipment implements OnInit {
   toggleEditMode(): void {
     this.isEditMode.update((val) => !val);
     if (!this.isEditMode() && this.equipment()) {
-      this.editedEquipment.set(this.equipment()!);
+      const current = this.equipment()!;
+      this.editedEquipment.set({
+        id: current.id,
+        name: current.name,
+        serialNumber: current.serialNumber,
+        purchaseDate: new Date(current.purchaseDate).toISOString().split('T')[0],
+        isWork: current.isWork,
+        description: current.description,
+        departmentId: current.departmentId,
+        categoryId: current.categoryId,
+        departmentName: current.departmentName,
+        categoryName: current.categoryName,
+      });
     }
   }
 
@@ -108,9 +133,25 @@ export class Equipment implements OnInit {
 
     this.isSaving.set(true);
 
-    this.equipmentService.updateEquipment(eq).subscribe({
+    const payload: EquipmentUpdatePayload = {
+      id: eq.id,
+      name: eq.name,
+      serialNumber: eq.serialNumber,
+      purchaseDate: eq.purchaseDate,
+      isWork: eq.isWork,
+      description: eq.description,
+      categoryId: eq.categoryId,
+      departmentId: eq.departmentId,
+    };
+
+    this.equipmentService.updateEquipment(payload).subscribe({
       next: (updatedEq) => {
-        this.equipment.set(updatedEq);
+        const merged = updatedEq || ({
+          ...payload,
+          departmentName: eq.departmentName,
+          categoryName: eq.categoryName,
+        } as unknown as EquipmentModel);
+        this.equipment.set(merged);
         this.isEditMode.set(false);
         this.isSaving.set(false);
       },

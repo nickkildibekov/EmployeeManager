@@ -1,8 +1,8 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Equipment } from '../../shared/models/equipment.model';
-import { catchError, Observable, throwError } from 'rxjs';
-import { EquipmentCreationPayload } from '../../shared/models/payloads';
+import { catchError, map, Observable, throwError } from 'rxjs';
+import { EquipmentCreationPayload, EquipmentUpdatePayload } from '../../shared/models/payloads';
 
 @Injectable({
   providedIn: 'root',
@@ -45,8 +45,13 @@ export class EquipmentService {
   }
 
   addEquipment(equipmentData: EquipmentCreationPayload): Observable<Equipment> {
-    const payload = {
+    const payload: EquipmentCreationPayload = {
       name: equipmentData.name,
+      serialNumber: equipmentData.serialNumber,
+      purchaseDate: equipmentData.purchaseDate,
+      isWork: equipmentData.isWork,
+      description: equipmentData.description,
+      categoryId: equipmentData.categoryId,
       departmentId: equipmentData.departmentId,
     };
     return this.httpClient.post<Equipment>(this.apiUrl, payload).pipe(
@@ -75,8 +80,9 @@ export class EquipmentService {
     );
   }
 
-  updateEquipment(equipmentData: Equipment): Observable<Equipment> {
+  updateEquipment(equipmentData: EquipmentUpdatePayload): Observable<Equipment> {
     return this.httpClient.put<Equipment>(`${this.apiUrl}${equipmentData.id}`, equipmentData).pipe(
+      map((res) => res || (equipmentData as unknown as Equipment)),
       catchError((error) => {
         console.error('Error updating equipment:', error);
         const errorMessage = error.error?.message || 'Error updating equipment.';

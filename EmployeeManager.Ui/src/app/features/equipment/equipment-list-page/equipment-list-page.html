@@ -75,7 +75,9 @@
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="isLoading()" class="loading">Loading...</div>
+  @if (isLoading()) {
+    <app-skeleton-loader [count]="5"></app-skeleton-loader>
+  }
 
   <!-- List -->
   <div *ngIf="!isLoading()" class="list-container">

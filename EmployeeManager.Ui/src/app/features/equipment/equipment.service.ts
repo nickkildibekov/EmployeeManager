@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { Equipment } from '../../shared/models/equipment.model';
 import { catchError, map, Observable, throwError } from 'rxjs';
 import { EquipmentCreationPayload, EquipmentUpdatePayload } from '../../shared/models/payloads';
+import { ErrorHandlerService } from '../../shared/services/error-handler.service';
 
 @Injectable({
   providedIn: 'root',
@@ -10,13 +11,11 @@ import { EquipmentCreationPayload, EquipmentUpdatePayload } from '../../shared/m
 export class EquipmentService {
   private readonly apiUrl = '/api/Equipment/';
   private httpClient = inject(HttpClient);
+  private errorHandler = inject(ErrorHandlerService);
 
   getAllEquipment(): Observable<Equipment[]> {
     return this.httpClient.get<Equipment[]>(this.apiUrl).pipe(
-      catchError((error) => {
-        console.error('Error in getAllEquipment:', error);
-        return throwError(() => new Error('Error to get equipment!'));
-      })
+      catchError(this.errorHandler.handleError.bind(this.errorHandler))
     );
   }
 
@@ -41,11 +40,7 @@ export class EquipmentService {
     }
 
     return this.httpClient.get<{ items: Equipment[]; total: number }>(this.apiUrl, { params }).pipe(
-      catchError((error) => {
-        console.error('Error fetching equipment by department:', error);
-        const message = error.error?.message || 'Error fetching equipment.';
-        return throwError(() => new Error(message));
-      })
+      catchError(this.errorHandler.handleError.bind(this.errorHandler))
     );
   }
 
@@ -60,39 +55,26 @@ export class EquipmentService {
       departmentId: equipmentData.departmentId,
     };
     return this.httpClient.post<Equipment>(this.apiUrl, payload).pipe(
-      catchError((error) => {
-        console.error('Error adding equipment:', error);
-        return throwError(() => new Error('Error adding equipment'));
-      })
+      catchError(this.errorHandler.handleError.bind(this.errorHandler))
     );
   }
 
   deleteEquipment(equipmentId: number): Observable<any> {
     return this.httpClient.delete(`${this.apiUrl}${equipmentId}`).pipe(
-      catchError((error) => {
-        console.error('Error deleting equipment:', error);
-        return throwError(() => new Error('Error deleting equipment: ' + equipmentId));
-      })
+      catchError(this.errorHandler.handleError.bind(this.errorHandler))
     );
   }
 
   getEquipmentById(equipmentId: number): Observable<Equipment> {
     return this.httpClient.get<Equipment>(`${this.apiUrl}${equipmentId}`).pipe(
-      catchError((error) => {
-        console.error('Error fetching equipment by id:', error);
-        return throwError(() => new Error('Error fetching equipment: ' + equipmentId));
-      })
+      catchError(this.errorHandler.handleError.bind(this.errorHandler))
     );
   }
 
   updateEquipment(equipmentData: EquipmentUpdatePayload): Observable<Equipment> {
     return this.httpClient.put<Equipment>(`${this.apiUrl}${equipmentData.id}`, equipmentData).pipe(
       map((res) => res || (equipmentData as unknown as Equipment)),
-      catchError((error) => {
-        console.error('Error updating equipment:', error);
-        const errorMessage = error.error?.message || 'Error updating equipment.';
-        return throwError(() => new Error(errorMessage));
-      })
+      catchError(this.errorHandler.handleError.bind(this.errorHandler))
     );
   }
 }

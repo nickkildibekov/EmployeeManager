@@ -27,20 +27,20 @@ export class Equipment implements OnInit {
   equipment = signal<EquipmentModel | undefined>(undefined);
   departments = signal<Department[]>([]);
 
-  editedEquipment = signal<EquipmentUpdatePayload & { departmentName?: string; categoryName?: string }>(
-    {
-      id: 0,
-      name: '',
-      serialNumber: '',
-      purchaseDate: '',
-      isWork: true,
-      description: '',
-      departmentId: 0,
-      categoryId: 0,
-      departmentName: '',
-      categoryName: '',
-    }
-  );
+  editedEquipment = signal<
+    EquipmentUpdatePayload & { departmentName?: string; categoryName?: string }
+  >({
+    id: 0,
+    name: '',
+    serialNumber: '',
+    purchaseDate: '',
+    isWork: true,
+    description: '',
+    departmentId: 0,
+    categoryId: 0,
+    departmentName: '',
+    categoryName: '',
+  });
 
   isFetching = signal(false);
   isSaving = signal(false);
@@ -138,7 +138,9 @@ export class Equipment implements OnInit {
   saveEquipment(): void {
     const eq = this.editedEquipment();
     if (!this.isFormValid()) {
-      this.error.set('Please fill all required fields (name, serial, category, department, purchase date).');
+      this.error.set(
+        'Please fill all required fields (name, serial, category, department, purchase date).'
+      );
       return;
     }
 
@@ -158,11 +160,13 @@ export class Equipment implements OnInit {
 
     this.equipmentService.updateEquipment(payload).subscribe({
       next: (updatedEq) => {
-        const merged = updatedEq || ({
-          ...payload,
-          departmentName: eq.departmentName,
-          categoryName: eq.categoryName,
-        } as unknown as EquipmentModel);
+        const merged =
+          updatedEq ||
+          ({
+            ...payload,
+            departmentName: eq.departmentName,
+            categoryName: eq.categoryName,
+          } as unknown as EquipmentModel);
         this.equipment.set(merged);
         this.isEditMode.set(false);
         this.isSaving.set(false);

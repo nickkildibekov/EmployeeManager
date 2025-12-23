@@ -172,9 +172,30 @@ namespace EmployeeManager.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
         {
-            var dep = await _appDbContext.Departments.FindAsync(new object[] { id }, cancellationToken);
+            var dep = await _appDbContext.Departments
+                .Include(d => d.Employees)
+                .Include(d => d.Equipments)
+                .Include(d => d.DepartmentPositions)
+                .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
+                
             if (dep == null)
                 return NotFound(new { message = $"Department with ID {id} not found." });
+
+            // Check for dependencies before attempting delete
+            if (dep.Employees?.Any() == true)
+            {
+                return Conflict(new { message = $"Cannot delete department with {dep.Employees.Count} employee(s). Reassign employees first." });
+            }
+            
+            if (dep.Equipments?.Any() == true)
+            {
+                return Conflict(new { message = $"Cannot delete department with {dep.Equipments.Count} equipment item(s). Reassign equipment first." });
+            }
+            
+            if (dep.DepartmentPositions?.Any() == true)
+            {
+                return Conflict(new { message = $"Cannot delete department with {dep.DepartmentPositions.Count} position link(s). Remove positions first." });
+            }
 
             try
             {

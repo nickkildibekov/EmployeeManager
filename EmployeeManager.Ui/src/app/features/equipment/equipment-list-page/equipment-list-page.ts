@@ -2,16 +2,19 @@ import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EquipmentService } from '../equipment.service';
 import { DepartmentService } from '../../departments/department.service';
 import { Equipment } from '../../../shared/models/equipment.model';
 import { Department } from '../../../shared/models/department.model';
 import { EquipmentCreationPayload } from '../../../shared/models/payloads';
+import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-equipment-list-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLoaderComponent],
   templateUrl: './equipment-list-page.html',
   styleUrls: ['./equipment-list-page.css'],
 })
@@ -20,6 +23,8 @@ export class EquipmentListPageComponent implements OnInit {
   private departmentService = inject(DepartmentService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  
+  private searchSubject = new Subject<string>();
 
   equipment = signal<Equipment[]>([]);
   departments = signal<Department[]>([]);
@@ -50,6 +55,20 @@ export class EquipmentListPageComponent implements OnInit {
   ngOnInit(): void {
     this.loadDepartments();
     this.loadEquipment();
+    
+    // Setup debounced search
+    const searchSub = this.searchSubject
+      .pipe(
+        debounceTime(300),
+        distinctUntilChanged()
+      )
+      .subscribe(term => {
+        this.searchTerm.set(term);
+        this.page.set(1);
+        this.loadEquipment();
+      });
+    
+    this.destroyRef.onDestroy(() => searchSub.unsubscribe());
   }
 
   private loadDepartments() {
@@ -63,11 +82,7 @@ export class EquipmentListPageComponent implements OnInit {
   loadEquipment() {
     this.isLoading.set(true);
     const isWorkParam =
-      this.statusFilter() === 'all'
-        ? null
-        : this.statusFilter() === 'operational'
-        ? true
-        : false;
+      this.statusFilter() === 'all' ? null : this.statusFilter() === 'operational' ? true : false;
     const sub = this.equipmentService
       .getEquipmentByDepartment(
         this.selectedDepartmentId() || 0,
@@ -88,9 +103,7 @@ export class EquipmentListPageComponent implements OnInit {
   }
 
   onSearch(term: string) {
-    this.searchTerm.set(term);
-    this.page.set(1);
-    this.loadEquipment();
+    this.searchSubject.next(term);
   }
 
   onDepartmentChange(depId: string) {

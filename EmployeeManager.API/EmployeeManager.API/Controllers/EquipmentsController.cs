@@ -123,6 +123,15 @@ namespace EmployeeManager.API.Controllers
                 return BadRequest(new { message = "Name and SerialNumber are required." });
             }
 
+            // Check for duplicate serial number
+            var existingSerial = await _appDbContext.Equipments
+                .AnyAsync(e => e.SerialNumber == equipmentDto.SerialNumber, cancellationToken);
+            
+            if (existingSerial)
+            {
+                return Conflict(new { message = $"Equipment with serial number '{equipmentDto.SerialNumber}' already exists." });
+            }
+
             if (!await _appDbContext.EquipmentCategories.AnyAsync(c => c.Id == equipmentDto.CategoryId, cancellationToken))
             {
                 return BadRequest(new { message = $"Category with ID {equipmentDto.CategoryId} does not exist." });
@@ -181,6 +190,15 @@ namespace EmployeeManager.API.Controllers
             if (string.IsNullOrWhiteSpace(equipmentDto.Name) || string.IsNullOrWhiteSpace(equipmentDto.SerialNumber))
             {
                 return BadRequest(new { message = "Name and SerialNumber are required." });
+            }
+
+            // Check for duplicate serial number (excluding current equipment)
+            var existingSerial = await _appDbContext.Equipments
+                .AnyAsync(e => e.SerialNumber == equipmentDto.SerialNumber && e.Id != id, cancellationToken);
+            
+            if (existingSerial)
+            {
+                return Conflict(new { message = $"Another equipment with serial number '{equipmentDto.SerialNumber}' already exists." });
             }
 
             if (!await _appDbContext.EquipmentCategories.AnyAsync(c => c.Id == equipmentDto.CategoryId, cancellationToken) ||

@@ -1,4 +1,5 @@
 ﻿using EmployeeManager.API.Data;
+using EmployeeManager.API.Middleware;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
@@ -64,6 +65,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();    
 }
+
+// Add global exception handling middleware
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 

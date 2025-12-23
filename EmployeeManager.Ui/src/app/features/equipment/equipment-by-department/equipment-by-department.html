@@ -21,7 +21,7 @@
   </div>
 
   @if (isLoading()) {
-  <p>Loading...</p>
+    <app-skeleton-loader [count]="5"></app-skeleton-loader>
   } @else if (error()) {
   <p class="text-danger">{{ error() }}</p>
   } @else if (filtered() && filtered()!.length > 0) {
@@ -35,7 +35,9 @@
         <div class="category">{{ eq.categoryName }}</div>
         <div>Status: {{ eq.isWork ? 'Operational' : 'Out of Service' }}</div>
       </div>
-      <button (click)="onDelete(eq.id); $event.stopPropagation()" class="btn btn-danger btn-sm">Delete</button>
+      <button (click)="onDelete(eq.id); $event.stopPropagation()" class="btn btn-danger btn-sm">
+        Delete
+      </button>
     </li>
     }
   </ul>

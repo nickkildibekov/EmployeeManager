@@ -4,28 +4,28 @@
 
 :host {
   display: block;
-  font-family: 'Inter', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Common container for Positions and Employees and Equipment */
 .section,
 .list-section {
-  background-color: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
   padding: 24px;
   margin-bottom: 30px;
-  transition: all 0.3s ease;
+  transition: var(--transition);
 }
 
 .section-header h2,
 .list-section h2 {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1f2937; /* Dark text */
+  color: var(--text-primary);
   margin-bottom: 20px;
   padding-bottom: 10px;
-  border-bottom: 2px solid #f3f4f6;
+  border-bottom: 2px solid var(--border-color);
 }
 
 .table {
@@ -35,8 +35,8 @@
 }
 
 .table tbody tr {
-  border-bottom: 1px solid #f3f4f6;
-  transition: background-color 0.2s;
+  border-bottom: 1px solid var(--border-color);
+  transition: var(--transition);
 }
 
 .table tbody tr:last-child {
@@ -45,9 +45,9 @@
 
 .table td {
   padding: 12px 15px;
-  color: #374151;
+  color: var(--text-secondary);
 }
 
 .table tbody tr:hover {
-  background-color: #f9fafb;
+  background-color: var(--bg-secondary);
 }

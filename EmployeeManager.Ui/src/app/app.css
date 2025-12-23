@@ -4,21 +4,36 @@
   padding: 0;
 }
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f5f5f5;
-  margin: 0;
-}
-
 .app-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
   min-height: calc(100vh - 80px);
+  background-color: var(--bg-secondary);
+}
+
+@media (max-width: 1440px) {
+  .app-container {
+    max-width: 1200px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-container {
+    max-width: 960px;
+    padding: 16px;
+  }
 }
 
 @media (max-width: 768px) {
   .app-container {
-    padding: 10px;
+    padding: 12px;
+    min-height: calc(100vh - 60px);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-container {
+    padding: 8px;
   }
 }

@@ -10,6 +10,7 @@ import { Employee } from '../../../shared/models/employee.model';
 import { PositionCreationPayload } from '../../../shared/models/payloads';
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { DialogService } from '../../../shared/services/dialog.service';
 
 @Component({
   selector: 'app-position-list-page',
@@ -24,6 +25,7 @@ export class PositionListPageComponent implements OnInit {
   private router = inject(Router);
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
+  private dialogService = inject(DialogService);
   private destroyRef = inject(DestroyRef);
 
   positions = signal<Position[]>([]);
@@ -137,8 +139,9 @@ export class PositionListPageComponent implements OnInit {
     });
   }
 
-  deletePosition(id: number) {
-    if (!confirm('Are you sure?')) return;
+  async deletePosition(id: number): Promise<void> {
+    const confirmed = await this.dialogService.confirm('Are you sure you want to delete this position?');
+    if (!confirmed) return;
 
     this.positionService.deletePosition(id).subscribe({
       next: () => {

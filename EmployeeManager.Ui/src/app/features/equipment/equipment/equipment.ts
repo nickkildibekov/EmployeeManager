@@ -6,6 +6,7 @@ import { switchMap } from 'rxjs';
 
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { DialogService } from '../../../shared/services/dialog.service';
 import { Equipment as EquipmentModel } from '../../../shared/models/equipment.model';
 import { EquipmentUpdatePayload } from '../../../shared/models/payloads';
 import { EquipmentService } from '../equipment.service';
@@ -27,6 +28,7 @@ export class Equipment implements OnInit {
   private destroyRef = inject(DestroyRef);
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
+  private dialogService = inject(DialogService);
 
   equipment = signal<EquipmentModel | undefined>(undefined);
   departments = signal<Department[]>([]);
@@ -192,15 +194,21 @@ export class Equipment implements OnInit {
     });
   }
 
-  deleteEquipment(): void {
-    if (!this.toastService.confirm('Are you sure you want to delete this equipment?')) return;
+  async deleteEquipment(): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Delete Equipment',
+      message: 'Are you sure you want to delete this equipment? This action cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
 
     const id = this.equipmentId;
     if (!id) return;
 
     this.equipmentService.deleteEquipment(id).subscribe({
       next: () => {
-        this.navigationService.afterDelete('Equipment', '/equipment');
+        this.navigationService.afterDelete('equipment');
       },
       error: (err: Error) => {
         this.error.set(err.message);

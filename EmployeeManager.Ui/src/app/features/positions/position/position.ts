@@ -5,6 +5,7 @@ import { ActivatedRoute } from '@angular/router';
 import { switchMap } from 'rxjs';
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { DialogService } from '../../../shared/services/dialog.service';
 
 import { Position } from '../../../shared/models/position.model';
 import { PositionUpdatePayload } from '../../../shared/models/payloads';
@@ -24,6 +25,7 @@ export class PositionComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
+  private dialogService = inject(DialogService);
   private destroyRef = inject(DestroyRef);
 
   position = signal<Position | undefined>(undefined);
@@ -162,8 +164,14 @@ export class PositionComponent implements OnInit {
     });
   }
 
-  deletePosition(): void {
-    if (!confirm('Are you sure you want to delete this position?')) return;
+  async deletePosition(): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Delete Position',
+      message: 'Are you sure you want to delete this position? This action cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
 
     const id = this.positionId;
     if (!id) return;

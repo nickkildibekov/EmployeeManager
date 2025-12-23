@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { DialogService } from '../../../shared/services/dialog.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EquipmentService } from '../equipment.service';
 import { DepartmentService } from '../../departments/department.service';
@@ -27,6 +28,7 @@ export class EquipmentListPageComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
+  private dialogService = inject(DialogService);
   
   private searchSubject = new Subject<string>();
 
@@ -184,8 +186,9 @@ export class EquipmentListPageComponent implements OnInit {
     });
   }
 
-  deleteEquipment(id: number) {
-    if (!this.toastService.confirm('Are you sure?')) return;
+  async deleteEquipment(id: number): Promise<void> {
+    const confirmed = await this.dialogService.confirm('Are you sure you want to delete this equipment?');
+    if (!confirmed) return;
 
     this.equipmentService.deleteEquipment(id).subscribe({
       next: () => {

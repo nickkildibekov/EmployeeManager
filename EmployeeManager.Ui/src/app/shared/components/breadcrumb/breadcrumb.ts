@@ -49,6 +49,11 @@ export class BreadcrumbComponent {
 
       const segment = segments[i];
       currentPath += `/${segment}`;
+
+      // Skip duplicate dashboard crumb since Home already points to /dashboard
+      if (segment === 'dashboard') {
+        continue;
+      }
       
       // Skip numeric IDs in breadcrumb display but keep for URL
       if (/^\d+$/.test(segment)) {

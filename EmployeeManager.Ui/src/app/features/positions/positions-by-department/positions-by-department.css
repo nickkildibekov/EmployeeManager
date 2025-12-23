@@ -1,5 +1,7 @@
 .positions-container {
   padding: 12px;
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
 }
 .controls {
   display: flex;
@@ -10,6 +12,10 @@
 .controls input {
   flex: 1;
   padding: 6px 8px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
 }
 .pagination {
   display: flex;

@@ -6,6 +6,7 @@ import { switchMap } from 'rxjs';
 
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { DialogService } from '../../../shared/services/dialog.service';
 import { Employee } from '../../../shared/models/employee.model';
 import { EmployeeUpdateData } from '../../../shared/models/payloads';
 import { EmployeeService } from '../employee.service';
@@ -29,6 +30,7 @@ export class EmployeeComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
+  private dialogService = inject(DialogService);
 
   employee = signal<Employee | undefined>(undefined);
   departments = signal<Department[]>([]);
@@ -158,15 +160,21 @@ export class EmployeeComponent implements OnInit {
     });
   }
 
-  deleteEmployee(): void {
-    if (!this.toastService.confirm('Are you sure you want to delete this employee?')) return;
+  async deleteEmployee(): Promise<void> {
+    const confirmed = await this.dialogService.confirm({
+      title: 'Delete Employee',
+      message: 'Are you sure you want to delete this employee? This action cannot be undone.',
+      confirmText: 'Delete',
+      variant: 'danger'
+    });
+    if (!confirmed) return;
 
     const id = this.employeeId;
     if (!id) return;
 
     this.employeeService.deleteEmployee(id).subscribe({
       next: () => {
-        this.navigationService.afterDelete('Employee', '/employees');
+        this.navigationService.afterDelete('employee');
       },
       error: (err: Error) => {
         this.error.set(err.message);

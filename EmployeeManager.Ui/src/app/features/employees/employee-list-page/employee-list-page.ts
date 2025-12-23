@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { DialogService } from '../../../shared/services/dialog.service';
 import { EmployeeService } from '../employee.service';
 import { DepartmentService } from '../../departments/department.service';
 import { PositionService } from '../../positions/position.service';
@@ -27,6 +28,7 @@ export class EmployeeListPageComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
+  private dialogService = inject(DialogService);
 
   employees = signal<Employee[]>([]);
   departments = signal<Department[]>([]);
@@ -170,8 +172,9 @@ export class EmployeeListPageComponent implements OnInit {
     });
   }
 
-  deleteEmployee(id: number) {
-    if (!this.toastService.confirm('Are you sure?')) return;
+  async deleteEmployee(id: number): Promise<void> {
+    const confirmed = await this.dialogService.confirm('Are you sure you want to delete this employee?');
+    if (!confirmed) return;
 
     this.employeeService.deleteEmployee(id).subscribe({
       next: () => {

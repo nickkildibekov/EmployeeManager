@@ -65,4 +65,23 @@ export class EquipmentService {
       })
     );
   }
+
+  getEquipmentById(equipmentId: number): Observable<Equipment> {
+    return this.httpClient.get<Equipment>(`${this.apiUrl}${equipmentId}`).pipe(
+      catchError((error) => {
+        console.error('Error fetching equipment by id:', error);
+        return throwError(() => new Error('Error fetching equipment: ' + equipmentId));
+      })
+    );
+  }
+
+  updateEquipment(equipmentData: Equipment): Observable<Equipment> {
+    return this.httpClient.put<Equipment>(`${this.apiUrl}${equipmentData.id}`, equipmentData).pipe(
+      catchError((error) => {
+        console.error('Error updating equipment:', error);
+        const errorMessage = error.error?.message || 'Error updating equipment.';
+        return throwError(() => new Error(errorMessage));
+      })
+    );
+  }
 }

@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { EquipmentService } from '../equipment.service';
 import { Equipment } from '../../../shared/models/equipment.model';
 
@@ -13,6 +13,7 @@ import { Equipment } from '../../../shared/models/equipment.model';
 })
 export class EquipmentByDepartmentComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private equipmentService = inject(EquipmentService);
 
   equipment = signal<Equipment[] | undefined>(undefined);
@@ -95,5 +96,9 @@ export class EquipmentByDepartmentComponent implements OnInit {
       next: () => this.loadEquipment(depId),
       error: (err: Error) => this.error.set(err.message),
     });
+  }
+
+  onEquipmentSelected(eqId: number) {
+    this.router.navigate(['/equipment', eqId]);
   }
 }

@@ -1,1 +1,124 @@
-<p>equipment works!</p>
+<div class="container">
+  <div class="header-section">
+    <button class="back-button" (click)="goBack()">← Back to List</button>
+  </div>
+
+  @if (isFetching()) {
+  <div class="loading">
+    <p>Loading equipment details...</p>
+  </div>
+  } @else if (equipment()) {
+  <div class="content">
+    <div class="edit-section">
+      <div class="button-group">
+        <button class="btn btn-primary" (click)="toggleEditMode()" [disabled]="isSaving()">
+          {{ isEditMode() ? '✕ Cancel Editing' : '✏️ Edit Equipment' }}
+        </button>
+
+        @if (isEditMode()) {
+        <button
+          class="btn btn-success"
+          (click)="saveEquipment()"
+          [disabled]="isSaving() || !editedEquipment().name.trim()"
+        >
+          @if (isSaving()) { Saving... } @else { 💾 Save Changes }
+        </button>
+        }
+
+        <button
+          class="btn btn-danger"
+          (click)="deleteEquipment()"
+          [disabled]="isEditMode() || isSaving()"
+        >
+          🗑️ Delete Equipment
+        </button>
+      </div>
+    </div>
+
+    @if (error()) {
+    <div class="alert alert-danger">
+      {{ error() }}
+    </div>
+    }
+
+    <div class="equipment-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Equipment Name</label>
+          <input
+            type="text"
+            [(ngModel)]="editedEquipment().name"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Serial Number</label>
+          <input
+            type="text"
+            [(ngModel)]="editedEquipment().serialNumber"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Purchase Date</label>
+          <input
+            type="date"
+            [(ngModel)]="editedEquipment().purchaseDate"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Department</label>
+          <select
+            [(ngModel)]="editedEquipment().departmentId"
+            [disabled]="!isEditMode()"
+            class="form-input"
+          >
+            <option *ngFor="let dep of departments()" [value]="dep.id">
+              {{ dep.name }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Description</label>
+          <input
+            type="text"
+            [(ngModel)]="editedEquipment().description"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-check-label">
+            <input
+              type="checkbox"
+              [(ngModel)]="editedEquipment().isWork"
+              [disabled]="!isEditMode()"
+              class="form-check-input"
+            />
+            Is Work Equipment
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+  } @else {
+  <div class="loading">
+    <p style="color: #e53e3e; font-weight: 600">
+      ⚠️ Equipment not found or an error occurred: {{ error() }}
+    </p>
+  </div>
+  }
+</div>

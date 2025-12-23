@@ -23,12 +23,12 @@
 
   <ul class="equipment-list">
     @for (eq of filtered(); track eq.id) {
-    <li class="equipment-item">
+    <li class="equipment-item" (click)="onEquipmentSelected(eq.id)">
       <div class="equipment-info">
         <strong>{{ eq.name }}</strong>
         <span class="category">{{ eq.category }}</span>
       </div>
-      <button (click)="onDelete(eq.id)" class="btn btn-danger btn-sm">Delete</button>
+      <button (click)="onDelete(eq.id); $event.stopPropagation()" class="btn btn-danger btn-sm">Delete</button>
     </li>
     }
   </ul>

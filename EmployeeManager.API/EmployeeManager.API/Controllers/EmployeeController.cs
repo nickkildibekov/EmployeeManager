@@ -18,12 +18,37 @@ namespace EmployeeManager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int? departmentId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
         {
-            var employees = await _appDbContext.Employees
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _appDbContext.Employees
                 .Include(e => e.Position)
                 .Include(e => e.Department)
+                .AsQueryable();
+
+            // Filter by department if specified (and > 0)
+            if (departmentId.HasValue && departmentId.Value > 0)
+            {
+                query = query.Where(e => e.DepartmentId == departmentId.Value);
+            }
+
+            // Search by first name or last name
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchLower = search.ToLower();
+                query = query.Where(e => 
+                    e.FirstName.ToLower().Contains(searchLower) || 
+                    e.LastName.ToLower().Contains(searchLower));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var employees = await query
                 .AsNoTracking()
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(e => new EmployeeDTO
                 {
                     Id = e.Id,
@@ -31,12 +56,13 @@ namespace EmployeeManager.API.Controllers
                     LastName = e.LastName,
                     PhoneNumber = e.PhoneNumber,
                     PositionId = e.PositionId,
+                    PositionName = e.Position != null ? e.Position.Title : null,
                     DepartmentId = e.DepartmentId,
                     DepartmentName = e.Department != null ? e.Department.Name : string.Empty
                 })
                 .ToListAsync();
 
-            return Ok(employees);
+            return Ok(new { items = employees, total = totalCount });
         }
 
         [HttpGet("{id}")]
@@ -85,6 +111,25 @@ namespace EmployeeManager.API.Controllers
             await _appDbContext.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetById), new { id = employee.Id }, employee);
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, EmployeeDTO employeeDto)
+        {
+            var employee = await _appDbContext.Employees.FindAsync(id);
+            if (employee == null)
+                return NotFound();
+
+            employee.FirstName = employeeDto.FirstName;
+            employee.LastName = employeeDto.LastName;
+            employee.PhoneNumber = employeeDto.PhoneNumber;
+            employee.PositionId = employeeDto.PositionId;
+            employee.DepartmentId = employeeDto.DepartmentId;
+
+            _appDbContext.Employees.Update(employee);
+            await _appDbContext.SaveChangesAsync();
+
+            return Ok(employee);
         }
 
         [HttpDelete("{id}")]

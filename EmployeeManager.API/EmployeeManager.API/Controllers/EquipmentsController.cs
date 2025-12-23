@@ -19,12 +19,37 @@ namespace EmployeeManager.API.Controllers
 
         
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll([FromQuery] int? departmentId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
         {
-            var equipmentList = await _appDbContext.Equipments
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _appDbContext.Equipments
                 .Include(e => e.Category)
                 .Include(e => e.Department)
+                .AsQueryable();
+
+            // Filter by department if specified
+            if (departmentId.HasValue && departmentId.Value > 0)
+            {
+                query = query.Where(e => e.DepartmentId == departmentId.Value);
+            }
+
+            // Search by name or serial number
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchLower = search.ToLower();
+                query = query.Where(e => 
+                    e.Name.ToLower().Contains(searchLower) || 
+                    e.SerialNumber.ToLower().Contains(searchLower));
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var equipmentList = await query
                 .AsNoTracking()
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(e => new EquipmentDTO
                 {
                     Id = e.Id,
@@ -40,7 +65,7 @@ namespace EmployeeManager.API.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(equipmentList);
+            return Ok(new { items = equipmentList, total = totalCount });
         }
 
         

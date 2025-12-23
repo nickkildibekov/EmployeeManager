@@ -17,22 +17,51 @@ namespace EmployeeManager.API.Controllers
             _appDbContext = appDbContext;
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetAll(int? departmentId)
+        [HttpGet("all")]
+        public async Task<IActionResult> GetAllPositions()
         {
-            var query = _appDbContext.Positions
-                .AsQueryable();
+            var positions = await _appDbContext.Positions
+                .AsNoTracking()
+                .Select(p => new PositionDTO
+                {
+                    Id = p.Id,
+                    Title = p.Title,
+                })
+                .ToListAsync();
 
-            if (departmentId.HasValue)
+            return Ok(positions);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll([FromQuery] int? departmentId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
+        {
+            if (page < 1) page = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var query = _appDbContext.Positions.AsQueryable();
+
+            if (departmentId.HasValue && departmentId.Value > 0)
             {
-                // Filter positions that are associated with the given department ID via the join table
                 query = query
                     .Where(p => p.DepartmentPositions!
                         .Any(dp => dp.DepartmentId == departmentId.Value));
             }
 
+            // Search by title
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchLower = search.ToLower();
+                query = query.Where(p => p.Title.ToLower().Contains(searchLower));
+            }
+
+            var totalCount = await query.CountAsync();
+
             var positions = await query
                 .AsNoTracking()
+                .Include(p => p.DepartmentPositions!)
+                    .ThenInclude(dp => dp.Department)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => new PositionDTO
                 {
                     Id = p.Id,
@@ -40,7 +69,7 @@ namespace EmployeeManager.API.Controllers
                 })
                 .ToListAsync();
 
-            return Ok(positions);
+            return Ok(new { items = positions, total = totalCount });
         }
 
         [HttpGet("{id}")]
@@ -133,12 +162,22 @@ namespace EmployeeManager.API.Controllers
 
             try
             {
+                // Update all employees with this position to position 16 (Unemployed)
+                var employeesWithPosition = await _appDbContext.Employees
+                    .Where(e => e.PositionId == id)
+                    .ToListAsync();
+
+                foreach (var emp in employeesWithPosition)
+                {
+                    emp.PositionId = 16; // Set to Unemployed position
+                }
+
                 _appDbContext.Positions.Remove(pos);
                 await _appDbContext.SaveChangesAsync();
             }
-            catch (DbUpdateException ex) when (ex.InnerException?.Message?.Contains("foreign key") == true)
+            catch (DbUpdateException ex)
             {
-                return Conflict(new { message = "Cannot delete position with linked employees." });
+                return Conflict(new { message = "Error deleting position: " + ex.Message });
             }
 
             return NoContent();

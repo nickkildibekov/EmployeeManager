@@ -19,10 +19,17 @@ namespace EmployeeManager.API.Controllers
 
         
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? departmentId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] int? departmentId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null,
+            [FromQuery] bool? isWork = null,
+            CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100;
 
             var query = _appDbContext.Equipments
                 .Include(e => e.Category)
@@ -44,9 +51,15 @@ namespace EmployeeManager.API.Controllers
                     e.SerialNumber.ToLower().Contains(searchLower));
             }
 
-            var totalCount = await query.CountAsync();
+            if (isWork.HasValue)
+            {
+                query = query.Where(e => e.IsWork == isWork.Value);
+            }
+
+            var totalCount = await query.CountAsync(cancellationToken);
 
             var equipmentList = await query
+                .OrderBy(e => e.Name)
                 .AsNoTracking()
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -63,14 +76,14 @@ namespace EmployeeManager.API.Controllers
                     DepartmentId = e.DepartmentId,
                     DepartmentName = e.Department != null ? e.Department.Name : string.Empty
                 })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return Ok(new { items = equipmentList, total = totalCount });
         }
 
         
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
         {
             var equipment = await _appDbContext.Equipments
                 .Include(e => e.Category)
@@ -90,28 +103,33 @@ namespace EmployeeManager.API.Controllers
                     DepartmentId = e.DepartmentId,
                     DepartmentName = e.Department != null ? e.Department.Name : string.Empty
                 })
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (equipment == null)
-                return NotFound();
+                return NotFound(new { message = $"Equipment with ID {id} not found." });
 
             return Ok(equipment);
         }
 
        
         [HttpPost]
-        public async Task<IActionResult> Create(EquipmentDTO equipmentDto)
+        public async Task<IActionResult> Create([FromBody] EquipmentDTO equipmentDto, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (!_appDbContext.EquipmentCategories.Any(c => c.Id == equipmentDto.CategoryId))
+            if (string.IsNullOrWhiteSpace(equipmentDto.Name) || string.IsNullOrWhiteSpace(equipmentDto.SerialNumber))
             {
-                return BadRequest($"Category with ID {equipmentDto.CategoryId} does not exist.");
+                return BadRequest(new { message = "Name and SerialNumber are required." });
             }
-            if (!_appDbContext.Departments.Any(d => d.Id == equipmentDto.DepartmentId))
+
+            if (!await _appDbContext.EquipmentCategories.AnyAsync(c => c.Id == equipmentDto.CategoryId, cancellationToken))
             {
-                return BadRequest($"Department with ID {equipmentDto.DepartmentId} does not exist.");
+                return BadRequest(new { message = $"Category with ID {equipmentDto.CategoryId} does not exist." });
+            }
+            if (!await _appDbContext.Departments.AnyAsync(d => d.Id == equipmentDto.DepartmentId, cancellationToken))
+            {
+                return BadRequest(new { message = $"Department with ID {equipmentDto.DepartmentId} does not exist." });
             }
 
             var equipment = new Equipment
@@ -126,9 +144,8 @@ namespace EmployeeManager.API.Controllers
             };
 
             _appDbContext.Equipments.Add(equipment);
-            await _appDbContext.SaveChangesAsync();
+            await _appDbContext.SaveChangesAsync(cancellationToken);
 
-            
             var createdEquipmentDto = await _appDbContext.Equipments
                 .Include(e => e.Category)
                 .Include(e => e.Department)
@@ -147,29 +164,29 @@ namespace EmployeeManager.API.Controllers
                     DepartmentId = e.DepartmentId,
                     DepartmentName = e.Department != null ? e.Department.Name : string.Empty
                 })
-                .FirstOrDefaultAsync();
-
-            if (createdEquipmentDto == null)
-            {
-                return CreatedAtAction(nameof(GetById), new { id = equipment.Id }, equipmentDto);
-            }
+                .FirstOrDefaultAsync(cancellationToken);
 
             return CreatedAtAction(nameof(GetById), new { id = equipment.Id }, createdEquipmentDto);
         }
 
         
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, EquipmentDTO equipmentDto)
+        public async Task<IActionResult> Update(int id, [FromBody] EquipmentDTO equipmentDto, CancellationToken cancellationToken = default)
         {
             if (id != equipmentDto.Id)
             {
-                return BadRequest("ID mismatch.");
+                return BadRequest(new { message = "ID mismatch." });
             }
 
-            if (!_appDbContext.EquipmentCategories.Any(c => c.Id == equipmentDto.CategoryId) ||
-                !_appDbContext.Departments.Any(d => d.Id == equipmentDto.DepartmentId))
+            if (string.IsNullOrWhiteSpace(equipmentDto.Name) || string.IsNullOrWhiteSpace(equipmentDto.SerialNumber))
             {
-                return BadRequest("Invalid CategoryId or DepartmentId.");
+                return BadRequest(new { message = "Name and SerialNumber are required." });
+            }
+
+            if (!await _appDbContext.EquipmentCategories.AnyAsync(c => c.Id == equipmentDto.CategoryId, cancellationToken) ||
+                !await _appDbContext.Departments.AnyAsync(d => d.Id == equipmentDto.DepartmentId, cancellationToken))
+            {
+                return BadRequest(new { message = "Invalid CategoryId or DepartmentId." });
             }
 
             var equipment = await _appDbContext.Equipments.FindAsync(id);
@@ -191,11 +208,11 @@ namespace EmployeeManager.API.Controllers
 
             try
             {
-                await _appDbContext.SaveChangesAsync();
+                await _appDbContext.SaveChangesAsync(cancellationToken);
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_appDbContext.Equipments.Any(e => e.Id == id))
+                if (!await _appDbContext.Equipments.AnyAsync(e => e.Id == id, cancellationToken))
                 {
                     return NotFound();
                 }
@@ -205,16 +222,36 @@ namespace EmployeeManager.API.Controllers
                 }
             }
 
-            return NoContent();
+            var updatedDto = await _appDbContext.Equipments
+                .Include(e => e.Category)
+                .Include(e => e.Department)
+                .AsNoTracking()
+                .Where(e => e.Id == id)
+                .Select(e => new EquipmentDTO
+                {
+                    Id = e.Id,
+                    Name = e.Name,
+                    SerialNumber = e.SerialNumber,
+                    PurchaseDate = e.PurchaseDate,
+                    IsWork = e.IsWork,
+                    Description = e.Description,
+                    CategoryId = e.CategoryId,
+                    CategoryName = e.Category != null ? e.Category.Name : string.Empty,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return Ok(updatedDto);
         }
 
        
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id, [FromQuery] int? departmentId)
+        public async Task<IActionResult> Delete(int id, [FromQuery] int? departmentId, CancellationToken cancellationToken = default)
         {
-            var equip = await _appDbContext.Equipments.FindAsync(id);
+            var equip = await _appDbContext.Equipments.FindAsync(new object[] { id }, cancellationToken);
             if (equip == null)
-                return NotFound();
+                return NotFound(new { message = $"Equipment with ID {id} not found." });
 
             if (departmentId.HasValue && equip.DepartmentId != departmentId.Value)
             {
@@ -224,7 +261,7 @@ namespace EmployeeManager.API.Controllers
             try
             {
                 _appDbContext.Equipments.Remove(equip);
-                await _appDbContext.SaveChangesAsync();
+                await _appDbContext.SaveChangesAsync(cancellationToken);
             }
             catch (DbUpdateException)
             {

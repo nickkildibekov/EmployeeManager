@@ -18,25 +18,32 @@ namespace EmployeeManager.API.Controllers
         }
 
         [HttpGet("all")]
-        public async Task<IActionResult> GetAllPositions()
+        public async Task<IActionResult> GetAllPositions(CancellationToken cancellationToken = default)
         {
             var positions = await _appDbContext.Positions
+                .OrderBy(p => p.Title)
                 .AsNoTracking()
                 .Select(p => new PositionDTO
                 {
                     Id = p.Id,
                     Title = p.Title,
                 })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return Ok(positions);
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? departmentId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
+        public async Task<IActionResult> GetAll(
+            [FromQuery] int? departmentId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] string? search = null,
+            CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
+            if (pageSize > 100) pageSize = 100;
 
             var query = _appDbContext.Positions.AsQueryable();
 
@@ -54,9 +61,10 @@ namespace EmployeeManager.API.Controllers
                 query = query.Where(p => p.Title.ToLower().Contains(searchLower));
             }
 
-            var totalCount = await query.CountAsync();
+            var totalCount = await query.CountAsync(cancellationToken);
 
             var positions = await query
+                .OrderBy(p => p.Title)
                 .AsNoTracking()
                 .Include(p => p.DepartmentPositions!)
                     .ThenInclude(dp => dp.Department)
@@ -67,13 +75,13 @@ namespace EmployeeManager.API.Controllers
                     Id = p.Id,
                     Title = p.Title
                 })
-                .ToListAsync();
+                .ToListAsync(cancellationToken);
 
             return Ok(new { items = positions, total = totalCount });
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
         {
             var position = await _appDbContext.Positions
                 .AsNoTracking()
@@ -83,19 +91,24 @@ namespace EmployeeManager.API.Controllers
                     Id = p.Id,
                     Title = p.Title,
                 })
-                .FirstOrDefaultAsync();
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (position == null)
-                return NotFound();
+                return NotFound(new { message = $"Position with ID {id} not found." });
 
             return Ok(position);
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] PositionUpdateDTO positionDto)
+        public async Task<IActionResult> Create([FromBody] PositionUpdateDTO positionDto, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            if (string.IsNullOrWhiteSpace(positionDto.Title))
+            {
+                return BadRequest(new { message = "Title is required." });
+            }
 
             var position = new Position
             {
@@ -103,7 +116,7 @@ namespace EmployeeManager.API.Controllers
             };
 
             _appDbContext.Positions.Add(position);
-            await _appDbContext.SaveChangesAsync();
+            await _appDbContext.SaveChangesAsync(cancellationToken);
 
             if (positionDto.DepartmentIds.Any())
             {
@@ -112,24 +125,30 @@ namespace EmployeeManager.API.Controllers
                     .ToList();
 
                 _appDbContext.DepartmentPositions.AddRange(newLinks);
-                await _appDbContext.SaveChangesAsync();
+                await _appDbContext.SaveChangesAsync(cancellationToken);
             }
 
-            return CreatedAtAction(nameof(GetById), new { id = position.Id }, position);
+            var createdDto = new PositionDTO { Id = position.Id, Title = position.Title };
+            return CreatedAtAction(nameof(GetById), new { id = position.Id }, createdDto);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] PositionUpdateDTO model)
+        public async Task<IActionResult> Update(int id, [FromBody] PositionUpdateDTO model, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            if (string.IsNullOrWhiteSpace(model.Title))
+            {
+                return BadRequest(new { message = "Title is required." });
+            }
+
             var pos = await _appDbContext.Positions
                 .Include(p => p.DepartmentPositions)
-                .FirstOrDefaultAsync(p => p.Id == id);
+                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
             if (pos == null)
-                return NotFound();
+                return NotFound(new { message = $"Position with ID {id} not found." });
 
             pos.Title = model.Title;
 
@@ -148,24 +167,25 @@ namespace EmployeeManager.API.Controllers
                 .ToList();
             _appDbContext.DepartmentPositions.AddRange(linksToAdd);
 
-            await _appDbContext.SaveChangesAsync();
+            await _appDbContext.SaveChangesAsync(cancellationToken);
 
-            return Ok(pos);
+            var updatedDto = new PositionDTO { Id = pos.Id, Title = pos.Title };
+            return Ok(updatedDto);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
         {
-            var pos = await _appDbContext.Positions.FindAsync(id);
+            var pos = await _appDbContext.Positions.FindAsync(new object[] { id }, cancellationToken);
             if (pos == null)
-                return NotFound();
+                return NotFound(new { message = $"Position with ID {id} not found." });
 
             try
             {
                 // Update all employees with this position to position 16 (Unemployed)
                 var employeesWithPosition = await _appDbContext.Employees
                     .Where(e => e.PositionId == id)
-                    .ToListAsync();
+                    .ToListAsync(cancellationToken);
 
                 foreach (var emp in employeesWithPosition)
                 {
@@ -173,11 +193,11 @@ namespace EmployeeManager.API.Controllers
                 }
 
                 _appDbContext.Positions.Remove(pos);
-                await _appDbContext.SaveChangesAsync();
+                await _appDbContext.SaveChangesAsync(cancellationToken);
             }
             catch (DbUpdateException ex)
             {
-                return Conflict(new { message = "Error deleting position: " + ex.Message });
+                return Conflict(new { message = "Error deleting position.", detail = ex.Message });
             }
 
             return NoContent();

@@ -7,6 +7,7 @@ import { PositionService } from '../../positions/position.service';
 import { EmployeeListComponent } from '../employee-list/employee-list';
 import { Department } from '../../../shared/models/department.model';
 import { Position } from '../../../shared/models/position.model';
+import { NewEmployeeData } from '../../../shared/models/payloads';
 
 @Component({
   selector: 'app-employees-by-department',
@@ -107,10 +108,10 @@ export class EmployeesByDepartmentComponent implements OnInit {
     return isNaN(id) ? null : id;
   }
 
-  handleAdd(payload: any) {
+  handleAdd(payload: Omit<NewEmployeeData, 'departmentId'>) {
     const depId = this.getDepId();
     if (!depId) return;
-    const createPayload = { ...payload, departmentId: depId };
+    const createPayload: NewEmployeeData = { ...payload, departmentId: depId };
     this.employeeService.addEmployee(createPayload).subscribe({
       next: () => this.loadEmployees(depId),
       error: (err: Error) => this.error.set(err.message),

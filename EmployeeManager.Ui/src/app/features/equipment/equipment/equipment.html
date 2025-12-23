@@ -19,7 +19,7 @@
         <button
           class="btn btn-success"
           (click)="saveEquipment()"
-          [disabled]="isSaving() || !editedEquipment().name.trim()"
+          [disabled]="isSaving() || !isFormValid()"
         >
           @if (isSaving()) { Saving... } @else { 💾 Save Changes }
         </button>

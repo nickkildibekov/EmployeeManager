@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { EquipmentService } from '../equipment.service';
 import { Equipment } from '../../../shared/models/equipment.model';
+import { EquipmentCreationPayload } from '../../../shared/models/payloads';
 
 @Component({
   selector: 'app-equipment-by-department',
@@ -22,6 +23,7 @@ export class EquipmentByDepartmentComponent implements OnInit {
   pageSize = signal(10);
   total = signal(0);
   search = signal('');
+  statusFilter = signal<'all' | 'operational' | 'out_of_service'>('all');
   isLoading = signal(false);
   error = signal('');
 
@@ -30,7 +32,7 @@ export class EquipmentByDepartmentComponent implements OnInit {
 
   ngOnInit(): void {
     const depId = Number(this.route.snapshot.paramMap.get('id'));
-    if (!depId) {
+    if (!depId || isNaN(depId)) {
       this.error.set('Invalid department id');
       return;
     }
@@ -40,13 +42,19 @@ export class EquipmentByDepartmentComponent implements OnInit {
 
   private loadEquipment(depId: number) {
     this.isLoading.set(true);
+    const isWorkParam =
+      this.statusFilter() === 'all'
+        ? null
+        : this.statusFilter() === 'operational'
+        ? true
+        : false;
     this.equipmentService
-      .getEquipmentByDepartment(depId, this.page(), this.pageSize(), this.search())
+      .getEquipmentByDepartment(depId, this.page(), this.pageSize(), this.search(), isWorkParam)
       .subscribe({
         next: (res) => {
           this.equipment.set(res.items);
+          this.filtered.set(res.items);
           this.total.set(res.total);
-          this.applyFilter();
         },
         error: (err: Error) => {
           console.error(err);
@@ -57,14 +65,9 @@ export class EquipmentByDepartmentComponent implements OnInit {
   }
 
   applyFilter() {
+    // Server-side filtering now; keep method for compatibility
     const list = this.equipment() || [];
-    const term = this.search().trim().toLowerCase();
-    let filtered = list;
-    if (term) filtered = list.filter((x) => x.name.toLowerCase().includes(term));
-    this.total.set(filtered.length);
-    const start = (this.page() - 1) * this.pageSize();
-    const end = start + this.pageSize();
-    this.filtered.set(filtered.slice(start, end));
+    this.filtered.set(list);
   }
 
   onSearch(term: string) {
@@ -76,7 +79,15 @@ export class EquipmentByDepartmentComponent implements OnInit {
 
   changePage(page: number) {
     this.page.set(page);
-    this.applyFilter();
+    const depId = Number(this.route.snapshot.paramMap.get('id'));
+    if (depId) this.loadEquipment(depId);
+  }
+
+  onStatusChange(value: string) {
+    this.statusFilter.set(value as 'all' | 'operational' | 'out_of_service');
+    this.page.set(1);
+    const depId = Number(this.route.snapshot.paramMap.get('id'));
+    if (depId) this.loadEquipment(depId);
   }
 
   onDelete(eqId: number) {
@@ -89,9 +100,9 @@ export class EquipmentByDepartmentComponent implements OnInit {
     });
   }
 
-  onAdd(payload: any) {
+  onAdd(payload: Omit<EquipmentCreationPayload, 'departmentId'>) {
     const depId = Number(this.route.snapshot.paramMap.get('id'));
-    const createPayload = { ...payload, departmentId: depId };
+    const createPayload: EquipmentCreationPayload = { ...payload, departmentId: depId };
     this.equipmentService.addEquipment(createPayload).subscribe({
       next: () => this.loadEquipment(depId),
       error: (err: Error) => this.error.set(err.message),

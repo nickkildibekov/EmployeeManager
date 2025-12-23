@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -46,6 +46,17 @@ export class Equipment implements OnInit {
   isSaving = signal(false);
   isEditMode = signal(false);
   error = signal('');
+
+  isFormValid = computed(() => {
+    const eq = this.editedEquipment();
+    return (
+      eq.name.trim().length > 0 &&
+      eq.serialNumber.trim().length > 0 &&
+      eq.departmentId > 0 &&
+      eq.categoryId > 0 &&
+      eq.purchaseDate.length > 0
+    );
+  });
 
   equipmentId: number | undefined;
 
@@ -126,12 +137,13 @@ export class Equipment implements OnInit {
 
   saveEquipment(): void {
     const eq = this.editedEquipment();
-    if (!eq.name.trim() || !eq.serialNumber.trim() || !eq.departmentId || !eq.purchaseDate) {
-      alert('Please fill required fields (name, serial, department, purchase date).');
+    if (!this.isFormValid()) {
+      this.error.set('Please fill all required fields (name, serial, category, department, purchase date).');
       return;
     }
 
     this.isSaving.set(true);
+    this.error.set('');
 
     const payload: EquipmentUpdatePayload = {
       id: eq.id,

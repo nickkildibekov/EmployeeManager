@@ -24,7 +24,8 @@ export class EquipmentService {
     departmentId: number,
     page: number = 1,
     pageSize: number = 10,
-    search: string = ''
+    search: string = '',
+    isWork: boolean | null = null
   ): Observable<{ items: Equipment[]; total: number }> {
     let params = new HttpParams()
       .set('departmentId', String(departmentId))
@@ -33,6 +34,10 @@ export class EquipmentService {
 
     if (search && search.trim()) {
       params = params.set('search', search.trim());
+    }
+
+    if (isWork !== null && isWork !== undefined) {
+      params = params.set('isWork', String(isWork));
     }
 
     return this.httpClient.get<{ items: Equipment[]; total: number }>(this.apiUrl, { params }).pipe(

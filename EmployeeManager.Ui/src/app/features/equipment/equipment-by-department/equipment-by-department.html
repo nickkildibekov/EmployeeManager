@@ -6,6 +6,11 @@
       placeholder="Search equipment"
       (input)="onSearch($any($event.target).value)"
     />
+    <select (change)="onStatusChange($event.target.value)">
+      <option value="all">All Statuses</option>
+      <option value="operational">Operational</option>
+      <option value="out_of_service">Out of Service</option>
+    </select>
     <div class="pagination">
       <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Prev</button>
       <span>Page {{ page() }} / {{ Math.ceil((total() || 0) / pageSize()) || 1 }}</span>
@@ -27,7 +32,7 @@
       <div class="equipment-info">
         <strong>{{ eq.name }}</strong>
         <div>🔢 {{ eq.serialNumber }}</div>
-        <div class="category">{{ eq.category }}</div>
+        <div class="category">{{ eq.categoryName }}</div>
         <div>Status: {{ eq.isWork ? 'Operational' : 'Out of Service' }}</div>
       </div>
       <button (click)="onDelete(eq.id); $event.stopPropagation()" class="btn btn-danger btn-sm">Delete</button>

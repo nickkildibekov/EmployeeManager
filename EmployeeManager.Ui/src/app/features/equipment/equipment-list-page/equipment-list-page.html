@@ -61,6 +61,11 @@
         {{ dept.name }}
       </option>
     </select>
+    <select class="filter-select" (change)="onStatusChange($event.target.value)">
+      <option value="all">All Statuses</option>
+      <option value="operational">Operational</option>
+      <option value="out_of_service">Out of Service</option>
+    </select>
     <input
       type="text"
       class="filter-search"

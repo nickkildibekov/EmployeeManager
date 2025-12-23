@@ -25,6 +25,7 @@ export class EquipmentListPageComponent implements OnInit {
   departments = signal<Department[]>([]);
 
   selectedDepartmentId = signal<number | null>(null);
+  statusFilter = signal<'all' | 'operational' | 'out_of_service'>('all');
   searchTerm = signal('');
   page = signal(1);
   pageSize = signal(10);
@@ -61,12 +62,19 @@ export class EquipmentListPageComponent implements OnInit {
 
   loadEquipment() {
     this.isLoading.set(true);
+    const isWorkParam =
+      this.statusFilter() === 'all'
+        ? null
+        : this.statusFilter() === 'operational'
+        ? true
+        : false;
     const sub = this.equipmentService
       .getEquipmentByDepartment(
         this.selectedDepartmentId() || 0,
         this.page(),
         this.pageSize(),
-        this.searchTerm()
+        this.searchTerm(),
+        isWorkParam
       )
       .subscribe({
         next: (res) => {
@@ -88,6 +96,12 @@ export class EquipmentListPageComponent implements OnInit {
   onDepartmentChange(depId: string) {
     const id = depId ? parseInt(depId, 10) : null;
     this.selectedDepartmentId.set(id);
+    this.page.set(1);
+    this.loadEquipment();
+  }
+
+  onStatusChange(value: string) {
+    this.statusFilter.set(value as 'all' | 'operational' | 'out_of_service');
     this.page.set(1);
     this.loadEquipment();
   }

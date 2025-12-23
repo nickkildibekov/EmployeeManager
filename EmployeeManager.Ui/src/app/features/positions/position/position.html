@@ -54,15 +54,23 @@
 
       <div class="form-group">
         <label>Department</label>
-        <select
-          [(ngModel)]="editedPosition().departmentId"
-          [disabled]="!isEditMode()"
-          class="form-input"
-        >
-          <option *ngFor="let dep of departments()" [value]="dep.id">
-            {{ dep.name }}
-          </option>
-        </select>
+        @if (isEditMode()) {
+          <select
+            [(ngModel)]="editedPosition().departmentId"
+            class="form-input"
+          >
+            <option *ngFor="let dep of departments()" [value]="dep.id">
+              {{ dep.name }}
+            </option>
+          </select>
+        } @else {
+          <input
+            type="text"
+            [value]="getDepartmentName(editedPosition().departmentId)"
+            readonly
+            class="form-input"
+          />
+        }
       </div>
     </div>
   </div>

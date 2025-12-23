@@ -65,13 +65,15 @@ export class DepartmentComponent implements OnInit {
     const dept = this.department();
     if (!dept || !dept.equipments) return [];
 
-    // Group equipment by name and count (with first ID)
-    const groupedMap = new Map<string, { count: number; firstId: number }>();
+    // Group equipment by name and count operational/non-operational status
+    const groupedMap = new Map<string, { count: number; firstId: number; operational: number; nonOperational: number }>();
     dept.equipments.forEach((eq) => {
-      const existing = groupedMap.get(eq.name) || { count: 0, firstId: eq.id };
+      const existing = groupedMap.get(eq.name) || { count: 0, firstId: eq.id, operational: 0, nonOperational: 0 };
       groupedMap.set(eq.name, {
         count: existing.count + 1,
         firstId: existing.firstId,
+        operational: existing.operational + (eq.isWork ? 1 : 0),
+        nonOperational: existing.nonOperational + (eq.isWork ? 0 : 1),
       });
     });
 
@@ -79,6 +81,9 @@ export class DepartmentComponent implements OnInit {
       id: data.firstId,
       name,
       count: data.count,
+      operational: data.operational,
+      nonOperational: data.nonOperational,
+      statusText: `${data.operational} operational, ${data.nonOperational} out of service`,
     }));
   });
 

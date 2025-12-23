@@ -143,4 +143,9 @@ export class PositionComponent implements OnInit {
   goBack(): void {
     this.router.navigate(['/positions']);
   }
+
+  getDepartmentName(departmentId: number): string {
+    const dept = this.departments().find(d => d.id === departmentId);
+    return dept ? dept.name : 'Unknown Department';
+  }
 }

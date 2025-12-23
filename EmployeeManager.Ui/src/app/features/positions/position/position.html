@@ -53,20 +53,28 @@
       </div>
 
       <div class="form-group">
-        <label>Department</label>
+        <label>Departments</label>
         @if (isEditMode()) {
-          <select
-            [(ngModel)]="editedPosition().departmentId"
-            class="form-input"
-          >
-            <option *ngFor="let dep of departments()" [value]="dep.id">
-              {{ dep.name }}
-            </option>
-          </select>
+          <div class="departments-checkboxes">
+            @for (dep of departments(); track dep.id) {
+              <label class="checkbox-label">
+                <input
+                  type="checkbox"
+                  [checked]="isDepartmentSelected(dep.id)"
+                  (change)="toggleDepartment(dep.id)"
+                  class="checkbox-input"
+                />
+                <span>{{ dep.name }}</span>
+              </label>
+            }
+            @if (departments().length === 0) {
+              <p class="text-muted">No departments available</p>
+            }
+          </div>
         } @else {
           <input
             type="text"
-            [value]="getDepartmentName(editedPosition().departmentId)"
+            [value]="currentDepartments()"
             readonly
             class="form-input"
           />

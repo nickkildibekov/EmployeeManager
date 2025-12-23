@@ -21,13 +21,13 @@ export interface EmployeeUpdateData {
 
 export interface PositionCreationPayload {
   title: string;
-  departmentId: number | null;
+  departmentIds: number[];
 }
 
 export interface PositionUpdatePayload {
   id: number;
   title: string;
-  departmentId: number;
+  departmentIds: number[];
 }
 
 export interface EquipmentCreationPayload {

@@ -8,6 +8,8 @@ import { Position } from '../../../shared/models/position.model';
 import { Department } from '../../../shared/models/department.model';
 import { Employee } from '../../../shared/models/employee.model';
 import { PositionCreationPayload } from '../../../shared/models/payloads';
+import { NavigationService } from '../../../shared/services/navigation.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-position-list-page',
@@ -20,6 +22,8 @@ export class PositionListPageComponent implements OnInit {
   private positionService = inject(PositionService);
   private departmentService = inject(DepartmentService);
   private router = inject(Router);
+  private navigationService = inject(NavigationService);
+  private toastService = inject(ToastService);
   private destroyRef = inject(DestroyRef);
 
   positions = signal<Position[]>([]);
@@ -37,7 +41,7 @@ export class PositionListPageComponent implements OnInit {
 
   newPosition = signal<PositionCreationPayload>({
     title: '',
-    departmentId: null,
+    departmentIds: [],
   });
 
   Math = Math;
@@ -50,7 +54,7 @@ export class PositionListPageComponent implements OnInit {
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
       next: (depts) => this.departments.set(depts),
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => this.toastService.error(err.message),
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
@@ -69,7 +73,10 @@ export class PositionListPageComponent implements OnInit {
           this.positions.set(res.items);
           this.total.set(res.total);
         },
-        error: (err: Error) => this.error.set(err.message),
+        error: (err: Error) => {
+          this.toastService.error(err.message);
+          this.error.set(err.message);
+        },
         complete: () => this.isLoading.set(false),
       });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
@@ -105,13 +112,13 @@ export class PositionListPageComponent implements OnInit {
   resetForm() {
     this.newPosition.set({
       title: '',
-      departmentId: null,
+      departmentIds: [],
     });
   }
 
   isFormValid(): boolean {
     const pos = this.newPosition();
-    return !!(pos.title.trim() && pos.departmentId !== null);
+    return !!(pos.title.trim() && pos.departmentIds.length > 0);
   }
 
   addPosition() {
@@ -119,13 +126,14 @@ export class PositionListPageComponent implements OnInit {
 
     const pos = this.newPosition();
     this.positionService.addPosition(pos).subscribe({
-      next: () => {
+      next: (created) => {
         this.resetForm();
         this.isAddFormVisible.set(false);
         this.page.set(1);
         this.loadPositions();
+        this.toastService.success('Position created successfully!');
       },
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => this.toastService.error(err.message),
     });
   }
 
@@ -133,8 +141,11 @@ export class PositionListPageComponent implements OnInit {
     if (!confirm('Are you sure?')) return;
 
     this.positionService.deletePosition(id).subscribe({
-      next: () => this.loadPositions(),
-      error: (err: Error) => this.error.set(err.message),
+      next: () => {
+        this.loadPositions();
+        this.toastService.success('Position deleted successfully!');
+      },
+      error: (err: Error) => this.toastService.error(err.message),
     });
   }
 
@@ -146,6 +157,26 @@ export class PositionListPageComponent implements OnInit {
 
   openPosition(id: number) {
     this.router.navigate(['/positions', id]);
+  }
+
+  isDepartmentSelected(departmentId: number): boolean {
+    return this.newPosition().departmentIds.includes(departmentId);
+  }
+
+  toggleDepartment(departmentId: number): void {
+    const currentIds = [...this.newPosition().departmentIds];
+    const index = currentIds.indexOf(departmentId);
+    
+    if (index > -1) {
+      currentIds.splice(index, 1);
+    } else {
+      currentIds.push(departmentId);
+    }
+    
+    this.newPosition.update(pos => ({
+      ...pos,
+      departmentIds: currentIds
+    }));
   }
 
   getEmployeeCount(posId: number): number {

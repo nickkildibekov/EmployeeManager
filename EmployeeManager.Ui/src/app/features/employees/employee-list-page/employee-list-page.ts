@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NavigationService } from '../../../shared/services/navigation.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { EmployeeService } from '../employee.service';
 import { DepartmentService } from '../../departments/department.service';
 import { PositionService } from '../../positions/position.service';
@@ -23,6 +25,8 @@ export class EmployeeListPageComponent implements OnInit {
   private positionService = inject(PositionService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private navigationService = inject(NavigationService);
+  private toastService = inject(ToastService);
 
   employees = signal<Employee[]>([]);
   departments = signal<Department[]>([]);
@@ -57,7 +61,10 @@ export class EmployeeListPageComponent implements OnInit {
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
       next: (depts) => this.departments.set(depts),
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
@@ -65,7 +72,10 @@ export class EmployeeListPageComponent implements OnInit {
   private loadPositions() {
     const sub = this.positionService.getAllPositions().subscribe({
       next: (pos) => this.positions.set(pos),
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
@@ -84,7 +94,10 @@ export class EmployeeListPageComponent implements OnInit {
           this.employees.set(res.items);
           this.total.set(res.total);
         },
-        error: (err: Error) => this.error.set(err.message),
+        error: (err: Error) => {
+          this.error.set(err.message);
+          this.toastService.error(err.message);
+        },
         complete: () => this.isLoading.set(false),
       });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
@@ -148,17 +161,27 @@ export class EmployeeListPageComponent implements OnInit {
         this.isAddFormVisible.set(false);
         this.page.set(1);
         this.loadEmployees();
+        this.toastService.success('Employee created successfully');
       },
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
   }
 
   deleteEmployee(id: number) {
-    if (!confirm('Are you sure?')) return;
+    if (!this.toastService.confirm('Are you sure?')) return;
 
     this.employeeService.deleteEmployee(id).subscribe({
-      next: () => this.loadEmployees(),
-      error: (err: Error) => this.error.set(err.message),
+      next: () => {
+        this.loadEmployees();
+        this.toastService.success('Employee deleted successfully');
+      },
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
   }
 

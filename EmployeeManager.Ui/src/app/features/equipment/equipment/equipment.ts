@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs';
 
+import { NavigationService } from '../../../shared/services/navigation.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { Equipment as EquipmentModel } from '../../../shared/models/equipment.model';
 import { EquipmentUpdatePayload } from '../../../shared/models/payloads';
 import { EquipmentService } from '../equipment.service';
@@ -23,6 +25,8 @@ export class Equipment implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private navigationService = inject(NavigationService);
+  private toastService = inject(ToastService);
 
   equipment = signal<EquipmentModel | undefined>(undefined);
   departments = signal<Department[]>([]);
@@ -71,6 +75,7 @@ export class Equipment implements OnInit {
 
           if (!id || isNaN(id)) {
             this.error.set('Equipment Id is missing or invalid!');
+            this.toastService.error('Equipment Id is missing or invalid!');
             this.isFetching.set(false);
             return [];
           }
@@ -99,6 +104,7 @@ export class Equipment implements OnInit {
         },
         error: (error: Error) => {
           this.error.set(error.message);
+          this.toastService.error(error.message);
           this.isFetching.set(false);
         },
       });
@@ -111,7 +117,10 @@ export class Equipment implements OnInit {
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
       next: (depts) => this.departments.set(depts),
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
@@ -139,6 +148,9 @@ export class Equipment implements OnInit {
     const eq = this.editedEquipment();
     if (!this.isFormValid()) {
       this.error.set(
+        'Please fill all required fields (name, serial, category, department, purchase date).'
+      );
+      this.toastService.error(
         'Please fill all required fields (name, serial, category, department, purchase date).'
       );
       return;
@@ -170,33 +182,34 @@ export class Equipment implements OnInit {
         this.equipment.set(merged);
         this.isEditMode.set(false);
         this.isSaving.set(false);
+        this.toastService.success('Equipment updated successfully');
       },
       error: (err: Error) => {
-        console.error('Error updating equipment:', err);
         this.error.set(err.message);
+        this.toastService.error(err.message);
         this.isSaving.set(false);
       },
     });
   }
 
   deleteEquipment(): void {
-    if (!confirm('Are you sure you want to delete this equipment?')) return;
+    if (!this.toastService.confirm('Are you sure you want to delete this equipment?')) return;
 
     const id = this.equipmentId;
     if (!id) return;
 
     this.equipmentService.deleteEquipment(id).subscribe({
       next: () => {
-        this.router.navigate(['/equipment']);
+        this.navigationService.afterDelete('Equipment', '/equipment');
       },
       error: (err: Error) => {
-        console.error('Error deleting equipment:', err);
         this.error.set(err.message);
+        this.toastService.error(err.message);
       },
     });
   }
 
   goBack(): void {
-    this.router.navigate(['/equipment']);
+    this.navigationService.goBack('/equipment');
   }
 }

@@ -84,12 +84,21 @@ namespace EmployeeManager.API.Controllers
         public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
         {
             var position = await _appDbContext.Positions
+                .Include(p => p.DepartmentPositions!)
+                    .ThenInclude(dp => dp.Department)
                 .AsNoTracking()
                 .Where(p => p.Id == id)
                 .Select(p => new PositionDTO
                 {
                     Id = p.Id,
                     Title = p.Title,
+                    Departments = p.DepartmentPositions!
+                        .Select(dp => new DepartmentDTO
+                        {
+                            Id = dp.Department!.Id,
+                            Name = dp.Department.Name
+                        })
+                        .ToList()
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 

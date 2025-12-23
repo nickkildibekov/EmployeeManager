@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs';
 
+import { NavigationService } from '../../../shared/services/navigation.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { Employee } from '../../../shared/models/employee.model';
 import { EmployeeUpdateData } from '../../../shared/models/payloads';
 import { EmployeeService } from '../employee.service';
@@ -25,6 +27,8 @@ export class EmployeeComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private navigationService = inject(NavigationService);
+  private toastService = inject(ToastService);
 
   employee = signal<Employee | undefined>(undefined);
   departments = signal<Department[]>([]);
@@ -58,6 +62,7 @@ export class EmployeeComponent implements OnInit {
 
           if (!id || isNaN(id)) {
             this.error.set('Employee Id is missing or invalid!');
+            this.toastService.error('Employee Id is missing or invalid!');
             this.isFetching.set(false);
             return [];
           }
@@ -82,6 +87,7 @@ export class EmployeeComponent implements OnInit {
         },
         error: (error: Error) => {
           this.error.set(error.message);
+          this.toastService.error(error.message);
           this.isFetching.set(false);
         },
       });
@@ -94,7 +100,10 @@ export class EmployeeComponent implements OnInit {
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
       next: (depts) => this.departments.set(depts),
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
@@ -102,7 +111,10 @@ export class EmployeeComponent implements OnInit {
   private loadPositions() {
     const sub = this.positionService.getAllPositions().subscribe({
       next: (pos) => this.positions.set(pos),
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
@@ -125,7 +137,7 @@ export class EmployeeComponent implements OnInit {
   saveEmployee(): void {
     const emp = this.editedEmployee();
     if (!emp.firstName.trim() || !emp.lastName.trim() || !emp.phoneNumber.trim()) {
-      alert('Please fill all required fields.');
+      this.toastService.warning('Please fill all required fields.');
       return;
     }
 
@@ -136,33 +148,34 @@ export class EmployeeComponent implements OnInit {
         this.employee.set(updatedEmp);
         this.isEditMode.set(false);
         this.isSaving.set(false);
+        this.toastService.success('Employee updated successfully');
       },
       error: (err: Error) => {
-        console.error('Error updating employee:', err);
         this.error.set(err.message);
+        this.toastService.error(err.message);
         this.isSaving.set(false);
       },
     });
   }
 
   deleteEmployee(): void {
-    if (!confirm('Are you sure you want to delete this employee?')) return;
+    if (!this.toastService.confirm('Are you sure you want to delete this employee?')) return;
 
     const id = this.employeeId;
     if (!id) return;
 
     this.employeeService.deleteEmployee(id).subscribe({
       next: () => {
-        this.router.navigate(['/employees']);
+        this.navigationService.afterDelete('Employee', '/employees');
       },
       error: (err: Error) => {
-        console.error('Error deleting employee:', err);
         this.error.set(err.message);
+        this.toastService.error(err.message);
       },
     });
   }
 
   goBack(): void {
-    this.router.navigate(['/employees']);
+    this.navigationService.goBack('/employees');
   }
 }

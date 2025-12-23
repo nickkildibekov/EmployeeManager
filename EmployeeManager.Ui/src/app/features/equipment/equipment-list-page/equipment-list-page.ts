@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
+import { NavigationService } from '../../../shared/services/navigation.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EquipmentService } from '../equipment.service';
 import { DepartmentService } from '../../departments/department.service';
@@ -23,6 +25,8 @@ export class EquipmentListPageComponent implements OnInit {
   private departmentService = inject(DepartmentService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private navigationService = inject(NavigationService);
+  private toastService = inject(ToastService);
   
   private searchSubject = new Subject<string>();
 
@@ -74,7 +78,10 @@ export class EquipmentListPageComponent implements OnInit {
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
       next: (depts) => this.departments.set(depts),
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
@@ -96,7 +103,10 @@ export class EquipmentListPageComponent implements OnInit {
           this.equipment.set(res.items);
           this.total.set(res.total);
         },
-        error: (err: Error) => this.error.set(err.message),
+        error: (err: Error) => {
+          this.error.set(err.message);
+          this.toastService.error(err.message);
+        },
         complete: () => this.isLoading.set(false),
       });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
@@ -165,17 +175,27 @@ export class EquipmentListPageComponent implements OnInit {
         this.isAddFormVisible.set(false);
         this.page.set(1);
         this.loadEquipment();
+        this.toastService.success('Equipment created successfully');
       },
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
   }
 
   deleteEquipment(id: number) {
-    if (!confirm('Are you sure?')) return;
+    if (!this.toastService.confirm('Are you sure?')) return;
 
     this.equipmentService.deleteEquipment(id).subscribe({
-      next: () => this.loadEquipment(),
-      error: (err: Error) => this.error.set(err.message),
+      next: () => {
+        this.loadEquipment();
+        this.toastService.success('Equipment deleted successfully');
+      },
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
     });
   }
   openEquipment(id: number) {

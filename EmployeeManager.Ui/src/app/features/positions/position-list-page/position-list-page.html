@@ -14,12 +14,21 @@
   <div *ngIf="isAddFormVisible()" class="add-form">
     <div class="form-row">
       <input class="form-control" placeholder="Position Title" [(ngModel)]="newPosition().title" />
-      <select class="form-control" [(ngModel)]="newPosition().departmentId">
-        <option [value]="null">Select Department</option>
-        <option *ngFor="let dep of departments()" [value]="dep.id">
-          {{ dep.name }}
-        </option>
-      </select>
+    </div>
+    <div class="departments-section">
+      <label class="section-label">Select Departments:</label>
+      <div class="departments-checkboxes">
+        <label *ngFor="let dep of departments()" class="checkbox-label">
+          <input
+            type="checkbox"
+            [checked]="isDepartmentSelected(dep.id)"
+            (change)="toggleDepartment(dep.id)"
+            class="checkbox-input"
+          />
+          <span>{{ dep.name }}</span>
+        </label>
+        <p *ngIf="departments().length === 0" class="text-muted">No departments available</p>
+      </div>
     </div>
     <div class="button-row">
       <button class="btn btn-success" (click)="addPosition()" [disabled]="!isFormValid()">

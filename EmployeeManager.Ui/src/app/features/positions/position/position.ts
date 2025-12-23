@@ -1,8 +1,10 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { switchMap } from 'rxjs';
+import { NavigationService } from '../../../shared/services/navigation.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 import { Position } from '../../../shared/models/position.model';
 import { PositionUpdatePayload } from '../../../shared/models/payloads';
@@ -20,7 +22,8 @@ export class PositionComponent implements OnInit {
   private positionService = inject(PositionService);
   private departmentService = inject(DepartmentService);
   private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  private navigationService = inject(NavigationService);
+  private toastService = inject(ToastService);
   private destroyRef = inject(DestroyRef);
 
   position = signal<Position | undefined>(undefined);
@@ -29,7 +32,16 @@ export class PositionComponent implements OnInit {
   editedPosition = signal<PositionUpdatePayload>({
     id: 0,
     title: '',
-    departmentId: 0,
+    departmentIds: [],
+  });
+  
+  // Computed property to show department names from position data
+  currentDepartments = computed(() => {
+    const pos = this.position();
+    if (!pos || !pos.departments || pos.departments.length === 0) {
+      return 'No departments assigned';
+    }
+    return pos.departments.map(d => d.name).join(', ');
   });
 
   isFetching = signal(false);
@@ -62,14 +74,16 @@ export class PositionComponent implements OnInit {
       .subscribe({
         next: (pos) => {
           this.position.set(pos);
+          const deptIds = pos.departments ? pos.departments.map(d => d.id) : [];
           this.editedPosition.set({
             id: pos.id,
             title: pos.title,
-            departmentId: pos.departmentId,
+            departmentIds: deptIds,
           });
           this.isFetching.set(false);
         },
         error: (error: Error) => {
+          this.toastService.error(error.message);
           this.error.set(error.message);
           this.isFetching.set(false);
         },
@@ -83,7 +97,10 @@ export class PositionComponent implements OnInit {
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
       next: (depts) => this.departments.set(depts),
-      error: (err: Error) => this.error.set(err.message),
+      error: (err: Error) => {
+        this.toastService.error('Failed to load departments');
+        this.error.set(err.message);
+      },
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
@@ -92,18 +109,39 @@ export class PositionComponent implements OnInit {
     this.isEditMode.update((val) => !val);
     if (!this.isEditMode() && this.position()) {
       const currentPos = this.position()!;
+      const deptIds = currentPos.departments ? currentPos.departments.map(d => d.id) : [];
       this.editedPosition.set({
         id: currentPos.id,
         title: currentPos.title,
-        departmentId: currentPos.departmentId,
+        departmentIds: deptIds,
       });
     }
+  }
+
+  isDepartmentSelected(departmentId: number): boolean {
+    return this.editedPosition().departmentIds.includes(departmentId);
+  }
+
+  toggleDepartment(departmentId: number): void {
+    const currentIds = [...this.editedPosition().departmentIds];
+    const index = currentIds.indexOf(departmentId);
+    
+    if (index > -1) {
+      currentIds.splice(index, 1);
+    } else {
+      currentIds.push(departmentId);
+    }
+    
+    this.editedPosition.update(pos => ({
+      ...pos,
+      departmentIds: currentIds
+    }));
   }
 
   savePosition(): void {
     const pos = this.editedPosition();
     if (!pos.title.trim()) {
-      alert('Please fill all required fields.');
+      this.toastService.warning('Please fill all required fields');
       return;
     }
 
@@ -114,9 +152,10 @@ export class PositionComponent implements OnInit {
         this.position.set(updatedPos);
         this.isEditMode.set(false);
         this.isSaving.set(false);
+        this.navigationService.afterUpdate('position', { stayOnPage: true });
       },
       error: (err: Error) => {
-        console.error('Error updating position:', err);
+        this.toastService.error(err.message);
         this.error.set(err.message);
         this.isSaving.set(false);
       },
@@ -131,21 +170,16 @@ export class PositionComponent implements OnInit {
 
     this.positionService.deletePosition(id).subscribe({
       next: () => {
-        this.router.navigate(['/positions']);
+        this.navigationService.afterDelete('position');
       },
       error: (err: Error) => {
-        console.error('Error deleting position:', err);
+        this.toastService.error(err.message);
         this.error.set(err.message);
       },
     });
   }
 
   goBack(): void {
-    this.router.navigate(['/positions']);
-  }
-
-  getDepartmentName(departmentId: number): string {
-    const dept = this.departments().find(d => d.id === departmentId);
-    return dept ? dept.name : 'Unknown Department';
+    this.navigationService.goBack('/positions');
   }
 }

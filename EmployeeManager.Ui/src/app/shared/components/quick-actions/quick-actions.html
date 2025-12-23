@@ -1,0 +1,31 @@
+<div class="quick-actions">
+  <button 
+    class="fab-main" 
+    (click)="toggleMenu()"
+    [class.active]="isOpen()"
+    aria-label="Quick actions menu"
+  >
+    {{ isOpen() ? '✕' : '+' }}
+  </button>
+  
+  @if (isOpen()) {
+    <div class="fab-menu">
+      <button class="fab-item" (click)="navigate('/employees')" aria-label="Add Employee">
+        <span class="icon">👤</span>
+        <span class="label">Add Employee</span>
+      </button>
+      <button class="fab-item" (click)="navigate('/departments')" aria-label="Add Department">
+        <span class="icon">🏢</span>
+        <span class="label">Add Department</span>
+      </button>
+      <button class="fab-item" (click)="navigate('/positions')" aria-label="Add Position">
+        <span class="icon">💼</span>
+        <span class="label">Add Position</span>
+      </button>
+      <button class="fab-item" (click)="navigate('/equipment')" aria-label="Add Equipment">
+        <span class="icon">🔧</span>
+        <span class="label">Add Equipment</span>
+      </button>
+    </div>
+  }
+</div>

@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { switchMap } from 'rxjs';
 
+import { NavigationService } from '../../../shared/services/navigation.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { Department } from '../../../shared/models/department.model';
 import { DepartmentUpdateDTO } from '../../../shared/models/payloads';
 
@@ -21,6 +23,8 @@ export class DepartmentComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private navigationService = inject(NavigationService);
+  private toastService = inject(ToastService);
 
   department = signal<Department | undefined>(undefined);
   editedDepartment = signal<DepartmentUpdateDTO>({ id: 0, name: '' });
@@ -96,6 +100,7 @@ export class DepartmentComponent implements OnInit {
 
           if (!id || isNaN(id)) {
             this.error.set('Department Id is missing or invalid!');
+            this.toastService.error('Department Id is missing or invalid!');
             this.isFetching.set(false);
             return [];
           }
@@ -116,6 +121,7 @@ export class DepartmentComponent implements OnInit {
         },
         error: (error: Error) => {
           this.error.set(error.message);
+          this.toastService.error(error.message);
           this.isFetching.set(false);
         },
       });
@@ -141,7 +147,7 @@ export class DepartmentComponent implements OnInit {
     const id = this.departmentId;
     const { name } = this.editedDepartment();
     if (!id || !name.trim()) {
-      console.warn('Cannot save: Invalid ID or empty name.');
+      this.toastService.warning('Cannot save: Invalid ID or empty name.');
       return;
     }
 
@@ -159,16 +165,18 @@ export class DepartmentComponent implements OnInit {
         }));
         this.isEditMode.set(false);
         this.isSaving.set(false);
+        this.toastService.success('Department updated successfully');
       },
       error: (err: Error) => {
-        console.error('Error updating department:', err);
+        this.error.set(err.message);
+        this.toastService.error(err.message);
         this.isSaving.set(false);
       },
     });
   }
 
   goBack(): void {
-    this.router.navigate(['/departments']);
+    this.navigationService.goBack('/departments');
   }
 
   navigateToPosition(positionId: number): void {

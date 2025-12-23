@@ -1,5 +1,11 @@
 export interface Position {
   id: number;
   title: string;
-  departmentId: number;
+  departments?: Array<{ id: number; name: string }>;
+}
+
+export interface PositionUpdatePayload {
+  id: number;
+  title: string;
+  departmentIds: number[];
 }

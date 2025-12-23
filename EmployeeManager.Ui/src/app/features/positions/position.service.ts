@@ -56,12 +56,12 @@ export class PositionService {
   addPosition(positionData: PositionCreationPayload): Observable<Position> {
     const payload = {
       title: positionData.title,
-      departmentId: positionData.departmentId,
+      departmentIds: positionData.departmentIds,
     };
     return this.httpClient.post<Position>(this.apiUrl, payload).pipe(
       catchError((error) => {
         return throwError(
-          () => new Error('Error adding position to department: ' + positionData.departmentId)
+          () => new Error('Error adding position')
         );
       })
     );

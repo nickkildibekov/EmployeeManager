@@ -2,6 +2,8 @@ import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DepartmentService } from '../department.service';
 import { Department } from '../../../shared/models/department.model';
+import { NavigationService } from '../../../shared/services/navigation.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 import { Router } from '@angular/router';
 
@@ -16,6 +18,8 @@ export class DepartmentListComponent implements OnInit {
   private departmentService = inject(DepartmentService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
+  private navigationService = inject(NavigationService);
+  private toastService = inject(ToastService);
   departments = signal<Department[] | undefined>(undefined);
   isFetching = signal(false);
   error = signal('');
@@ -28,6 +32,7 @@ export class DepartmentListComponent implements OnInit {
       },
       error: (error: Error) => {
         this.error.set(error.message);
+        this.toastService.error(error.message);
       },
       complete: () => {
         this.isFetching.set(false);

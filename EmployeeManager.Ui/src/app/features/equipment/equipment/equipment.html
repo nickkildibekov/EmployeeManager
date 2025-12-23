@@ -118,15 +118,17 @@
               </button>
             </div>
             } @else {
-            <div class="inline-form">
+            <div class="inline-form-vertical">
               <input class="form-input" placeholder="Category Name" [(ngModel)]="newCategoryName" />
-              <input class="form-input" placeholder="Description" [(ngModel)]="newCategoryDescription" />
-              <button class="btn btn-success btn-sm" type="button" (click)="createAndSelectCategory()">
-                Create
-              </button>
-              <button class="btn btn-secondary btn-sm" type="button" (click)="toggleAddNewCategory()">
-                Cancel
-              </button>
+              <input class="form-input" placeholder="Description (optional)" [(ngModel)]="newCategoryDescription" />
+              <div class="button-stack">
+                <button class="btn btn-success btn-sm" type="button" (click)="createAndSelectCategory()">
+                  Create
+                </button>
+                <button class="btn btn-secondary btn-sm" type="button" (click)="toggleAddNewCategory()">
+                  Cancel
+                </button>
+              </div>
             </div>
             }
           }

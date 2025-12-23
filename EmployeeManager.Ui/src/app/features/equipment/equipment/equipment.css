@@ -104,6 +104,26 @@
   padding: 8px 12px;
 }
 
+.inline-form-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inline-form-vertical .form-input {
+  width: 100%;
+}
+
+.button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.button-stack .btn {
+  width: 100%;
+}
+
 .form-group {
   flex: 1;
   display: flex;

@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { catchError, Observable, throwError } from 'rxjs';
+import { catchError, Observable, throwError, map } from 'rxjs';
 import { Position } from '../../shared/models/position.model';
 import { PositionCreationPayload, PositionUpdatePayload } from '../../shared/models/payloads';
 
@@ -21,12 +21,16 @@ export class PositionService {
   }
 
   getPositionsByDepartmentId(depId: number): Observable<Position[]> {
-    return this.httpClient.get<Position[]>(`${this.apiUrl}ByDepartment/${depId}`).pipe(
-      catchError((error) => {
-        console.error('Error in getPositionsByDepartmentId:', error);
-        return throwError(() => new Error('Error to get positions for department id: ' + depId));
-      })
-    );
+    // Backend filters positions via query params on the main endpoint
+    return this.httpClient
+      .get<{ items: Position[]; total: number }>(`${this.apiUrl}?departmentId=${depId}&page=1&pageSize=100`)
+      .pipe(
+        map((res) => res.items || []),
+        catchError((error) => {
+          console.error('Error in getPositionsByDepartmentId:', error);
+          return throwError(() => new Error('Error to get positions for department id: ' + depId));
+        })
+      );
   }
 
   getPositionsByDepartmentIdWithPagination(
@@ -60,9 +64,7 @@ export class PositionService {
     };
     return this.httpClient.post<Position>(this.apiUrl, payload).pipe(
       catchError((error) => {
-        return throwError(
-          () => new Error('Error adding position')
-        );
+        return throwError(() => new Error('Error adding position'));
       })
     );
   }

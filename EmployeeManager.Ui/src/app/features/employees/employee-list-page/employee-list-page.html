@@ -22,18 +22,28 @@
         placeholder="Phone Number"
         [(ngModel)]="newEmployee().phoneNumber"
       />
-      <select class="form-control" [(ngModel)]="newEmployee().positionId">
-        <option [value]="null">Select Position</option>
-        <option *ngFor="let pos of positions()" [value]="pos.id">
-          {{ pos.title }}
+    </div>
+    <div class="form-row">
+      <select
+        class="form-control"
+        (change)="onNewDepartmentChange($event.target.value)"
+        [ngModel]="newEmployee().departmentId"
+      >
+        <option [value]="null">Select Department</option>
+        <option *ngFor="let dep of departments()" [value]="dep.id">
+          {{ dep.name }}
         </option>
       </select>
     </div>
     <div class="form-row">
-      <select class="form-control" [(ngModel)]="newEmployee().departmentId">
-        <option [value]="null">Select Department</option>
-        <option *ngFor="let dep of departments()" [value]="dep.id">
-          {{ dep.name }}
+      <select
+        class="form-control"
+        [(ngModel)]="newEmployee().positionId"
+        [disabled]="!newEmployee().departmentId"
+      >
+        <option [value]="null">Select Position</option>
+        <option *ngFor="let pos of formPositions()" [value]="pos.id">
+          {{ pos.title }}
         </option>
       </select>
     </div>

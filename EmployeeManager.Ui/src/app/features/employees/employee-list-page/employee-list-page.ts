@@ -33,6 +33,8 @@ export class EmployeeListPageComponent implements OnInit {
   employees = signal<Employee[]>([]);
   departments = signal<Department[]>([]);
   positions = signal<Position[]>([]);
+  // Positions available for the add form, filtered by selected department
+  formPositions = signal<Position[]>([]);
 
   selectedDepartmentId = signal<number | null>(null);
   searchTerm = signal('');
@@ -77,6 +79,18 @@ export class EmployeeListPageComponent implements OnInit {
       error: (err: Error) => {
         this.error.set(err.message);
         this.toastService.error(err.message);
+      },
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  private loadPositionsForDepartment(depId: number) {
+    const sub = this.positionService.getPositionsByDepartmentId(depId).subscribe({
+      next: (pos) => this.formPositions.set(pos),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+        this.formPositions.set([]);
       },
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
@@ -140,6 +154,7 @@ export class EmployeeListPageComponent implements OnInit {
       positionId: null,
       departmentId: null,
     });
+    this.formPositions.set([]);
   }
 
   isFormValid(): boolean {
@@ -172,8 +187,27 @@ export class EmployeeListPageComponent implements OnInit {
     });
   }
 
+  // Add form: when user selects the department, populate positions and enable the dropdown
+  onNewDepartmentChange(value: string) {
+    const id = value ? parseInt(value, 10) : null;
+    const current = this.newEmployee();
+    // Update department and clear previously selected position
+    this.newEmployee.set({
+      ...current,
+      departmentId: id,
+      positionId: null,
+    });
+    if (id) {
+      this.loadPositionsForDepartment(id);
+    } else {
+      this.formPositions.set([]);
+    }
+  }
+
   async deleteEmployee(id: number): Promise<void> {
-    const confirmed = await this.dialogService.confirm('Are you sure you want to delete this employee?');
+    const confirmed = await this.dialogService.confirm(
+      'Are you sure you want to delete this employee?'
+    );
     if (!confirmed) return;
 
     this.employeeService.deleteEmployee(id).subscribe({

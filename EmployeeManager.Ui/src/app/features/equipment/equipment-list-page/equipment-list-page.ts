@@ -38,6 +38,7 @@ export class EquipmentListPageComponent implements OnInit {
   categories = signal<EquipmentCategory[]>([]);
 
   selectedDepartmentId = signal<number | null>(null);
+  selectedCategoryId = signal<number | null>(null);
   statusFilter = signal<'all' | 'operational' | 'out_of_service'>('all');
   searchTerm = signal('');
   page = signal(1);
@@ -47,6 +48,9 @@ export class EquipmentListPageComponent implements OnInit {
   isLoading = signal(false);
   error = signal('');
   isAddFormVisible = signal(false);
+  isAddingNewCategory = signal(false);
+  newCategoryName = signal('');
+  newCategoryDescription = signal('');
 
   newEquipment = signal<EquipmentCreationPayload>({
     name: '',
@@ -109,7 +113,8 @@ export class EquipmentListPageComponent implements OnInit {
         this.page(),
         this.pageSize(),
         this.searchTerm(),
-        isWorkParam
+        isWorkParam,
+        this.selectedCategoryId()
       )
       .subscribe({
         next: (res) => {
@@ -136,6 +141,13 @@ export class EquipmentListPageComponent implements OnInit {
     this.loadEquipment();
   }
 
+  onCategoryChange(catId: string) {
+    const id = catId ? parseInt(catId, 10) : null;
+    this.selectedCategoryId.set(id);
+    this.page.set(1);
+    this.loadEquipment();
+  }
+
   onStatusChange(value: string) {
     this.statusFilter.set(value as 'all' | 'operational' | 'out_of_service');
     this.page.set(1);
@@ -149,6 +161,41 @@ export class EquipmentListPageComponent implements OnInit {
 
   toggleAddForm() {
     this.isAddFormVisible.update((v) => !v);
+  }
+
+  toggleAddNewCategory() {
+    this.isAddingNewCategory.update((val) => !val);
+    if (this.isAddingNewCategory()) {
+      this.newEquipment().categoryId = null;
+    }
+    this.newCategoryName.set('');
+    this.newCategoryDescription.set('');
+  }
+
+  async createAndSelectCategory() {
+    const name = this.newCategoryName().trim();
+    if (!name) {
+      this.toastService.error('Category name is required');
+      return;
+    }
+
+    try {
+      const newCategory = await this.equipmentService
+        .createCategory(name, this.newCategoryDescription())
+        .toPromise();
+      
+      if (newCategory) {
+        this.categories.update(cats => [...cats, newCategory]);
+        this.newEquipment().categoryId = newCategory.id;
+        this.isAddingNewCategory.set(false);
+        this.newCategoryName.set('');
+        this.newCategoryDescription.set('');
+        this.toastService.success('Category created successfully');
+      }
+    } catch (err: any) {
+      this.error.set(err.message);
+      this.toastService.error(err.message);
+    }
   }
 
   cancelAdd() {

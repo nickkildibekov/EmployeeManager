@@ -45,6 +45,22 @@
   margin-bottom: 10px;
 }
 
+.inline-form {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  align-items: center;
+}
+
+.inline-form .form-control {
+  flex: 1;
+}
+
+.inline-form .btn {
+  white-space: nowrap;
+  padding: 8px 12px;
+}
+
 .form-control {
   flex: 1;
   padding: 8px;

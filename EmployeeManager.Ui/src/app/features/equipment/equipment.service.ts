@@ -26,7 +26,8 @@ export class EquipmentService {
     page: number = 1,
     pageSize: number = 10,
     search: string = '',
-    isWork: boolean | null = null
+    isWork: boolean | null = null,
+    categoryId: number | null = null
   ): Observable<{ items: Equipment[]; total: number }> {
     let params = new HttpParams()
       .set('departmentId', String(departmentId))
@@ -39,6 +40,10 @@ export class EquipmentService {
 
     if (isWork !== null && isWork !== undefined) {
       params = params.set('isWork', String(isWork));
+    }
+
+    if (categoryId !== null && categoryId !== undefined && categoryId > 0) {
+      params = params.set('categoryId', String(categoryId));
     }
 
     return this.httpClient
@@ -83,6 +88,12 @@ export class EquipmentService {
   getAllCategories(): Observable<EquipmentCategory[]> {
     return this.httpClient
       .get<EquipmentCategory[]>(this.categoryUrl)
+      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
+  }
+
+  createCategory(name: string, description: string = ''): Observable<EquipmentCategory> {
+    return this.httpClient
+      .post<EquipmentCategory>(this.categoryUrl, { name, description })
       .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
   }
 }

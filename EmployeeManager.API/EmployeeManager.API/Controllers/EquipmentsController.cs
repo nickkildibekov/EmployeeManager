@@ -21,6 +21,7 @@ namespace EmployeeManager.API.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(
             [FromQuery] int? departmentId,
+            [FromQuery] int? categoryId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? search = null,
@@ -40,6 +41,12 @@ namespace EmployeeManager.API.Controllers
             if (departmentId.HasValue && departmentId.Value > 0)
             {
                 query = query.Where(e => e.DepartmentId == departmentId.Value);
+            }
+
+            // Filter by category if specified
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                query = query.Where(e => e.CategoryId == categoryId.Value);
             }
 
             // Search by name or serial number

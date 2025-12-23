@@ -35,12 +35,30 @@
       </select>
     </div>
     <div class="form-row">
+      @if (!isAddingNewCategory()) {
       <select class="form-control" [(ngModel)]="newEquipment().categoryId">
         <option [ngValue]="null" disabled>Select Category</option>
         <option *ngFor="let cat of categories()" [ngValue]="cat.id">
           {{ cat.name }}
         </option>
       </select>
+      <button class="btn btn-secondary" type="button" (click)="toggleAddNewCategory()">
+        + New Category
+      </button>
+      } @else {
+      <div class="inline-form">
+        <input class="form-control" placeholder="Category Name" [(ngModel)]="newCategoryName" />
+        <input class="form-control" placeholder="Description (optional)" [(ngModel)]="newCategoryDescription" />
+        <button class="btn btn-success" type="button" (click)="createAndSelectCategory()">
+          Create
+        </button>
+        <button class="btn btn-secondary" type="button" (click)="toggleAddNewCategory()">
+          Cancel
+        </button>
+      </div>
+      }
+    </div>
+    <div class="form-row">
       <label class="form-check">
         <input type="checkbox" [(ngModel)]="newEquipment().isWork" />
         Is Work Equipment
@@ -60,6 +78,12 @@
       <option value="">All Departments</option>
       <option *ngFor="let dept of departments()" [value]="dept.id">
         {{ dept.name }}
+      </option>
+    </select>
+    <select class="filter-select" (change)="onCategoryChange($event.target.value)">
+      <option value="">All Categories</option>
+      <option *ngFor="let cat of categories()" [value]="cat.id">
+        {{ cat.name }}
       </option>
     </select>
     <select class="filter-select" (change)="onStatusChange($event.target.value)">

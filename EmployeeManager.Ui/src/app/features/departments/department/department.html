@@ -44,15 +44,13 @@
       <div class="info-section">
         <h3>Positions</h3>
         <div class="info-list">
-          @if (positionsList().length > 0) {
-            @for (pos of positionsList(); track pos.name) {
-              <div class="info-item">
-                <span class="info-label">{{ pos.name }}</span>
-                <span class="info-value">{{ pos.count }} employee(s)</span>
-              </div>
-            }
-          } @else {
-            <p class="no-data">No positions available</p>
+          @if (positionsList().length > 0) { @for (pos of positionsList(); track pos.id) {
+          <div class="info-item" (click)="navigateToPosition(pos.id)" style="cursor: pointer">
+            <span class="info-label">{{ pos.name }}</span>
+            <span class="info-value">{{ pos.count }} employee(s)</span>
+          </div>
+          } } @else {
+          <p class="no-data">No positions available</p>
           }
         </div>
       </div>
@@ -61,15 +59,13 @@
       <div class="info-section">
         <h3>Employees</h3>
         <div class="info-list">
-          @if (employeesList().length > 0) {
-            @for (emp of employeesList(); track emp.fullName) {
-              <div class="info-item">
-                <span class="info-label">{{ emp.fullName }}</span>
-                <span class="info-value">{{ emp.position }}</span>
-              </div>
-            }
-          } @else {
-            <p class="no-data">No employees available</p>
+          @if (employeesList().length > 0) { @for (emp of employeesList(); track emp.id) {
+          <div class="info-item" (click)="navigateToEmployee(emp.id)" style="cursor: pointer">
+            <span class="info-label">{{ emp.fullName }}</span>
+            <span class="info-value">{{ emp.position }}</span>
+          </div>
+          } } @else {
+          <p class="no-data">No employees available</p>
           }
         </div>
       </div>
@@ -78,15 +74,13 @@
       <div class="info-section">
         <h3>Equipment</h3>
         <div class="info-list">
-          @if (equipmentList().length > 0) {
-            @for (eq of equipmentList(); track eq.name) {
-              <div class="info-item">
-                <span class="info-label">{{ eq.name }}</span>
-                <span class="info-value">{{ eq.count }} unit(s)</span>
-              </div>
-            }
-          } @else {
-            <p class="no-data">No equipment available</p>
+          @if (equipmentList().length > 0) { @for (eq of equipmentList(); track eq.id) {
+          <div class="info-item" (click)="navigateToEquipment(eq.id)" style="cursor: pointer">
+            <span class="info-label">{{ eq.name }}</span>
+            <span class="info-value">{{ eq.count }} unit(s)</span>
+          </div>
+          } } @else {
+          <p class="no-data">No equipment available</p>
           }
         </div>
       </div>

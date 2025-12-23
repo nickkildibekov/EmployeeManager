@@ -36,12 +36,13 @@ export class DepartmentComponent implements OnInit {
   positionsList = computed(() => {
     const dept = this.department();
     if (!dept || !dept.positions) return [];
-    
-    return dept.positions.map(pos => {
-      const empCount = dept.employees?.filter(e => e.positionId === pos.id).length || 0;
+
+    return dept.positions.map((pos) => {
+      const empCount = dept.employees?.filter((e) => e.positionId === pos.id).length || 0;
       return {
+        id: pos.id,
         name: pos.title,
-        count: empCount
+        count: empCount,
       };
     });
   });
@@ -49,12 +50,13 @@ export class DepartmentComponent implements OnInit {
   employeesList = computed(() => {
     const dept = this.department();
     if (!dept || !dept.employees) return [];
-    
-    return dept.employees.map(emp => {
-      const position = dept.positions?.find(p => p.id === emp.positionId);
+
+    return dept.employees.map((emp) => {
+      const position = dept.positions?.find((p) => p.id === emp.positionId);
       return {
+        id: emp.id,
         fullName: `${emp.firstName} ${emp.lastName}`,
-        position: position?.title || 'N/A'
+        position: position?.title || 'N/A',
       };
     });
   });
@@ -62,17 +64,21 @@ export class DepartmentComponent implements OnInit {
   equipmentList = computed(() => {
     const dept = this.department();
     if (!dept || !dept.equipments) return [];
-    
-    // Group equipment by name and count
-    const groupedMap = new Map<string, number>();
-    dept.equipments.forEach(eq => {
-      const count = groupedMap.get(eq.name) || 0;
-      groupedMap.set(eq.name, count + 1);
+
+    // Group equipment by name and count (with first ID)
+    const groupedMap = new Map<string, { count: number; firstId: number }>();
+    dept.equipments.forEach((eq) => {
+      const existing = groupedMap.get(eq.name) || { count: 0, firstId: eq.id };
+      groupedMap.set(eq.name, {
+        count: existing.count + 1,
+        firstId: existing.firstId,
+      });
     });
-    
-    return Array.from(groupedMap.entries()).map(([name, count]) => ({
+
+    return Array.from(groupedMap.entries()).map(([name, data]) => ({
+      id: data.firstId,
       name,
-      count
+      count: data.count,
     }));
   });
 
@@ -158,5 +164,17 @@ export class DepartmentComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/departments']);
+  }
+
+  navigateToPosition(positionId: number): void {
+    this.router.navigate(['/positions', positionId]);
+  }
+
+  navigateToEmployee(employeeId: number): void {
+    this.router.navigate(['/employees', employeeId]);
+  }
+
+  navigateToEquipment(equipmentId: number): void {
+    this.router.navigate(['/equipment', equipmentId]);
   }
 }

@@ -173,7 +173,28 @@
       </div>
     </div>
 
-    <!-- Row 4: Create/Cancel buttons -->
+    <!-- Row 4: Image Upload -->
+    <div class="form-row row-4">
+      <div class="image-group">
+        <label>Equipment Image (Optional)</label>
+        <input
+          type="file"
+          accept="image/*"
+          class="form-control"
+          (change)="onImageSelected($event)"
+        />
+        @if (newEquipment().imageData) {
+        <div class="image-preview">
+          <img [src]="newEquipment().imageData" alt="Equipment preview" class="preview-img" />
+          <button type="button" class="btn btn-sm btn-secondary" (click)="clearImage()">
+            Remove Image
+          </button>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Row 5: Create/Cancel buttons -->
     <div class="button-row">
       <button class="btn btn-success" (click)="addEquipment()" [disabled]="!isFormValid()">
         Create
@@ -264,6 +285,7 @@
               {{ sortOrder() === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
+          <th>Image</th>
         </tr>
       </thead>
       <tbody>
@@ -288,6 +310,13 @@
           </td>
           <td>{{ item.departmentName || 'N/A' }}</td>
           <td>{{ item.amount }}</td>
+          <td>
+            @if (item.imageData) {
+            <img [src]="item.imageData" alt="Equipment thumbnail" class="table-image" />
+            } @else {
+            <div class="table-image-placeholder">No Image</div>
+            }
+          </td>
         </tr>
       </tbody>
     </table>

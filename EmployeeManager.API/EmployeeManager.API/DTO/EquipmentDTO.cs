@@ -31,6 +31,8 @@ namespace EmployeeManager.API.DTO
         [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
         public string Description { get; set; } = string.Empty;
         
+        public string? ImageData { get; set; } // Base64-encoded image (optional)
+        
         [Required(ErrorMessage = "Category is required")]
         [Range(1, int.MaxValue, ErrorMessage = "Valid category must be selected")]
         public int CategoryId { get; set; }

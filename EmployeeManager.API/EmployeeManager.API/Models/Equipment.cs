@@ -10,6 +10,7 @@
         public string Status { get; set; } = "Used";
         public string Measurement { get; set; } = "Unit";
         public decimal Amount { get; set; } = 1m;
+        public string? ImageData { get; set; } // Base64-encoded image
         public int DepartmentId { get; set; }
         public Department? Department { get; set; }
         public int CategoryId { get; set; }

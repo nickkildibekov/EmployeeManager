@@ -244,7 +244,35 @@ export class EquipmentListPageComponent implements OnInit {
       description: '',
       categoryId: null,
       departmentId: null,
+      imageData: undefined,
     });
+  }
+
+  onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      this.toastService.error('Image size must not exceed 2MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      this.newEquipment().imageData = result; // Base64-encoded image
+      this.toastService.success('Image selected');
+    };
+    reader.onerror = () => {
+      this.toastService.error('Failed to read image file');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  clearImage() {
+    this.newEquipment().imageData = undefined;
   }
 
   onMeasurementChange(measurement: 'Unit' | 'Meter' | 'Liter') {

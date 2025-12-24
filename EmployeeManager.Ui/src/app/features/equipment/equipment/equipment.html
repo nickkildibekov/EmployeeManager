@@ -237,6 +237,36 @@
           />
         </div>
       </div>
+
+      <div class="form-row">
+        <div class="form-group image-group">
+          <label>Equipment Image (Optional)</label>
+          @if (isEditMode()) {
+          <input
+            type="file"
+            accept="image/*"
+            class="form-input"
+            (change)="onEditImageSelected($event)"
+          />
+          } @else {
+          <div class="view-image">
+            @if (editedEquipment().imageData) {
+            <img [src]="editedEquipment().imageData" alt="Equipment image" class="detail-image" />
+            } @else {
+            <div class="no-image-placeholder">No image</div>
+            }
+          </div>
+          }
+          @if (editedEquipment().imageData && isEditMode()) {
+          <div class="image-preview">
+            <img [src]="editedEquipment().imageData" alt="Equipment preview" class="preview-img" />
+            <button type="button" class="btn btn-sm btn-secondary" (click)="clearEditImage()">
+              Remove Image
+            </button>
+          </div>
+          }
+        </div>
+      </div>
     </div>
   </div>
   } @else {

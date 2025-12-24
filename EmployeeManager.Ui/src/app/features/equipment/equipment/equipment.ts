@@ -52,6 +52,7 @@ export class Equipment implements OnInit {
     description: '',
     departmentId: null,
     categoryId: null,
+    imageData: undefined,
     departmentName: '',
     categoryName: '',
   });
@@ -110,6 +111,7 @@ export class Equipment implements OnInit {
             description: eq.description,
             departmentId: eq.departmentId && eq.departmentId > 0 ? eq.departmentId : null,
             categoryId: eq.categoryId,
+            imageData: eq.imageData,
             departmentName: eq.departmentName,
             categoryName: eq.categoryName,
           });
@@ -200,6 +202,7 @@ export class Equipment implements OnInit {
         departmentId:
           current.departmentId && current.departmentId > 0 ? current.departmentId : null,
         categoryId: current.categoryId && current.categoryId > 0 ? current.categoryId : null,
+        imageData: current.imageData,
         departmentName: current.departmentName,
         categoryName: current.categoryName,
       });
@@ -304,5 +307,32 @@ export class Equipment implements OnInit {
       val = Math.max(0.01, Math.round(val * 100) / 100);
     }
     this.editedEquipment().amount = val;
+  }
+
+  onEditImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      this.toastService.error('Image size must not exceed 2MB');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      this.editedEquipment().imageData = result; // Base64-encoded image
+      this.toastService.success('Image selected');
+    };
+    reader.onerror = () => {
+      this.toastService.error('Failed to read image file');
+    };
+    reader.readAsDataURL(file);
+  }
+
+  clearEditImage() {
+    this.editedEquipment().imageData = undefined;
   }
 }

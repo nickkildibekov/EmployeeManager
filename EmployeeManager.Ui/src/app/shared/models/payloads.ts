@@ -40,6 +40,7 @@ export interface EquipmentCreationPayload {
   description: string;
   categoryId: number;
   departmentId: number | null;
+  imageData?: string; // Base64-encoded image (optional)
 }
 
 export interface EquipmentUpdatePayload {
@@ -53,6 +54,7 @@ export interface EquipmentUpdatePayload {
   description: string;
   categoryId: number;
   departmentId: number | null;
+  imageData?: string; // Base64-encoded image (optional)
 }
 
 export interface DepartmentUpdateDTO {

@@ -11,4 +11,5 @@ export interface Equipment {
   categoryName: string;
   departmentId: number;
   departmentName: string;
+  imageData?: string; // Base64-encoded image
 }

@@ -1,4 +1,12 @@
-import { Component, OnInit, inject, signal, DestroyRef, HostListener, computed } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  inject,
+  signal,
+  DestroyRef,
+  HostListener,
+  computed,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -71,7 +79,7 @@ export class EquipmentListPageComponent implements OnInit {
   Math = Math;
 
   // Image modal state
-  imageItems = signal<{ src: string; name: string }[]>([]);
+  imageItems = signal<{ src: string; name: string; id: number }[]>([]);
   selectedImageIndex = signal<number>(0);
   selectedImage = computed(() => {
     const items = this.imageItems();
@@ -380,7 +388,7 @@ export class EquipmentListPageComponent implements OnInit {
     if (!src) return;
     const items = this.equipment()
       .filter((e) => !!e.imageData)
-      .map((e) => ({ src: e.imageData as string, name: e.name }));
+      .map((e) => ({ src: e.imageData as string, name: e.name, id: e.id }));
     this.imageItems.set(items);
     const idx = items.findIndex((it) => it.src === src && it.name === name);
     this.selectedImageIndex.set(Math.max(0, idx));
@@ -403,6 +411,13 @@ export class EquipmentListPageComponent implements OnInit {
     if (!items.length) return;
     const next = (this.selectedImageIndex() + 1) % items.length;
     this.selectedImageIndex.set(next);
+  }
+
+  openSelectedDetails() {
+    const sel = this.selectedImage();
+    if (!sel) return;
+    this.closeImageModal();
+    this.openEquipment(sel.id);
   }
 
   @HostListener('window:keydown', ['$event'])

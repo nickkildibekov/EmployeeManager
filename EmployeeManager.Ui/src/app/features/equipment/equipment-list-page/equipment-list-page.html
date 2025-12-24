@@ -347,12 +347,15 @@
   <!-- Image Modal -->
   @if (selectedImage()) {
   <div class="modal-backdrop" (click)="closeImageModal()">
-    <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-content fixed" (click)="$event.stopPropagation()">
       <button class="modal-close" (click)="closeImageModal()" aria-label="Close">✕</button>
       <button class="modal-nav prev" (click)="prevImage()" aria-label="Previous">‹</button>
       <img [src]="selectedImage()!.src" [alt]="selectedImage()!.name" class="modal-image" />
       <button class="modal-nav next" (click)="nextImage()" aria-label="Next">›</button>
-      <div class="modal-caption">{{ selectedImage()!.name }}</div>
+      <div class="modal-caption">
+        <span class="caption-text">{{ selectedImage()!.name }}</span>
+        <button class="modal-action" (click)="openSelectedDetails()">Open details</button>
+      </div>
     </div>
   </div>
   }

@@ -235,6 +235,7 @@ export class Equipment implements OnInit {
       description: eq.description,
       categoryId: eq.categoryId,
       departmentId: eq.departmentId,
+      imageData: eq.imageData,
     };
 
     this.equipmentService.updateEquipment(payload).subscribe({

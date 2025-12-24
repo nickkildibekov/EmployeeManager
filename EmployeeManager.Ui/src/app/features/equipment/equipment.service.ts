@@ -74,6 +74,7 @@ export class EquipmentService {
       description: equipmentData.description,
       categoryId: equipmentData.categoryId,
       departmentId: equipmentData.departmentId,
+      imageData: equipmentData.imageData,
     };
     return this.httpClient
       .post<Equipment>(this.apiUrl, payload)

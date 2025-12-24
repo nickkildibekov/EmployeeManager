@@ -11,7 +11,12 @@
       </label>
       <label>
         Date:
-        <input class="form-control" type="date" [value]="selectedDate()" (change)="onDateChange($any($event.target).value)" />
+        <input
+          class="form-control"
+          type="date"
+          [value]="selectedDate()"
+          (change)="onDateChange($any($event.target).value)"
+        />
       </label>
       <div class="mode-switch">
         <button [class.active]="mode() === 'Daily'" (click)="setMode('Daily')">Daily</button>
@@ -41,7 +46,10 @@
       <div class="mode-row" *ngFor="let emp of employees()">
         <div class="day-entry">
           <div class="state-select">
-            <select [value]="getEntry(emp.id, selectedDate()).state" (change)="updateState(emp.id, selectedDate(), $any($event.target).value)">
+            <select
+              [value]="getEntry(emp.id, selectedDate()).state"
+              (change)="updateState(emp.id, selectedDate(), $any($event.target).value)"
+            >
               <option value="OnWork">On Work</option>
               <option value="Rest">Rest</option>
               <option value="Vacation">Vacation</option>
@@ -49,7 +57,13 @@
             </select>
           </div>
           <div class="hours-input">
-            <input type="number" min="0" max="24" [value]="getEntry(emp.id, selectedDate()).hours" (input)="updateHours(emp.id, selectedDate(), +$any($event.target).value)" />
+            <input
+              type="number"
+              min="0"
+              max="24"
+              [value]="getEntry(emp.id, selectedDate()).hours"
+              (input)="updateHours(emp.id, selectedDate(), +$any($event.target).value)"
+            />
             <span class="unit">h</span>
           </div>
         </div>
@@ -76,15 +90,23 @@
 
     <!-- Month Mode -->
     <div class="mode-column" *ngIf="mode() === 'Month'">
-      <div class="mode-header">Month of {{ selectedDate() | date: 'MMMM yyyy' }}</div>
+      <div class="mode-header">Month of {{ selectedDate() | date : 'MMMM yyyy' }}</div>
       <div class="month-row header">
         <div class="month-cell" *ngFor="let d of monthDays()">{{ d.split('-')[2] }}</div>
       </div>
       <div class="mode-row" *ngFor="let emp of employees()">
         <div class="month-row">
           <div class="month-cell" *ngFor="let d of monthDays()">
-            <div class="month-entry" [class.work]="getEntry(emp.id, d).state === 'OnWork'" [class.rest]="getEntry(emp.id, d).state !== 'OnWork'">
-              {{ getEntry(emp.id, d).state === 'OnWork' ? getEntry(emp.id, d).hours + 'h' : getEntry(emp.id, d).state }}
+            <div
+              class="month-entry"
+              [class.work]="getEntry(emp.id, d).state === 'OnWork'"
+              [class.rest]="getEntry(emp.id, d).state !== 'OnWork'"
+            >
+              {{
+                getEntry(emp.id, d).state === 'OnWork'
+                  ? getEntry(emp.id, d).hours + 'h'
+                  : getEntry(emp.id, d).state
+              }}
             </div>
           </div>
         </div>
@@ -93,9 +115,9 @@
 
     <!-- Year Mode -->
     <div class="mode-column" *ngIf="mode() === 'Year'">
-      <div class="mode-header">Year {{ selectedDate() | date: 'yyyy' }}</div>
+      <div class="mode-header">Year {{ selectedDate() | date : 'yyyy' }}</div>
       <div class="year-row header">
-        <div class="year-cell" *ngFor="let m of yearMonths()">{{ m | date: 'MMM' }}</div>
+        <div class="year-cell" *ngFor="let m of yearMonths()">{{ m | date : 'MMM' }}</div>
       </div>
       <div class="mode-row" *ngFor="let emp of employees()">
         <div class="year-row">
@@ -108,5 +130,7 @@
     </div>
   </div>
 
-  <div class="note">Note: This is a UI scaffold. We can persist schedule to the API once you confirm data model.</div>
+  <div class="note">
+    Note: This is a UI scaffold. We can persist schedule to the API once you confirm data model.
+  </div>
 </div>

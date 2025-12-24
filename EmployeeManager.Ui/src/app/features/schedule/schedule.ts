@@ -29,8 +29,10 @@ export class ScheduleComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
 
   mode = signal<ScheduleMode>('Daily');
+  zoom = signal<'hour' | 'day' | 'week' | 'month'>('day');
   selectedDate = signal<string>(new Date().toISOString().slice(0, 10));
   selectedDepartmentId = signal<number | null>(null);
+  selectedPositionId = signal<number | null>(null);
 
   departments = signal<Department[]>([]);
   employees = signal<Employee[]>([]);
@@ -71,12 +73,10 @@ export class ScheduleComponent implements OnInit {
       this.employees.set([]);
       return;
     }
-    const sub = this.employeeService
-      .getEmployeesByDepartment(depId, 1, 100)
-      .subscribe({
-        next: (res) => this.employees.set(res.items),
-        error: (err: Error) => console.error(err.message),
-      });
+    const sub = this.employeeService.getEmployeesByDepartment(depId, 1, 100).subscribe({
+      next: (res) => this.employees.set(res.items),
+      error: (err: Error) => console.error(err.message),
+    });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
@@ -114,23 +114,21 @@ export class ScheduleComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
-    const sub = this.scheduleService
-      .getEntries(deptId, startDate, endDate)
-      .subscribe({
-        next: (apiEntries: ScheduleEntry[]) => {
-          this.entries.clear();
-          apiEntries.forEach((entry) => {
-            const key = this.keyFor(entry.employeeId, entry.date.split('T')[0]);
-            this.entries.set(key, { hours: entry.hours, state: entry.state });
-          });
-          this.isLoading.set(false);
-        },
-        error: (err: Error) => {
-          console.error(err.message);
-          this.errorMessage.set(err.message);
-          this.isLoading.set(false);
-        },
-      });
+    const sub = this.scheduleService.getEntries(deptId, startDate, endDate).subscribe({
+      next: (apiEntries: ScheduleEntry[]) => {
+        this.entries.clear();
+        apiEntries.forEach((entry) => {
+          const key = this.keyFor(entry.employeeId, entry.date.split('T')[0]);
+          this.entries.set(key, { hours: entry.hours, state: entry.state });
+        });
+        this.isLoading.set(false);
+      },
+      error: (err: Error) => {
+        console.error(err.message);
+        this.errorMessage.set(err.message);
+        this.isLoading.set(false);
+      },
+    });
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
@@ -157,7 +155,7 @@ export class ScheduleComponent implements OnInit {
     entry.hours = normalized;
     // If hours > 0 and state is Rest, flip to OnWork for convenience
     if (normalized > 0 && entry.state === 'Rest') entry.state = 'OnWork';
-    
+
     // Save to API
     this.saveEntryToApi(empId, isoDate, entry);
   }
@@ -167,7 +165,7 @@ export class ScheduleComponent implements OnInit {
     entry.state = state;
     // If not working state, zero-out hours
     if (state !== 'OnWork') entry.hours = 0;
-    
+
     // Save to API
     this.saveEntryToApi(empId, isoDate, entry);
   }
@@ -225,4 +223,93 @@ export class ScheduleComponent implements OnInit {
     const y = cur.getFullYear();
     return Array.from({ length: 12 }, (_, i) => new Date(y, i, 1).toISOString().slice(0, 10));
   });
-}
+
+  // Timeline columns based on zoom level
+  timelineColumns = computed(() => {
+    const zoom = this.zoom();
+    const baseDate = new Date(this.selectedDate());
+    baseDate.setHours(0, 0, 0, 0);
+
+    if (zoom === 'hour') {
+      // 24 hours starting from selected date
+      return Array.from({ length: 24 }, (_, i) => {
+        const d = new Date(baseDate);
+        d.setHours(i);
+        return {
+          date: d.toISOString(),
+          label: d.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true }),
+        };
+      });
+    } else if (zoom === 'day') {
+      // 7 days (week view)
+      const day = baseDate.getDay();
+      const diffToMonday = (day + 6) % 7;
+      baseDate.setDate(baseDate.getDate() - diffToMonday);
+      return Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(baseDate);
+        d.setDate(baseDate.getDate() + i);
+        return {
+          date: d.toISOString().slice(0, 10),
+          label: d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
+        };
+      });
+    } else if (zoom === 'week') {
+      // 4 weeks (month view)
+      const firstOfMonth = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
+      const day = firstOfMonth.getDay();
+      const diffToMonday = (day + 6) % 7;
+      firstOfMonth.setDate(firstOfMonth.getDate() - diffToMonday);
+      return Array.from({ length: 5 }, (_, i) => {
+        const d = new Date(firstOfMonth);
+        d.setDate(firstOfMonth.getDate() + i * 7);
+        return { date: d.toISOString().slice(0, 10), label: `Week ${i + 1}` };
+      });
+    } else {
+      // month
+      // 12 months
+      const firstOfYear = new Date(baseDate.getFullYear(), 0, 1);
+      return Array.from({ length: 12 }, (_, i) => {
+        const d = new Date(firstOfYear);
+        d.setMonth(i);
+        return {
+          date: d.toISOString().slice(0, 10),
+          label: d.toLocaleDateString('en-US', { month: 'short' }),
+        };
+      });
+    }
+  });
+
+  // Filtered employees by position
+  filteredEmployees = computed(() => {
+    const posId = this.selectedPositionId();
+    const emps = this.employees();
+    if (!posId) return emps;
+    return emps.filter((e) => e.position?.id === posId);
+  });
+
+  // Get unique positions from employees
+  availablePositions = computed(() => {
+    const emps = this.employees();
+    const positions = new Map<number, string>();
+    emps.forEach((e) => {
+      if (e.position) {
+        positions.set(e.position.id, e.position.title);
+      }
+    });
+    return Array.from(positions.entries()).map(([id, title]) => ({ id, title }));
+  });
+  onCellClick(empId: number, colDate: string) {
+    const isoDate = colDate.slice(0, 10);
+    const entry = this.getEntry(empId, isoDate);
+    
+    // Toggle state or open edit dialog
+    const nextState: WorkingState = 
+      entry.state === 'Rest' ? 'OnWork' :
+      entry.state === 'OnWork' ? 'Vacation' :
+      entry.state === 'Vacation' ? 'Illness' : 'Rest';
+    
+    this.updateState(empId, isoDate, nextState);
+    if (nextState === 'OnWork' && entry.hours === 0) {
+      this.updateHours(empId, isoDate, 8); // Default 8 hours
+    }
+  }}

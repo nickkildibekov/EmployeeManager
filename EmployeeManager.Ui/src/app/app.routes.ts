@@ -77,13 +77,11 @@ export const routes: Routes = [
   },
   {
     path: 'schedule',
-    loadComponent: () =>
-      import('./features/schedule/schedule').then((m) => m.ScheduleComponent),
+    loadComponent: () => import('./features/schedule/schedule').then((m) => m.ScheduleComponent),
   },
   {
     path: 'calendar',
-    loadComponent: () =>
-      import('./features/calendar/calendar').then((m) => m.CalendarComponent),
+    loadComponent: () => import('./features/calendar/calendar').then((m) => m.CalendarComponent),
   },
   { path: '**', redirectTo: 'departments' },
 ];

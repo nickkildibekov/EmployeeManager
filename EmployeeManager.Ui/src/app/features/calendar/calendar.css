@@ -1,0 +1,5 @@
+.calendar-container{margin:20px auto;padding:20px;background:var(--bg-secondary);border-radius:var(--radius-lg)}
+.calendar-header{margin-bottom:20px}
+.calendar-header h1{margin:0 0 8px;color:var(--text-primary)}
+.calendar-header p{margin:0;color:var(--text-secondary)}
+.placeholder{padding:60px 20px;text-align:center;background:var(--bg-primary);border-radius:var(--radius-md);color:var(--text-secondary)}

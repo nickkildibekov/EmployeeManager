@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { EmployeeService } from '../employees/employee.service';
 import { DepartmentService } from '../departments/department.service';
+import { ScheduleService, ScheduleEntry, ScheduleEntryPayload } from './schedule.service';
 import { Employee } from '../../shared/models/employee.model';
 import { Department } from '../../shared/models/department.model';
 
@@ -24,6 +25,7 @@ interface DayEntry {
 export class ScheduleComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private departmentService = inject(DepartmentService);
+  private scheduleService = inject(ScheduleService);
   private destroyRef = inject(DestroyRef);
 
   mode = signal<ScheduleMode>('Daily');
@@ -35,6 +37,9 @@ export class ScheduleComponent implements OnInit {
 
   // Map: key `${employeeId}|${isoDate}` -> DayEntry
   private entries = new Map<string, DayEntry>();
+
+  isLoading = signal<boolean>(false);
+  errorMessage = signal<string | null>(null);
 
   ngOnInit(): void {
     this.loadDepartments();
@@ -52,6 +57,12 @@ export class ScheduleComponent implements OnInit {
     const id = depId ? parseInt(depId, 10) : null;
     this.selectedDepartmentId.set(id);
     this.loadEmployees();
+    this.loadScheduleEntries();
+  }
+
+  onDateChange(newDate: string) {
+    this.selectedDate.set(newDate);
+    this.loadScheduleEntries();
   }
 
   private loadEmployees() {
@@ -69,8 +80,63 @@ export class ScheduleComponent implements OnInit {
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
+  private loadScheduleEntries() {
+    const deptId = this.selectedDepartmentId();
+    if (!deptId) return;
+
+    const mode = this.mode();
+    let startDate = this.selectedDate();
+    let endDate = this.selectedDate();
+
+    // Calculate date range based on mode
+    if (mode === 'Week') {
+      const start = new Date(startDate);
+      const day = start.getDay();
+      const diffToMonday = (day + 6) % 7;
+      start.setDate(start.getDate() - diffToMonday);
+      startDate = start.toISOString().slice(0, 10);
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+      endDate = end.toISOString().slice(0, 10);
+    } else if (mode === 'Month') {
+      const cur = new Date(startDate);
+      const y = cur.getFullYear();
+      const m = cur.getMonth();
+      startDate = new Date(y, m, 1).toISOString().slice(0, 10);
+      endDate = new Date(y, m + 1, 0).toISOString().slice(0, 10);
+    } else if (mode === 'Year') {
+      const cur = new Date(startDate);
+      const y = cur.getFullYear();
+      startDate = new Date(y, 0, 1).toISOString().slice(0, 10);
+      endDate = new Date(y, 11, 31).toISOString().slice(0, 10);
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    const sub = this.scheduleService
+      .getEntries(deptId, startDate, endDate)
+      .subscribe({
+        next: (apiEntries: ScheduleEntry[]) => {
+          this.entries.clear();
+          apiEntries.forEach((entry) => {
+            const key = this.keyFor(entry.employeeId, entry.date.split('T')[0]);
+            this.entries.set(key, { hours: entry.hours, state: entry.state });
+          });
+          this.isLoading.set(false);
+        },
+        error: (err: Error) => {
+          console.error(err.message);
+          this.errorMessage.set(err.message);
+          this.isLoading.set(false);
+        },
+      });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
   setMode(m: ScheduleMode) {
     this.mode.set(m);
+    this.loadScheduleEntries(); // Reload with new date range
   }
 
   keyFor(empId: number, isoDate: string) {
@@ -91,6 +157,9 @@ export class ScheduleComponent implements OnInit {
     entry.hours = normalized;
     // If hours > 0 and state is Rest, flip to OnWork for convenience
     if (normalized > 0 && entry.state === 'Rest') entry.state = 'OnWork';
+    
+    // Save to API
+    this.saveEntryToApi(empId, isoDate, entry);
   }
 
   updateState(empId: number, isoDate: string, state: WorkingState) {
@@ -98,6 +167,33 @@ export class ScheduleComponent implements OnInit {
     entry.state = state;
     // If not working state, zero-out hours
     if (state !== 'OnWork') entry.hours = 0;
+    
+    // Save to API
+    this.saveEntryToApi(empId, isoDate, entry);
+  }
+
+  private saveEntryToApi(empId: number, isoDate: string, entry: DayEntry) {
+    const deptId = this.selectedDepartmentId();
+    if (!deptId) return;
+
+    const payload: ScheduleEntryPayload = {
+      employeeId: empId,
+      date: isoDate,
+      hours: entry.hours,
+      state: entry.state,
+      departmentId: deptId,
+    };
+
+    const sub = this.scheduleService.saveEntry(payload).subscribe({
+      next: () => {
+        // Successfully saved
+      },
+      error: (err: Error) => {
+        console.error('Error saving entry:', err.message);
+        this.errorMessage.set(err.message);
+      },
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
   // Derived summaries

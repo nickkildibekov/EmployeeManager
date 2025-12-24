@@ -1,10 +1,13 @@
 .schedule-container{margin:20px auto;padding:20px;background:var(--bg-secondary);border-radius:var(--radius-lg)}
-.schedule-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.schedule-header{display:flex;flex-direction:column;gap:12px;margin-bottom:16px}
+.schedule-header h1{margin:0}
 .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 .form-control{padding:8px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)}
 .mode-switch{display:flex;gap:8px}
 .mode-switch button{padding:6px 10px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);border-radius:var(--radius-md);cursor:pointer}
 .mode-switch button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.loading{padding:10px;background:var(--info-bg,#e0f7ff);color:var(--info-text,#0277bd);border-radius:var(--radius-md);border:1px solid var(--info-border,#4fc3f7)}
+.error{padding:10px;background:var(--error-bg,#ffe0e0);color:var(--error-text,#c62828);border-radius:var(--radius-md);border:1px solid var(--error-border,#ef5350)}
 .schedule-grid{display:grid;grid-template-columns:280px 1fr;gap:12px}
 .employee-header{font-weight:600;padding:8px;background:var(--bg-primary);border-radius:var(--radius-md);margin-bottom:8px}
 .employee-row .employee-cell{display:flex;flex-direction:column;gap:4px;padding:8px;border-bottom:1px solid var(--border-color)}

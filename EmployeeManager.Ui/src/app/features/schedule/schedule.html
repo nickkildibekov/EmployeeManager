@@ -11,7 +11,7 @@
       </label>
       <label>
         Date:
-        <input class="form-control" type="date" [value]="selectedDate()" (change)="selectedDate.set($any($event.target).value)" />
+        <input class="form-control" type="date" [value]="selectedDate()" (change)="onDateChange($any($event.target).value)" />
       </label>
       <div class="mode-switch">
         <button [class.active]="mode() === 'Daily'" (click)="setMode('Daily')">Daily</button>
@@ -20,6 +20,8 @@
         <button [class.active]="mode() === 'Year'" (click)="setMode('Year')">Year</button>
       </div>
     </div>
+    <div *ngIf="isLoading()" class="loading">Loading schedule data...</div>
+    <div *ngIf="errorMessage()" class="error">{{ errorMessage() }}</div>
   </div>
 
   <div class="schedule-grid">

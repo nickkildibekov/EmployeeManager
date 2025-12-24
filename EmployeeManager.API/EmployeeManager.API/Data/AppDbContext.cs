@@ -14,6 +14,7 @@ namespace EmployeeManager.API.Data
         public DbSet<Department> Departments => Set<Department>();
         public DbSet<Equipment> Equipments => Set<Equipment>();
         public DbSet<EquipmentCategory> EquipmentCategories => Set<EquipmentCategory>();
+        public DbSet<ScheduleEntry> ScheduleEntries => Set<ScheduleEntry>();
 
         public DbSet<DepartmentPosition> DepartmentPositions => Set<DepartmentPosition>();
 

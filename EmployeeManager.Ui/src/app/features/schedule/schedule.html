@@ -1,136 +1,161 @@
 <div class="schedule-container">
   <div class="schedule-header">
-    <h1>Employee Schedule</h1>
-    <div class="controls">
-      <label>
-        Department:
-        <select class="form-control" (change)="onDepartmentChange($event.target.value)">
-          <option [value]="''">Select...</option>
-          <option *ngFor="let dep of departments()" [value]="dep.id">{{ dep.name }}</option>
-        </select>
-      </label>
-      <label>
-        Date:
-        <input
-          class="form-control"
-          type="date"
-          [value]="selectedDate()"
-          (change)="onDateChange($any($event.target).value)"
-        />
-      </label>
-      <div class="mode-switch">
-        <button [class.active]="mode() === 'Daily'" (click)="setMode('Daily')">Daily</button>
-        <button [class.active]="mode() === 'Week'" (click)="setMode('Week')">Week</button>
-        <button [class.active]="mode() === 'Month'" (click)="setMode('Month')">Month</button>
-        <button [class.active]="mode() === 'Year'" (click)="setMode('Year')">Year</button>
+    <div class="header-top">
+      <h1>Schedule</h1>
+      <div class="controls">
+        <div class="control-group">
+          <label>Department:</label>
+          <select
+            [ngModel]="selectedDepartmentId()"
+            (ngModelChange)="onDepartmentChange($event.toString())"
+          >
+            <option [value]="''">All Departments</option>
+            <option *ngFor="let dept of departments()" [value]="dept.id">
+              {{ dept.name }}
+            </option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Position:</label>
+          <select [ngModel]="selectedPositionId()" (ngModelChange)="selectedPositionId.set($event)">
+            <option [value]="''">All Positions</option>
+            <option *ngFor="let pos of availablePositions()" [value]="pos">
+              {{ pos }}
+            </option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label>Zoom:</label>
+          <div class="zoom-buttons">
+            <button [class.active]="mode() === 'hour'" (click)="mode.set('hour')">Hour</button>
+            <button [class.active]="mode() === 'day'" (click)="mode.set('day')">Day</button>
+            <button [class.active]="mode() === 'week'" (click)="mode.set('week')">Week</button>
+            <button [class.active]="mode() === 'month'" (click)="mode.set('month')">Month</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label>Date:</label>
+          <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)" />
+        </div>
+
+        <div class="control-group">
+          <button (click)="exportToCSV()" class="export-btn">📥 CSV</button>
+        </div>
       </div>
     </div>
-    <div *ngIf="isLoading()" class="loading">Loading schedule data...</div>
-    <div *ngIf="errorMessage()" class="error">{{ errorMessage() }}</div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="bar onwork"></span> On Work</div>
+      <div class="legend-item"><span class="bar vacation"></span> Vacation</div>
+      <div class="legend-item"><span class="bar illness"></span> Illness</div>
+      <div class="legend-item"><span class="bar rest"></span> Rest</div>
+    </div>
   </div>
 
-  <div class="schedule-grid">
-    <div class="employee-column">
-      <div class="employee-header">Employee / Position</div>
-      <div class="employee-row" *ngFor="let emp of employees()">
-        <div class="employee-cell">
-          <div class="emp-name">{{ emp.firstName }} {{ emp.lastName }}</div>
-          <div class="emp-position">{{ emp.positionTitle || '—' }}</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Daily Mode: per selected date -->
-    <div class="mode-column" *ngIf="mode() === 'Daily'">
-      <div class="mode-header">{{ selectedDate() }}</div>
-      <div class="mode-row" *ngFor="let emp of employees()">
-        <div class="day-entry">
-          <div class="state-select">
-            <select
-              [value]="getEntry(emp.id, selectedDate()).state"
-              (change)="updateState(emp.id, selectedDate(), $any($event.target).value)"
-            >
-              <option value="OnWork">On Work</option>
-              <option value="Rest">Rest</option>
-              <option value="Vacation">Vacation</option>
-              <option value="Illness">Illness</option>
-            </select>
-          </div>
-          <div class="hours-input">
-            <input
-              type="number"
-              min="0"
-              max="24"
-              [value]="getEntry(emp.id, selectedDate()).hours"
-              (input)="updateHours(emp.id, selectedDate(), +$any($event.target).value)"
-            />
-            <span class="unit">h</span>
+  <div class="schedule-content">
+    @if (isLoading()) {
+    <div class="loading">Loading schedule...</div>
+    } @else if (errorMessage()) {
+    <div class="error">{{ errorMessage() }}</div>
+    } @else {
+    <div class="timeline-wrapper">
+      <!-- Sticky left sidebar with employee names -->
+      <div class="timeline-sidebar">
+        <div class="sidebar-header">Employees</div>
+        <div class="employees-list">
+          <div
+            *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId"
+            class="employee-row"
+          >
+            {{ emp.firstName }} {{ emp.lastName }}
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Week Mode -->
-    <div class="mode-column" *ngIf="mode() === 'Week'">
-      <div class="mode-header">Week of {{ weekDays()[0] }}</div>
-      <div class="week-row header">
-        <div class="week-cell" *ngFor="let d of weekDays()">{{ d }}</div>
-      </div>
-      <div class="mode-row" *ngFor="let emp of employees()">
-        <div class="week-row">
-          <div class="week-cell" *ngFor="let d of weekDays()">
-            <div class="week-entry">
-              <div class="state">{{ getEntry(emp.id, d).state }}</div>
-              <div class="hours">{{ getEntry(emp.id, d).hours }} h</div>
-            </div>
+      <!-- Scrollable timeline grid -->
+      <div class="timeline-grid-wrapper">
+        <div class="timeline-header-row">
+          <div
+            *ngFor="let col of timelineColumns(); trackBy: trackByColumn"
+            class="timeline-column-header"
+          >
+            {{ col | date : 'EEE MMM d' }}
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Month Mode -->
-    <div class="mode-column" *ngIf="mode() === 'Month'">
-      <div class="mode-header">Month of {{ selectedDate() | date : 'MMMM yyyy' }}</div>
-      <div class="month-row header">
-        <div class="month-cell" *ngFor="let d of monthDays()">{{ d.split('-')[2] }}</div>
-      </div>
-      <div class="mode-row" *ngFor="let emp of employees()">
-        <div class="month-row">
-          <div class="month-cell" *ngFor="let d of monthDays()">
+        <div class="timeline-grid">
+          <div *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId" class="grid-row">
             <div
-              class="month-entry"
-              [class.work]="getEntry(emp.id, d).state === 'OnWork'"
-              [class.rest]="getEntry(emp.id, d).state !== 'OnWork'"
+              *ngFor="let col of timelineColumns(); trackBy: trackByColumn; let colIdx = index"
+              class="grid-cell"
+              [ngClass]="
+                'state-' + (getEntry(emp.id, getIsoDate(col))?.state?.toLowerCase() || 'rest')
+              "
+              (click)="onCellClick(emp.id, getIsoDate(col))"
+              (dragstart)="onDragStart(emp.id, getIsoDate(col), $event)"
+              (dragover)="onDragOver($event)"
+              (drop)="onDrop(getIsoDate(col), $event)"
+              draggable="true"
             >
-              {{
-                getEntry(emp.id, d).state === 'OnWork'
-                  ? getEntry(emp.id, d).hours + 'h'
-                  : getEntry(emp.id, d).state
-              }}
+              <div class="cell-content">
+                <div class="hours">{{ getEntry(emp.id, getIsoDate(col))?.hours || 0 }}h</div>
+                <div class="state">{{ getEntry(emp.id, getIsoDate(col))?.state || 'Rest' }}</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Year Mode -->
-    <div class="mode-column" *ngIf="mode() === 'Year'">
-      <div class="mode-header">Year {{ selectedDate() | date : 'yyyy' }}</div>
-      <div class="year-row header">
-        <div class="year-cell" *ngFor="let m of yearMonths()">{{ m | date : 'MMM' }}</div>
-      </div>
-      <div class="mode-row" *ngFor="let emp of employees()">
-        <div class="year-row">
-          <div class="year-cell" *ngFor="let m of yearMonths()">
-            <!-- Simple placeholder summary: count of work days in month -->
-            <div class="year-entry">…</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="note">
-    Note: This is a UI scaffold. We can persist schedule to the API once you confirm data model.
+    }
   </div>
 </div>
+
+<!-- Edit Modal -->
+@if (showEditModal()) {
+<div class="modal-overlay" (click)="closeEditModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>Edit Schedule Entry</h2>
+      <button class="modal-close" (click)="closeEditModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Hours:</label>
+        <input
+          type="number"
+          min="0"
+          max="24"
+          [ngModel]="getEditingEntry()?.hours || 0"
+          placeholder="Hours"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>State:</label>
+        <select [ngModel]="getEditingEntry()?.state || 'Rest'">
+          <option value="Rest">Rest</option>
+          <option value="OnWork">On Work</option>
+          <option value="Vacation">Vacation</option>
+          <option value="Illness">Illness</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button (click)="closeEditModal()" class="btn-cancel">Cancel</button>
+      <button
+        (click)="
+          updateEditingEntry(getEditingEntry()?.hours || 0, getEditingEntry()?.state || 'Rest')
+        "
+        class="btn-save"
+      >
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+}

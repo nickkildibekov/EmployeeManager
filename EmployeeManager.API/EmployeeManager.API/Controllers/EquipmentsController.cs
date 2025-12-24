@@ -1,4 +1,4 @@
-﻿using EmployeeManager.API.Data;
+using EmployeeManager.API.Data;
 using EmployeeManager.API.DTO;
 using EmployeeManager.API.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -128,7 +128,8 @@ namespace EmployeeManager.API.Controllers
                     CategoryId = e.CategoryId,
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                     DepartmentId = e.DepartmentId,
-                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty
+                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty,
+                    ImageData = e.ImageData
                 })
                 .ToListAsync(cancellationToken);
 
@@ -157,7 +158,8 @@ namespace EmployeeManager.API.Controllers
                     CategoryId = e.CategoryId,
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                     DepartmentId = e.DepartmentId,
-                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty
+                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty,
+                    ImageData = e.ImageData
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -209,6 +211,7 @@ namespace EmployeeManager.API.Controllers
                 Status = equipmentDto.Status,
                 Measurement = equipmentDto.Measurement,
                 Amount = equipmentDto.Amount,
+                ImageData = equipmentDto.ImageData,
                 CategoryId = equipmentDto.CategoryId,
                 DepartmentId = equipmentDto.DepartmentId
             };
@@ -234,7 +237,8 @@ namespace EmployeeManager.API.Controllers
                     CategoryId = e.CategoryId,
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                     DepartmentId = e.DepartmentId,
-                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty
+                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty,
+                    ImageData = e.ImageData
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -287,6 +291,7 @@ namespace EmployeeManager.API.Controllers
             equipment.Status = equipmentDto.Status;
             equipment.Measurement = equipmentDto.Measurement;
             equipment.Amount = equipmentDto.Amount;
+            equipment.ImageData = equipmentDto.ImageData;
             equipment.CategoryId = equipmentDto.CategoryId;
             equipment.DepartmentId = equipmentDto.DepartmentId;
 
@@ -326,7 +331,8 @@ namespace EmployeeManager.API.Controllers
                     CategoryId = e.CategoryId,
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                     DepartmentId = e.DepartmentId,
-                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty
+                    DepartmentName = e.Department != null ? e.Department.Name : string.Empty,
+                    ImageData = e.ImageData
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 

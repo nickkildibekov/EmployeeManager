@@ -1,115 +1,88 @@
-<div class="schedule-timeline">
-  <!-- Header Controls -->
-  <div class="timeline-controls">
-    <h1>Employee Schedule Timeline</h1>
-    <div class="controls-group">
-      <div class="control-item">
-        <label>Department:</label>
-        <select [ngModel]="selectedDepartmentId()" (ngModelChange)="onDepartmentChange($event.toString())">
-          <option *ngFor="let dept of departments()" [value]="dept.id">{{ dept.name }}</option>
-        </select>
-      </div>
-
-      <div class="control-item">
-        <label>Position:</label>
-        <select [ngModel]="selectedPositionId()" (ngModelChange)="selectedPositionId.set($event)">
-          <option [value]="''">All Positions</option>
-          <option *ngFor="let pos of availablePositions()" [value]="pos">{{ pos }}</option>
-        </select>
-      </div>
-
-      <div class="control-item">
-        <label>Zoom:</label>
-        <div class="zoom-buttons">
-          <button [class.active]="mode() === 'hour'" (click)="mode.set('hour')">Hour</button>
-          <button [class.active]="mode() === 'day'" (click)="mode.set('day')">Day</button>
-          <button [class.active]="mode() === 'week'" (click)="mode.set('week')">Week</button>
-          <button [class.active]="mode() === 'month'" (click)="mode.set('month')">Month</button>
-        </div>
-      </div>
-
-      <div class="control-item">
-        <label>Date:</label>
-        <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)">
-      </div>
-
-      <div class="control-item">
-        <button class="btn-export" (click)="exportToCSV()">📥 Export CSV</button>
-      </div>
+<div class="rct-outer">
+  <!-- Top Controls Bar -->
+  <div class="rct-controls">
+    <div class="rct-controls-left">
+      <h2>Schedule</h2>
+      <select [ngModel]="selectedDepartmentId()" (ngModelChange)="onDepartmentChange($event.toString())" class="rct-select">
+        <option *ngFor="let dept of departments()" [value]="dept.id">{{ dept.name }}</option>
+      </select>
     </div>
-
-    <!-- Legend -->
-    <div class="timeline-legend">
-      <span class="legend-item"><span class="legend-color work"></span>On Work</span>
-      <span class="legend-item"><span class="legend-color vacation"></span>Vacation</span>
-      <span class="legend-item"><span class="legend-color illness"></span>Illness</span>
-      <span class="legend-item"><span class="legend-color rest"></span>Rest</span>
+    <div class="rct-controls-right">
+      <div class="rct-legend">
+        <span class="rct-legend-item"><span class="rct-dot work"></span>Working</span>
+        <span class="rct-legend-item"><span class="rct-dot vacation"></span>Vacation</span>
+        <span class="rct-legend-item"><span class="rct-dot illness"></span>Illness</span>
+        <span class="rct-legend-item"><span class="rct-dot rest"></span>Rest</span>
+      </div>
+      <button class="rct-btn" (click)="exportToCSV()">Export CSV</button>
     </div>
   </div>
 
-  <!-- Timeline Content -->
-  <div class="timeline-container">
+
+  <!-- Timeline Container -->
+  <div class="rct-container">
     @if (isLoading()) {
-      <div class="timeline-loading">Loading schedule...</div>
+      <div class="rct-loading">Loading...</div>
     } @else if (errorMessage()) {
-      <div class="timeline-error">{{ errorMessage() }}</div>
+      <div class="rct-error">{{ errorMessage() }}</div>
     } @else {
-      <div class="timeline-main">
-        <!-- Left Sidebar: Employee List -->
-        <div class="timeline-sidebar">
-          <div class="sidebar-header">Employees</div>
-          <div class="employees-track">
-            <div *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId" 
-                 class="employee-track">
-              <div class="employee-label">
-                <div class="emp-name">{{ emp.firstName }} {{ emp.lastName }}</div>
-                <div class="emp-position">{{ emp.positionName || '—' }}</div>
+      <div class="rct-scroll-wrapper">
+        <div class="rct-timeline">
+          <!-- Left Sidebar: Employee Names -->
+          <div class="rct-sidebar">
+            <div class="rct-sidebar-header">Employees</div>
+            <div class="rct-sidebar-body">
+              <div *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId" class="rct-row-label">
+                <div class="rct-emp-name">{{ emp.firstName }} {{ emp.lastName }}</div>
+                <div class="rct-emp-position">{{ emp.positionName || 'No Position' }}</div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Right Timeline: Calendar Grid -->
-        <div class="timeline-grid">
-          <!-- Date Header -->
-          <div class="timeline-header">
-            <div class="timeline-header-spacer"></div>
-            <div class="timeline-dates">
-              <div *ngFor="let col of timelineColumns(); trackBy: trackByColumn" 
-                   class="date-column">
-                <div class="date-header">
-                  <div class="date-day">{{ col | date: 'EEE' }}</div>
-                  <div class="date-num">{{ col | date: 'd' }}</div>
-                  <div class="date-month">{{ col | date: 'MMM' }}</div>
+          <!-- Right: Timeline Grid -->
+          <div class="rct-grid-wrapper">
+            <!-- Date Headers -->
+            <div class="rct-header">
+              <div *ngFor="let col of timelineColumns(); trackBy: trackByColumn; let i = index" 
+                   class="rct-header-cell"
+                   [style.width.px]="cellWidth">
+                <div class="rct-date-label">
+                  <span class="rct-day">{{ col | date: 'EEE' }}</span>
+                  <span class="rct-num">{{ col | date: 'd' }}</span>
+                  <span class="rct-month">{{ col | date: 'MMM' }}</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Employee Rows with Timeline Bars -->
-          <div class="timeline-rows">
-            <div *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId" 
-                 class="timeline-row">
-              <div class="row-spacer"></div>
-              <div class="row-timeline">
-                <div *ngFor="let col of timelineColumns(); trackBy: trackByColumn" 
-                     class="date-cell">
-                  <div class="cell-inner">
-                    <!-- Entry Bar -->
-                    @if (getEntry(emp.id, getIsoDate(col))?.hours) {
-                      <div class="entry-bar"
-                           [ngClass]="'state-' + (getEntry(emp.id, getIsoDate(col))?.state?.toLowerCase() || 'rest')"
-                           (click)="onCellClick(emp.id, getIsoDate(col))"
-                           (dragstart)="onDragStart(emp.id, getIsoDate(col), $event)"
-                           (dragover)="onDragOver($event)"
-                           (drop)="onDrop(getIsoDate(col), $event)"
-                           draggable="true"
-                           [title]="getEntry(emp.id, getIsoDate(col))?.hours + 'h - ' + (getEntry(emp.id, getIsoDate(col))?.state || 'Rest')">
-                        <div class="bar-content">
-                          <span class="bar-hours">{{ getEntry(emp.id, getIsoDate(col))?.hours }}h</span>
-                          <span class="bar-state">{{ getEntry(emp.id, getIsoDate(col))?.state }}</span>
+            <!-- Grid Body with Rows -->
+            <div class="rct-body">
+              <div *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId" class="rct-row">
+                <div class="rct-row-inner">
+                  <!-- Grid cells for each date -->
+                  <div *ngFor="let col of timelineColumns(); trackBy: trackByColumn; let i = index" 
+                       class="rct-cell"
+                       [style.width.px]="cellWidth"
+                       (click)="onCellClick(emp.id, getIsoDate(col))"
+                       (dragover)="onDragOver($event)"
+                       (drop)="onDrop(getIsoDate(col), $event)">
+                  </div>
+                  
+                  <!-- Entry Bars (absolute positioned) -->
+                  <div class="rct-items-layer">
+                    @for (col of timelineColumns(); track trackByColumn($index, col); let i = $index) {
+                      @if (getEntry(emp.id, getIsoDate(col))?.hours > 0) {
+                        <div class="rct-item"
+                             [ngClass]="'state-' + getEntry(emp.id, getIsoDate(col))?.state?.toLowerCase()"
+                             [style.left.px]="i * cellWidth"
+                             [style.width.px]="cellWidth - 4"
+                             (click)="onCellClick(emp.id, getIsoDate(col)); $event.stopPropagation()"
+                             draggable="true"
+                             (dragstart)="onDragStart(emp.id, getIsoDate(col), $event)">
+                          <div class="rct-item-content">
+                            <span class="rct-item-text">{{ getEntry(emp.id, getIsoDate(col))?.hours }}h</span>
+                          </div>
                         </div>
-                      </div>
+                      }
                     }
                   </div>
                 </div>
@@ -122,37 +95,40 @@
   </div>
 </div>
 
+
 <!-- Edit Modal -->
 @if (showEditModal()) {
-  <div class="modal-overlay" (click)="closeEditModal()">
-    <div class="modal-dialog" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Edit Schedule Entry</h2>
-        <button class="modal-close" (click)="closeEditModal()">×</button>
+  <div class="rct-modal-overlay" (click)="closeEditModal()">
+    <div class="rct-modal" (click)="$event.stopPropagation()">
+      <div class="rct-modal-header">
+        <h3>Edit Entry</h3>
+        <button class="rct-modal-close" (click)="closeEditModal()">×</button>
       </div>
-
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Hours (0-24):</label>
-          <input type="number" min="0" max="24" [ngModel]="getEditingEntry()?.hours || 0" placeholder="Hours" class="form-input">
+      <div class="rct-modal-body">
+        <div class="rct-form-group">
+          <label>Hours (0-24)</label>
+          <input type="number" 
+                 min="0" 
+                 max="24" 
+                 #hoursInput
+                 [value]="getEditingEntry()?.hours || 0" 
+                 class="rct-input">
         </div>
-
-        <div class="form-group">
-          <label>Work State:</label>
-          <select [ngModel]="getEditingEntry()?.state || 'Rest'" class="form-input">
-            <option value="Rest">Rest</option>
-            <option value="OnWork">On Work</option>
+        <div class="rct-form-group">
+          <label>Status</label>
+          <select #stateSelect [value]="getEditingEntry()?.state || 'Rest'" class="rct-select">
+            <option value="OnWork">Working</option>
             <option value="Vacation">Vacation</option>
             <option value="Illness">Illness</option>
+            <option value="Rest">Rest</option>
           </select>
         </div>
       </div>
-
-      <div class="modal-footer">
-        <button class="btn-secondary" (click)="closeEditModal()">Cancel</button>
-        <button class="btn-primary" 
-                (click)="updateEditingEntry((getEditingEntry()?.hours || 0), (getEditingEntry()?.state || 'Rest'))">
-          Save Changes
+      <div class="rct-modal-footer">
+        <button class="rct-btn rct-btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button class="rct-btn rct-btn-primary" 
+                (click)="updateEditingEntry(+hoursInput.value, stateSelect.value)">
+          Save
         </button>
       </div>
     </div>

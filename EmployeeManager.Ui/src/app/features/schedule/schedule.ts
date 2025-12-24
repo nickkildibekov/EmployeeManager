@@ -31,7 +31,8 @@ export class ScheduleComponent implements OnInit {
   mode = signal<ScheduleMode>('day');
   selectedDate = signal<string>(new Date().toISOString().slice(0, 10));
   selectedDepartmentId = signal<number>(0);
-  selectedPositionId = signal<string>('');
+
+  cellWidth = 100; // pixels per day column
 
   departments = signal<Department[]>([]);
   employees = signal<EmployeeModel[]>([]);
@@ -282,24 +283,9 @@ export class ScheduleComponent implements OnInit {
     }
   });
 
-  // Filtered employees by position
+  // Filtered employees (no position filter, just show all from department)
   filteredEmployees = computed(() => {
-    const posId = this.selectedPositionId();
-    const emps = this.employees();
-    if (!posId) return emps;
-    return emps.filter((e) => e.positionName === posId);
-  });
-
-  // Get unique positions from employees
-  availablePositions = computed(() => {
-    const emps = this.employees();
-    const positions = new Map<number, string>();
-    emps.forEach((e) => {
-      if (e.positionId && e.positionName) {
-        positions.set(e.positionId, e.positionName);
-      }
-    });
-    return Array.from(positions.entries()).map(([id, title]) => ({ id, title }));
+    return this.employees();
   });
 
   onCellClick(empId: number, colDate: string) {

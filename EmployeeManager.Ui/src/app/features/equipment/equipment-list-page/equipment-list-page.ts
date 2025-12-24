@@ -70,6 +70,9 @@ export class EquipmentListPageComponent implements OnInit {
 
   Math = Math;
 
+  // Image modal state
+  selectedImage = signal<{ src: string; name: string } | null>(null);
+
   ngOnInit(): void {
     this.loadDepartments();
     this.loadCategories();
@@ -364,5 +367,15 @@ export class EquipmentListPageComponent implements OnInit {
     if (!depId) return 'N/A';
     const dep = this.departments().find((d) => d.id === depId);
     return dep ? dep.name : 'Unknown';
+  }
+
+  // Open/close image modal
+  openImageModal(src: string, name: string) {
+    if (!src) return;
+    this.selectedImage.set({ src, name });
+  }
+
+  closeImageModal() {
+    this.selectedImage.set(null);
   }
 }

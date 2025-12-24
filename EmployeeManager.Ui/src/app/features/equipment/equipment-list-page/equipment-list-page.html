@@ -312,7 +312,12 @@
           <td>{{ item.amount }}</td>
           <td>
             @if (item.imageData) {
-            <img [src]="item.imageData" alt="Equipment thumbnail" class="table-image" />
+            <img
+              [src]="item.imageData"
+              [alt]="item.name + ' thumbnail'"
+              class="table-image"
+              (click)="openImageModal(item.imageData, item.name); $event.stopPropagation()"
+            />
             } @else {
             <div class="table-image-placeholder">No Image</div>
             }
@@ -338,4 +343,15 @@
       Next →
     </button>
   </div>
+
+  <!-- Image Modal -->
+  @if (selectedImage()) {
+  <div class="modal-backdrop" (click)="closeImageModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeImageModal()" aria-label="Close">✕</button>
+      <img [src]="selectedImage()!.src" [alt]="selectedImage()!.name" class="modal-image" />
+      <div class="modal-caption">{{ selectedImage()!.name }}</div>
+    </div>
+  </div>
+  }
 </div>

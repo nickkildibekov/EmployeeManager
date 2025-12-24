@@ -453,9 +453,8 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   z-index: 1000;
   padding: 20px;
 }
@@ -479,12 +478,23 @@
   height: min(700px, 80vh);
 }
 
+.modal-image-wrap {
+  position: relative;
+  width: 100%;
+  height: calc(100% - 56px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
 .modal-image {
   max-width: 100%;
-  max-height: calc(100% - 56px);
+  max-height: 100%;
   border-radius: var(--radius-md);
   object-fit: contain;
   background: var(--bg-secondary);
+  display: block;
 }
 
 .modal-caption {
@@ -495,6 +505,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding-top: 6px;
 }
 
 .modal-action {
@@ -538,6 +549,7 @@
   justify-content: center;
   font-size: 22px;
   line-height: 1;
+  z-index: 2;
 }
 
 .modal-nav.prev {

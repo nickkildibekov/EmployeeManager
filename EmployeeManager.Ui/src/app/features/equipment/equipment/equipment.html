@@ -256,8 +256,7 @@
             <div class="no-image-placeholder">No image</div>
             }
           </div>
-          }
-          @if (editedEquipment().imageData && isEditMode()) {
+          } @if (editedEquipment().imageData && isEditMode()) {
           <div class="image-preview">
             <img [src]="editedEquipment().imageData" alt="Equipment preview" class="preview-img" />
             <button type="button" class="btn btn-sm btn-secondary" (click)="clearEditImage()">

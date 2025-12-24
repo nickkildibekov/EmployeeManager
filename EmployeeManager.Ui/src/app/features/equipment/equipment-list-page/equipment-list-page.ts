@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, signal, DestroyRef, HostListener, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -71,7 +71,13 @@ export class EquipmentListPageComponent implements OnInit {
   Math = Math;
 
   // Image modal state
-  selectedImage = signal<{ src: string; name: string } | null>(null);
+  imageItems = signal<{ src: string; name: string }[]>([]);
+  selectedImageIndex = signal<number>(0);
+  selectedImage = computed(() => {
+    const items = this.imageItems();
+    const i = this.selectedImageIndex();
+    return items.length > 0 && i >= 0 && i < items.length ? items[i] : null;
+  });
 
   ngOnInit(): void {
     this.loadDepartments();
@@ -372,10 +378,44 @@ export class EquipmentListPageComponent implements OnInit {
   // Open/close image modal
   openImageModal(src: string, name: string) {
     if (!src) return;
-    this.selectedImage.set({ src, name });
+    const items = this.equipment()
+      .filter((e) => !!e.imageData)
+      .map((e) => ({ src: e.imageData as string, name: e.name }));
+    this.imageItems.set(items);
+    const idx = items.findIndex((it) => it.src === src && it.name === name);
+    this.selectedImageIndex.set(Math.max(0, idx));
   }
 
   closeImageModal() {
-    this.selectedImage.set(null);
+    this.imageItems.set([]);
+    this.selectedImageIndex.set(0);
+  }
+
+  prevImage() {
+    const items = this.imageItems();
+    if (!items.length) return;
+    const next = (this.selectedImageIndex() - 1 + items.length) % items.length;
+    this.selectedImageIndex.set(next);
+  }
+
+  nextImage() {
+    const items = this.imageItems();
+    if (!items.length) return;
+    const next = (this.selectedImageIndex() + 1) % items.length;
+    this.selectedImageIndex.set(next);
+  }
+
+  @HostListener('window:keydown', ['$event'])
+  onKeydown(ev: KeyboardEvent) {
+    if (!this.selectedImage()) return;
+    if (ev.key === 'Escape') {
+      this.closeImageModal();
+    } else if (ev.key === 'ArrowLeft') {
+      ev.preventDefault();
+      this.prevImage();
+    } else if (ev.key === 'ArrowRight') {
+      ev.preventDefault();
+      this.nextImage();
+    }
   }
 }

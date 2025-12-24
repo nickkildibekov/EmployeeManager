@@ -284,7 +284,7 @@ export class ScheduleComponent implements OnInit {
     const posId = this.selectedPositionId();
     const emps = this.employees();
     if (!posId) return emps;
-    return emps.filter((e) => e.position?.id === posId);
+    return emps.filter((e) => e.positionId === posId);
   });
 
   // Get unique positions from employees
@@ -292,8 +292,8 @@ export class ScheduleComponent implements OnInit {
     const emps = this.employees();
     const positions = new Map<number, string>();
     emps.forEach((e) => {
-      if (e.position) {
-        positions.set(e.position.id, e.position.title);
+      if (e.positionId && e.positionName) {
+        positions.set(e.positionId, e.positionName);
       }
     });
     return Array.from(positions.entries()).map(([id, title]) => ({ id, title }));

@@ -27,6 +27,12 @@ export class NavigationService {
     }
   }
 
+  // Smart back navigation to list by entity type
+  goBackToList(entityType: 'department' | 'employee' | 'position' | 'equipment') {
+    const listPath = this.getListPath(entityType);
+    this.goBack(listPath);
+  }
+
   // Navigate after create
   afterCreate(
     entityType: 'department' | 'employee' | 'position' | 'equipment',
@@ -39,10 +45,11 @@ export class NavigationService {
       this.toastService.success(`${this.capitalize(entityType)} created successfully!`);
     }
 
+    const listPath = this.getListPath(entityType);
     if (navigateToList) {
-      this.router.navigate([`/${entityType}s`]);
+      this.router.navigate([listPath]);
     } else {
-      this.router.navigate([`/${entityType}s`, id]);
+      this.router.navigate([listPath, id]);
     }
   }
 
@@ -58,7 +65,8 @@ export class NavigationService {
     }
 
     if (!stayOnPage) {
-      this.router.navigate([`/${entityType}s`]);
+      const listPath = this.getListPath(entityType);
+      this.router.navigate([listPath]);
     }
   }
 
@@ -76,7 +84,8 @@ export class NavigationService {
     if (returnTo) {
       this.router.navigate([returnTo]);
     } else {
-      this.router.navigate([`/${entityType}s`]);
+      const listPath = this.getListPath(entityType);
+      this.router.navigate([listPath]);
     }
   }
 
@@ -87,12 +96,14 @@ export class NavigationService {
 
   // Navigate to entity detail
   toDetail(entityType: string, id: number) {
-    this.router.navigate([`/${entityType}s`, id]);
+    const listPath = this.getListPath(entityType as any);
+    this.router.navigate([listPath, id]);
   }
 
   // Navigate to list
   toList(entityType: string, filters?: any) {
-    this.router.navigate([`/${entityType}s`], {
+    const listPath = this.getListPath(entityType as any);
+    this.router.navigate([listPath], {
       queryParams: filters,
     });
   }
@@ -112,5 +123,10 @@ export class NavigationService {
 
   private capitalize(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
+  }
+
+  // Centralize route pluralization; equipment list is singular in routes
+  private getListPath(entityType: 'department' | 'employee' | 'position' | 'equipment'): string {
+    return entityType === 'equipment' ? '/equipment' : `/${entityType}s`;
   }
 }

@@ -105,6 +105,9 @@ namespace EmployeeManager.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
@@ -115,8 +118,9 @@ namespace EmployeeManager.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsWork")
-                        .HasColumnType("bit");
+                    b.Property<string>("Measurement")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -126,6 +130,9 @@ namespace EmployeeManager.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("SerialNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

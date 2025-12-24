@@ -32,9 +32,11 @@ export interface PositionUpdatePayload {
 
 export interface EquipmentCreationPayload {
   name: string;
-  serialNumber: string;
+  serialNumber?: string;
   purchaseDate: string;
-  isWork: boolean;
+  status: 'Used' | 'NotUsed' | 'Broken';
+  measurement: 'Unit' | 'Meter' | 'Liter';
+  amount: number;
   description: string;
   categoryId: number;
   departmentId: number | null;
@@ -43,9 +45,11 @@ export interface EquipmentCreationPayload {
 export interface EquipmentUpdatePayload {
   id: number;
   name: string;
-  serialNumber: string;
+  serialNumber?: string;
   purchaseDate: string;
-  isWork: boolean;
+  status: 'Used' | 'NotUsed' | 'Broken';
+  measurement: 'Unit' | 'Meter' | 'Liter';
+  amount: number;
   description: string;
   categoryId: number;
   departmentId: number | null;

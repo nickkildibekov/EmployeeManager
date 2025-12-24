@@ -17,7 +17,6 @@ namespace EmployeeManager.API.Controllers
             _appDbContext = appDbContext;
         }
 
-        
         [HttpGet]
         public async Task<IActionResult> GetAll(
             [FromQuery] int? departmentId,
@@ -25,7 +24,10 @@ namespace EmployeeManager.API.Controllers
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? search = null,
-            [FromQuery] bool? isWork = null,
+            [FromQuery] string? status = null,
+            [FromQuery] string? measurement = null,
+            [FromQuery] string sortBy = "name",
+            [FromQuery] string sortOrder = "asc",
             CancellationToken cancellationToken = default)
         {
             if (page < 1) page = 1;
@@ -58,15 +60,58 @@ namespace EmployeeManager.API.Controllers
                     e.SerialNumber.ToLower().Contains(searchLower));
             }
 
-            if (isWork.HasValue)
+            if (!string.IsNullOrWhiteSpace(status))
             {
-                query = query.Where(e => e.IsWork == isWork.Value);
+                var normalizedStatus = status.Trim();
+                query = query.Where(e => e.Status == normalizedStatus);
+            }
+
+            if (!string.IsNullOrWhiteSpace(measurement))
+            {
+                var normalizedMeasurement = measurement.Trim();
+                query = query.Where(e => e.Measurement == normalizedMeasurement);
             }
 
             var totalCount = await query.CountAsync(cancellationToken);
 
+            // Apply sorting
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                query = sortBy.ToLower() switch
+                {
+                    "name" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.Name)
+                        : query.OrderBy(e => e.Name),
+                    "serialnumber" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.SerialNumber)
+                        : query.OrderBy(e => e.SerialNumber),
+                    "category" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.Category.Name)
+                        : query.OrderBy(e => e.Category.Name),
+                    "purchasedate" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.PurchaseDate)
+                        : query.OrderBy(e => e.PurchaseDate),
+                    "status" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.Status)
+                        : query.OrderBy(e => e.Status),
+                    "measurement" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.Measurement)
+                        : query.OrderBy(e => e.Measurement),
+                    "amount" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.Amount)
+                        : query.OrderBy(e => e.Amount),
+                    "department" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.Department.Name)
+                        : query.OrderBy(e => e.Department.Name),
+                    _ => query.OrderBy(e => e.Name)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(e => e.Name);
+            }
+
             var equipmentList = await query
-                .OrderBy(e => e.Name)
                 .AsNoTracking()
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -76,7 +121,9 @@ namespace EmployeeManager.API.Controllers
                     Name = e.Name,
                     SerialNumber = e.SerialNumber,
                     PurchaseDate = e.PurchaseDate,
-                    IsWork = e.IsWork,
+                    Status = e.Status,
+                    Measurement = e.Measurement,
+                    Amount = e.Amount,
                     Description = e.Description,
                     CategoryId = e.CategoryId,
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
@@ -103,7 +150,9 @@ namespace EmployeeManager.API.Controllers
                     Name = e.Name,
                     SerialNumber = e.SerialNumber,
                     PurchaseDate = e.PurchaseDate,
-                    IsWork = e.IsWork,
+                    Status = e.Status,
+                    Measurement = e.Measurement,
+                    Amount = e.Amount,
                     Description = e.Description,
                     CategoryId = e.CategoryId,
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
@@ -125,18 +174,21 @@ namespace EmployeeManager.API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (string.IsNullOrWhiteSpace(equipmentDto.Name) || string.IsNullOrWhiteSpace(equipmentDto.SerialNumber))
+            if (string.IsNullOrWhiteSpace(equipmentDto.Name))
             {
-                return BadRequest(new { message = "Name and SerialNumber are required." });
+                return BadRequest(new { message = "Name is required." });
             }
 
-            // Check for duplicate serial number
-            var existingSerial = await _appDbContext.Equipments
-                .AnyAsync(e => e.SerialNumber == equipmentDto.SerialNumber, cancellationToken);
-            
-            if (existingSerial)
+            // Check for duplicate serial number (only if provided)
+            if (!string.IsNullOrWhiteSpace(equipmentDto.SerialNumber))
             {
-                return Conflict(new { message = $"Equipment with serial number '{equipmentDto.SerialNumber}' already exists." });
+                var existingSerial = await _appDbContext.Equipments
+                    .AnyAsync(e => e.SerialNumber == equipmentDto.SerialNumber, cancellationToken);
+            
+                if (existingSerial)
+                {
+                    return Conflict(new { message = $"Equipment with serial number '{equipmentDto.SerialNumber}' already exists." });
+                }
             }
 
             if (!await _appDbContext.EquipmentCategories.AnyAsync(c => c.Id == equipmentDto.CategoryId, cancellationToken))
@@ -154,7 +206,9 @@ namespace EmployeeManager.API.Controllers
                 Description = equipmentDto.Description,
                 SerialNumber = equipmentDto.SerialNumber,
                 PurchaseDate = equipmentDto.PurchaseDate,
-                IsWork = equipmentDto.IsWork,
+                Status = equipmentDto.Status,
+                Measurement = equipmentDto.Measurement,
+                Amount = equipmentDto.Amount,
                 CategoryId = equipmentDto.CategoryId,
                 DepartmentId = equipmentDto.DepartmentId
             };
@@ -173,7 +227,9 @@ namespace EmployeeManager.API.Controllers
                     Name = e.Name,
                     SerialNumber = e.SerialNumber,
                     PurchaseDate = e.PurchaseDate,
-                    IsWork = e.IsWork,
+                    Status = e.Status,
+                    Measurement = e.Measurement,
+                    Amount = e.Amount,
                     Description = e.Description,
                     CategoryId = e.CategoryId,
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
@@ -194,18 +250,21 @@ namespace EmployeeManager.API.Controllers
                 return BadRequest(new { message = "ID mismatch." });
             }
 
-            if (string.IsNullOrWhiteSpace(equipmentDto.Name) || string.IsNullOrWhiteSpace(equipmentDto.SerialNumber))
+            if (string.IsNullOrWhiteSpace(equipmentDto.Name))
             {
-                return BadRequest(new { message = "Name and SerialNumber are required." });
+                return BadRequest(new { message = "Name is required." });
             }
 
-            // Check for duplicate serial number (excluding current equipment)
-            var existingSerial = await _appDbContext.Equipments
-                .AnyAsync(e => e.SerialNumber == equipmentDto.SerialNumber && e.Id != id, cancellationToken);
-            
-            if (existingSerial)
+            // Check for duplicate serial number (excluding current equipment, only if provided)
+            if (!string.IsNullOrWhiteSpace(equipmentDto.SerialNumber))
             {
-                return Conflict(new { message = $"Another equipment with serial number '{equipmentDto.SerialNumber}' already exists." });
+                var existingSerial = await _appDbContext.Equipments
+                    .AnyAsync(e => e.SerialNumber == equipmentDto.SerialNumber && e.Id != id, cancellationToken);
+            
+                if (existingSerial)
+                {
+                    return Conflict(new { message = $"Another equipment with serial number '{equipmentDto.SerialNumber}' already exists." });
+                }
             }
 
             if (!await _appDbContext.EquipmentCategories.AnyAsync(c => c.Id == equipmentDto.CategoryId, cancellationToken) ||
@@ -225,7 +284,9 @@ namespace EmployeeManager.API.Controllers
             equipment.Description = equipmentDto.Description;
             equipment.SerialNumber = equipmentDto.SerialNumber;
             equipment.PurchaseDate = equipmentDto.PurchaseDate;
-            equipment.IsWork = equipmentDto.IsWork;
+            equipment.Status = equipmentDto.Status;
+            equipment.Measurement = equipmentDto.Measurement;
+            equipment.Amount = equipmentDto.Amount;
             equipment.CategoryId = equipmentDto.CategoryId;
             equipment.DepartmentId = equipmentDto.DepartmentId;
 
@@ -258,7 +319,9 @@ namespace EmployeeManager.API.Controllers
                     Name = e.Name,
                     SerialNumber = e.SerialNumber,
                     PurchaseDate = e.PurchaseDate,
-                    IsWork = e.IsWork,
+                    Status = e.Status,
+                    Measurement = e.Measurement,
+                    Amount = e.Amount,
                     Description = e.Description,
                     CategoryId = e.CategoryId,
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,

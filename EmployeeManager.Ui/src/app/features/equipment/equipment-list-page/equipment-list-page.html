@@ -1,8 +1,8 @@
 <div class="container">
   <div class="header">
     <h2>Equipment</h2>
-    <button class="btn btn-primary" (click)="toggleAddForm()">
-      {{ isAddFormVisible() ? 'Cancel' : '+ Add Equipment' }}
+    <button class="btn btn-primary" (click)="toggleAddForm()" *ngIf="!isAddFormVisible()">
+      + Add Equipment
     </button>
   </div>
 
@@ -12,15 +12,23 @@
 
   <!-- Add Form -->
   <div *ngIf="isAddFormVisible()" class="add-form">
-    <div class="form-row">
+    <!-- Row 1: Name | Serial | Description -->
+    <div class="form-row row-1">
       <input class="form-control" placeholder="Equipment Name" [(ngModel)]="newEquipment().name" />
       <input
         class="form-control"
-        placeholder="Serial Number"
+        placeholder="Serial Number (Optional)"
         [(ngModel)]="newEquipment().serialNumber"
       />
+      <input
+        class="form-control"
+        placeholder="Description"
+        [(ngModel)]="newEquipment().description"
+      />
     </div>
-    <div class="form-row">
+
+    <!-- Row 2: Purchase Date | Department | Category/+NewCategoryButton -->
+    <div class="form-row row-2">
       <input
         class="form-control"
         type="date"
@@ -33,40 +41,142 @@
           {{ dep.name }}
         </option>
       </select>
-    </div>
-    <div class="form-row">
+
       @if (!isAddingNewCategory()) {
-      <select class="form-control" [(ngModel)]="newEquipment().categoryId">
-        <option [ngValue]="null" disabled>Select Category</option>
-        <option *ngFor="let cat of categories()" [ngValue]="cat.id">
-          {{ cat.name }}
-        </option>
-      </select>
-      <button class="btn btn-secondary" type="button" (click)="toggleAddNewCategory()">
-        + New Category
-      </button>
-      } @else {
-      <div class="inline-form">
-        <input class="form-control" placeholder="Category Name" [(ngModel)]="newCategoryName" />
-        <input class="form-control" placeholder="Description (optional)" [(ngModel)]="newCategoryDescription" />
-        <button class="btn btn-success" type="button" (click)="createAndSelectCategory()">
-          Create
-        </button>
+      <div class="select-with-button">
+        <select class="form-control" [(ngModel)]="newEquipment().categoryId">
+          <option [ngValue]="null" disabled>Select Category</option>
+          <option *ngFor="let cat of categories()" [ngValue]="cat.id">
+            {{ cat.name }}
+          </option>
+        </select>
         <button class="btn btn-secondary" type="button" (click)="toggleAddNewCategory()">
-          Cancel
+          + New Category
         </button>
+      </div>
+      } @else {
+      <div class="inline-form-vertical">
+        <input class="form-control" placeholder="Category Name" [(ngModel)]="newCategoryName" />
+        <input
+          class="form-control"
+          placeholder="Description (optional)"
+          [(ngModel)]="newCategoryDescription"
+        />
+        <div class="button-stack">
+          <button class="btn btn-success" type="button" (click)="createAndSelectCategory()">
+            Create
+          </button>
+          <button class="btn btn-secondary" type="button" (click)="toggleAddNewCategory()">
+            Cancel
+          </button>
+        </div>
       </div>
       }
     </div>
-    <div class="form-row">
-      <label class="form-check">
-        <input type="checkbox" [(ngModel)]="newEquipment().isWork" />
-        Is Work Equipment
-      </label>
+
+    <!-- Row 3: Status Radios | Measurement Radios | Amount -->
+    <div class="form-row row-3">
+      <div class="status-group">
+        <label>Status</label>
+        <div class="status-options">
+          <label class="status-option">
+            <input
+              type="radio"
+              name="new-status"
+              [value]="'Used'"
+              [(ngModel)]="newEquipment().status"
+            />
+            Used
+          </label>
+          <label class="status-option">
+            <input
+              type="radio"
+              name="new-status"
+              [value]="'NotUsed'"
+              [(ngModel)]="newEquipment().status"
+            />
+            Not Used
+          </label>
+          <label class="status-option">
+            <input
+              type="radio"
+              name="new-status"
+              [value]="'Broken'"
+              [(ngModel)]="newEquipment().status"
+            />
+            Broken
+          </label>
+        </div>
+      </div>
+
+      <div class="measurement-group">
+        <label>Measurement</label>
+        <div class="measurement-options">
+          <label class="measurement-option">
+            <input
+              type="radio"
+              name="new-measurement"
+              [value]="'Unit'"
+              [(ngModel)]="newEquipment().measurement"
+              (change)="onMeasurementChange('Unit')"
+            />
+            Unit
+          </label>
+          <label class="measurement-option">
+            <input
+              type="radio"
+              name="new-measurement"
+              [value]="'Meter'"
+              [(ngModel)]="newEquipment().measurement"
+              (change)="onMeasurementChange('Meter')"
+            />
+            Meter
+          </label>
+          <label class="measurement-option">
+            <input
+              type="radio"
+              name="new-measurement"
+              [value]="'Liter'"
+              [(ngModel)]="newEquipment().measurement"
+              (change)="onMeasurementChange('Liter')"
+            />
+            Liter
+          </label>
+        </div>
+      </div>
+
+      <div class="amount-group">
+        <label>
+          Amount
+          <span class="unit-hint">
+            (
+            {{
+              newEquipment().measurement === 'Unit'
+                ? 'Unit'
+                : newEquipment().measurement === 'Meter'
+                ? 'm'
+                : 'L'
+            }}
+            )
+          </span>
+        </label>
+        <input
+          class="form-control"
+          type="number"
+          [step]="newEquipment().measurement === 'Unit' ? 1 : 0.01"
+          [min]="newEquipment().measurement === 'Unit' ? 1 : 0.01"
+          inputmode="numeric"
+          (input)="onAmountInput($event)"
+          [(ngModel)]="newEquipment().amount"
+          placeholder="Amount"
+        />
+      </div>
     </div>
+
+    <!-- Row 4: Create/Cancel buttons -->
     <div class="button-row">
       <button class="btn btn-success" (click)="addEquipment()" [disabled]="!isFormValid()">
-        Add
+        Create
       </button>
       <button class="btn btn-secondary" (click)="cancelAdd()">Cancel</button>
     </div>
@@ -88,8 +198,9 @@
     </select>
     <select class="filter-select" (change)="onStatusChange($event.target.value)">
       <option value="all">All Statuses</option>
-      <option value="operational">Operational</option>
-      <option value="out_of_service">Out of Service</option>
+      <option value="used">Used</option>
+      <option value="not_used">Not Used</option>
+      <option value="broken">Broken</option>
     </select>
     <input
       type="text"
@@ -105,23 +216,81 @@
   }
 
   <!-- List -->
-  <div *ngIf="!isLoading()" class="list-container">
+  <div *ngIf="!isLoading()" class="table-container">
     <div *ngIf="equipment().length === 0" class="empty-message">No equipment found.</div>
 
-    <div *ngFor="let item of equipment()" class="list-item" (click)="openEquipment(item.id)">
-      <div class="item-content">
-        <h4>{{ item.name }}</h4>
-        <p>🔢 {{ item.serialNumber }}</p>
-        <p>🏢 {{ item.departmentName }}</p>
-        <p>Status: {{ item.isWork ? 'Operational' : 'Out of Service' }}</p>
-      </div>
-      <button
-        class="btn btn-danger btn-sm"
-        (click)="deleteEquipment(item.id); $event.stopPropagation()"
-      >
-        Delete
-      </button>
-    </div>
+    <table *ngIf="equipment().length > 0" class="equipment-table">
+      <thead>
+        <tr>
+          <th class="sortable" (click)="toggleSort('name')">
+            Name
+            <span class="sort-indicator" *ngIf="sortBy() === 'name'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('serialNumber')">
+            Serial Number
+            <span class="sort-indicator" *ngIf="sortBy() === 'serialNumber'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('category')">
+            Category
+            <span class="sort-indicator" *ngIf="sortBy() === 'category'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('purchaseDate')">
+            Purchase Date
+            <span class="sort-indicator" *ngIf="sortBy() === 'purchaseDate'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('status')">
+            Status
+            <span class="sort-indicator" *ngIf="sortBy() === 'status'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('department')">
+            Department
+            <span class="sort-indicator" *ngIf="sortBy() === 'department'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('amount')">
+            Amount
+            <span class="sort-indicator" *ngIf="sortBy() === 'amount'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let item of equipment()" class="table-row" (click)="openEquipment(item.id)">
+          <td>{{ item.name }}</td>
+          <td>{{ item.serialNumber }}</td>
+          <td>{{ item.categoryName || 'N/A' }}</td>
+          <td>{{ item.purchaseDate | date : 'MMM dd, yyyy' }}</td>
+          <td>
+            <span
+              class="status-badge"
+              [ngClass]="{
+                'status-used': item.status === 'Used',
+                'status-not-used': item.status === 'NotUsed',
+                'status-broken': item.status === 'Broken'
+              }"
+            >
+              {{
+                item.status === 'Used' ? 'Used' : item.status === 'NotUsed' ? 'Not Used' : 'Broken'
+              }}
+            </span>
+          </td>
+          <td>{{ item.departmentName || 'N/A' }}</td>
+          <td>{{ item.amount }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- Pagination -->

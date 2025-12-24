@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EmployeeManager.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251223110105_23.12")]
-    partial class _2312
+    [Migration("20251224065625_AddMeasurementAmountAndOptionalSerialNumber")]
+    partial class AddMeasurementAmountAndOptionalSerialNumber
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -108,6 +108,9 @@ namespace EmployeeManager.API.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
@@ -118,7 +121,7 @@ namespace EmployeeManager.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("Measurement")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -130,6 +133,9 @@ namespace EmployeeManager.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("SerialNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

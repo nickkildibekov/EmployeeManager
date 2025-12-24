@@ -26,8 +26,11 @@ export class EquipmentService {
     page: number = 1,
     pageSize: number = 10,
     search: string = '',
-    isWork: boolean | null = null,
-    categoryId: number | null = null
+    status: string | null = null,
+    measurement: string | null = null,
+    categoryId: number | null = null,
+    sortBy: string = 'name',
+    sortOrder: 'asc' | 'desc' = 'asc'
   ): Observable<{ items: Equipment[]; total: number }> {
     let params = new HttpParams()
       .set('departmentId', String(departmentId))
@@ -38,12 +41,21 @@ export class EquipmentService {
       params = params.set('search', search.trim());
     }
 
-    if (isWork !== null && isWork !== undefined) {
-      params = params.set('isWork', String(isWork));
+    if (status) {
+      params = params.set('status', status);
+    }
+
+    if (measurement) {
+      params = params.set('measurement', measurement);
     }
 
     if (categoryId !== null && categoryId !== undefined && categoryId > 0) {
       params = params.set('categoryId', String(categoryId));
+    }
+
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+      params = params.set('sortOrder', sortOrder);
     }
 
     return this.httpClient
@@ -56,7 +68,9 @@ export class EquipmentService {
       name: equipmentData.name,
       serialNumber: equipmentData.serialNumber,
       purchaseDate: equipmentData.purchaseDate,
-      isWork: equipmentData.isWork,
+      status: equipmentData.status,
+      measurement: equipmentData.measurement,
+      amount: equipmentData.amount,
       description: equipmentData.description,
       categoryId: equipmentData.categoryId,
       departmentId: equipmentData.departmentId,

@@ -69,8 +69,8 @@
           <label>Purchase Date</label>
           <input
             type="date"
-            [value]="editedEquipment().purchaseDate"
-            (change)="editedEquipment().purchaseDate = $any($event.target).value"
+            placeholder="Purchase Date"
+            [(ngModel)]="editedEquipment().purchaseDate"
             [readonly]="!isEditMode()"
             class="form-input"
           />
@@ -95,43 +95,45 @@
         <div class="form-group">
           <label>Category</label>
           @if (!isEditMode()) {
-          <input
-            type="text"
-            [value]="editedEquipment().categoryName"
-            readonly
-            class="form-input"
-          />
+          <input type="text" [value]="editedEquipment().categoryName" readonly class="form-input" />
+          } @else { @if (!isAddingNewCategory()) {
+          <div class="select-with-button">
+            <select [(ngModel)]="editedEquipment().categoryId" class="form-input">
+              <option [ngValue]="null" disabled>Select Category</option>
+              <option *ngFor="let cat of categories()" [ngValue]="cat.id">
+                {{ cat.name }}
+              </option>
+            </select>
+            <button class="btn btn-secondary btn-sm" type="button" (click)="toggleAddNewCategory()">
+              + New
+            </button>
+          </div>
           } @else {
-            @if (!isAddingNewCategory()) {
-            <div class="select-with-button">
-              <select
-                [(ngModel)]="editedEquipment().categoryId"
-                class="form-input"
+          <div class="inline-form-vertical">
+            <input class="form-input" placeholder="Category Name" [(ngModel)]="newCategoryName" />
+            <input
+              class="form-input"
+              placeholder="Description (optional)"
+              [(ngModel)]="newCategoryDescription"
+            />
+            <div class="button-stack">
+              <button
+                class="btn btn-success btn-sm"
+                type="button"
+                (click)="createAndSelectCategory()"
               >
-                <option [ngValue]="null" disabled>Select Category</option>
-                <option *ngFor="let cat of categories()" [ngValue]="cat.id">
-                  {{ cat.name }}
-                </option>
-              </select>
-              <button class="btn btn-secondary btn-sm" type="button" (click)="toggleAddNewCategory()">
-                + New
+                Create
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                type="button"
+                (click)="toggleAddNewCategory()"
+              >
+                Cancel
               </button>
             </div>
-            } @else {
-            <div class="inline-form-vertical">
-              <input class="form-input" placeholder="Category Name" [(ngModel)]="newCategoryName" />
-              <input class="form-input" placeholder="Description (optional)" [(ngModel)]="newCategoryDescription" />
-              <div class="button-stack">
-                <button class="btn btn-success btn-sm" type="button" (click)="createAndSelectCategory()">
-                  Create
-                </button>
-                <button class="btn btn-secondary btn-sm" type="button" (click)="toggleAddNewCategory()">
-                  Cancel
-                </button>
-              </div>
-            </div>
-            }
-          }
+          </div>
+          } }
         </div>
 
         <div class="form-group">
@@ -146,16 +148,93 @@
       </div>
 
       <div class="form-row">
+        <div class="form-group status-group">
+          <label>Status</label>
+          <div class="status-options">
+            <label class="status-option">
+              <input
+                type="radio"
+                name="edit-status"
+                [value]="'Used'"
+                [(ngModel)]="editedEquipment().status"
+                [disabled]="!isEditMode()"
+              />
+              Used
+            </label>
+            <label class="status-option">
+              <input
+                type="radio"
+                name="edit-status"
+                [value]="'NotUsed'"
+                [(ngModel)]="editedEquipment().status"
+                [disabled]="!isEditMode()"
+              />
+              Not Used
+            </label>
+            <label class="status-option">
+              <input
+                type="radio"
+                name="edit-status"
+                [value]="'Broken'"
+                [(ngModel)]="editedEquipment().status"
+                [disabled]="!isEditMode()"
+              />
+              Broken
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group measurement-group">
+          <label>Measurement</label>
+          <div class="measurement-options">
+            <label class="measurement-option">
+              <input
+                type="radio"
+                name="edit-measurement"
+                [value]="'Unit'"
+                [(ngModel)]="editedEquipment().measurement"
+                [disabled]="!isEditMode()"
+                (change)="onEditMeasurementChange('Unit')"
+              />
+              Unit
+            </label>
+            <label class="measurement-option">
+              <input
+                type="radio"
+                name="edit-measurement"
+                [value]="'Meter'"
+                [(ngModel)]="editedEquipment().measurement"
+                [disabled]="!isEditMode()"
+                (change)="onEditMeasurementChange('Meter')"
+              />
+              Meter
+            </label>
+            <label class="measurement-option">
+              <input
+                type="radio"
+                name="edit-measurement"
+                [value]="'Liter'"
+                [(ngModel)]="editedEquipment().measurement"
+                [disabled]="!isEditMode()"
+                (change)="onEditMeasurementChange('Liter')"
+              />
+              Liter
+            </label>
+          </div>
+        </div>
+
         <div class="form-group">
-          <label class="form-check-label">
-            <input
-              type="checkbox"
-              [(ngModel)]="editedEquipment().isWork"
-              [disabled]="!isEditMode()"
-              class="form-check-input"
-            />
-            Is Work Equipment
-          </label>
+          <label>Amount</label>
+          <input
+            type="number"
+            [step]="editedEquipment().measurement === 'Unit' ? 1 : 0.01"
+            [min]="editedEquipment().measurement === 'Unit' ? 1 : 0.01"
+            inputmode="numeric"
+            (input)="onEditAmountInput($event)"
+            [(ngModel)]="editedEquipment().amount"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
         </div>
       </div>
     </div>

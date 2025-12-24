@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EmployeeManager.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251223110105_23.12")]
-    partial class _2312
+    [Migration("20251223151906_23.12_2")]
+    partial class _2312_2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -118,10 +118,6 @@ namespace EmployeeManager.API.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -130,6 +126,10 @@ namespace EmployeeManager.API.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 

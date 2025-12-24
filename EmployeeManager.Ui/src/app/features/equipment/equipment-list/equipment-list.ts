@@ -6,10 +6,10 @@ interface NewEquipmentData {
   name: string;
   description: string;
   serialNumber: string;
-  purchaseDate: Date;
-  isWork: boolean;
-  categoryId: number;
-  departmentId: number;
+  purchaseDate: string;
+  status: 'Used' | 'NotUsed' | 'Broken';
+  categoryId: number | null;
+  departmentId: number | null;
 }
 
 @Component({
@@ -28,8 +28,8 @@ export class EquipmentListComponent {
     name: '',
     description: '',
     serialNumber: '',
-    purchaseDate: new Date(),
-    isWork: true,
+    purchaseDate: '',
+    status: 'Used',
     categoryId: null,
     departmentId: null,
   });

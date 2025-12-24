@@ -1,9 +1,11 @@
 export interface Equipment {
   id: number;
   name: string;
-  serialNumber: string;
+  serialNumber?: string;
   purchaseDate: string;
-  isWork: boolean;
+  status: 'Used' | 'NotUsed' | 'Broken';
+  measurement: 'Unit' | 'Meter' | 'Liter';
+  amount: number;
   description: string;
   categoryId: number;
   categoryName: string;

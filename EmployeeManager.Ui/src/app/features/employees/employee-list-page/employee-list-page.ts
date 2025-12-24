@@ -37,10 +37,13 @@ export class EmployeeListPageComponent implements OnInit {
   formPositions = signal<Position[]>([]);
 
   selectedDepartmentId = signal<number | null>(null);
+  selectedPositionId = signal<number | null>(null);
   searchTerm = signal('');
   page = signal(1);
   pageSize = signal(10);
   total = signal(0);
+  sortBy = signal<'firstName' | 'lastName' | 'phoneNumber' | 'department' | 'position' | ''>('');
+  sortOrder = signal<'asc' | 'desc'>('asc');
 
   isLoading = signal(false);
   error = signal('');
@@ -103,7 +106,10 @@ export class EmployeeListPageComponent implements OnInit {
         this.selectedDepartmentId() ?? 0,
         this.page(),
         this.pageSize(),
-        this.searchTerm()
+        this.searchTerm(),
+        this.selectedPositionId(),
+        this.sortBy(),
+        this.sortOrder()
       )
       .subscribe({
         next: (res) => {
@@ -128,6 +134,24 @@ export class EmployeeListPageComponent implements OnInit {
   onDepartmentChange(depId: string) {
     const id = depId ? parseInt(depId, 10) : null;
     this.selectedDepartmentId.set(id);
+    this.page.set(1);
+    this.loadEmployees();
+  }
+
+  onPositionChange(posId: string) {
+    const id = posId ? parseInt(posId, 10) : null;
+    this.selectedPositionId.set(id);
+    this.page.set(1);
+    this.loadEmployees();
+  }
+
+  toggleSort(column: 'firstName' | 'lastName' | 'phoneNumber' | 'department' | 'position') {
+    if (this.sortBy() === column) {
+      this.sortOrder.update((order) => (order === 'asc' ? 'desc' : 'asc'));
+    } else {
+      this.sortBy.set(column);
+      this.sortOrder.set('asc');
+    }
     this.page.set(1);
     this.loadEmployees();
   }
@@ -177,6 +201,8 @@ export class EmployeeListPageComponent implements OnInit {
         this.resetForm();
         this.isAddFormVisible.set(false);
         this.page.set(1);
+        this.selectedDepartmentId.set(null);
+        this.selectedPositionId.set(null);
         this.loadEmployees();
         this.toastService.success('Employee created successfully');
       },

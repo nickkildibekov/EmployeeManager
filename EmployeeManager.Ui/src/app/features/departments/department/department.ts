@@ -74,6 +74,7 @@ export class DepartmentComponent implements OnInit {
       { count: number; firstId: number; operational: number; nonOperational: number }
     >();
     dept.equipments.forEach((eq) => {
+      const isOperational = eq.status === 'Used';
       const existing = groupedMap.get(eq.name) || {
         count: 0,
         firstId: eq.id,
@@ -83,8 +84,8 @@ export class DepartmentComponent implements OnInit {
       groupedMap.set(eq.name, {
         count: existing.count + 1,
         firstId: existing.firstId,
-        operational: existing.operational + (eq.isWork ? 1 : 0),
-        nonOperational: existing.nonOperational + (eq.isWork ? 0 : 1),
+        operational: existing.operational + (isOperational ? 1 : 0),
+        nonOperational: existing.nonOperational + (isOperational ? 0 : 1),
       });
     });
 

@@ -1,5 +1,4 @@
 .container {
-  max-width: 900px;
   margin: 20px auto;
   padding: 20px;
   background: var(--bg-secondary);
@@ -98,6 +97,77 @@
   padding: 40px;
   font-size: 16px;
   color: var(--text-secondary);
+}
+
+.table-container {
+  margin-bottom: 20px;
+}
+
+.empty-message {
+  text-align: center;
+  padding: 40px;
+  color: var(--text-tertiary);
+  font-size: 14px;
+}
+
+.employees-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.employees-table thead {
+  background: var(--bg-secondary);
+}
+
+.employees-table th {
+  padding: 16px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-color);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.employees-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+  transition: var(--transition);
+}
+
+.employees-table th.sortable:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.sort-indicator {
+  margin-left: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.employees-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.employees-table tbody tr:hover {
+  background: var(--bg-secondary);
+}
+
+.employees-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.employees-table td {
+  padding: 14px 16px;
+  color: var(--text-primary);
+  font-size: 14px;
 }
 
 .list-container {

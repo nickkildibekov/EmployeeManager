@@ -8,8 +8,9 @@
     />
     <select (change)="onStatusChange($event.target.value)">
       <option value="all">All Statuses</option>
-      <option value="operational">Operational</option>
-      <option value="out_of_service">Out of Service</option>
+      <option value="used">Used</option>
+      <option value="not_used">Not Used</option>
+      <option value="broken">Broken</option>
     </select>
     <div class="pagination">
       <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Prev</button>
@@ -33,7 +34,10 @@
         <strong>{{ eq.name }}</strong>
         <div>🔢 {{ eq.serialNumber }}</div>
         <div class="category">{{ eq.categoryName }}</div>
-        <div>Status: {{ eq.isWork ? 'Operational' : 'Out of Service' }}</div>
+        <div>
+          Status:
+          {{ eq.status === 'Used' ? 'Used' : eq.status === 'NotUsed' ? 'Not Used' : 'Broken' }}
+        </div>
       </div>
       <button (click)="onDelete(eq.id); $event.stopPropagation()" class="btn btn-danger btn-sm">
         Delete

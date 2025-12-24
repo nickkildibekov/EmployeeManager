@@ -179,6 +179,25 @@
   cursor: default;
 }
 
+.status-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-options {
+  display: flex;
+  gap: 16px;
+}
+
+.status-option {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
 @media (max-width: 768px) {
   .form-row {
     flex-direction: column;

@@ -5,7 +5,7 @@
 namespace EmployeeManager.API.Migrations
 {
     /// <inheritdoc />
-    public partial class _2312 : Migration
+    public partial class AddStatusColumnProper : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

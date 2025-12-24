@@ -132,6 +132,7 @@ export class PositionListPageComponent implements OnInit {
         this.resetForm();
         this.isAddFormVisible.set(false);
         this.page.set(1);
+        this.selectedDepartmentId.set(null);
         this.loadPositions();
         this.toastService.success('Position created successfully!');
       },

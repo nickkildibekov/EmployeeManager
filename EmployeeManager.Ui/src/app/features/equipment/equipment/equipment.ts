@@ -46,7 +46,9 @@ export class Equipment implements OnInit {
     name: '',
     serialNumber: '',
     purchaseDate: '',
-    isWork: true,
+    status: 'Used',
+    measurement: 'Unit',
+    amount: 1,
     description: '',
     departmentId: null,
     categoryId: null,
@@ -63,10 +65,10 @@ export class Equipment implements OnInit {
     const eq = this.editedEquipment();
     return (
       eq.name.trim().length > 0 &&
-      eq.serialNumber.trim().length > 0 &&
       (eq.departmentId ?? 0) > 0 &&
       (eq.categoryId ?? 0) > 0 &&
-      eq.purchaseDate.length > 0
+      eq.purchaseDate.length > 0 &&
+      !!eq.status
     );
   });
 
@@ -102,7 +104,9 @@ export class Equipment implements OnInit {
             name: eq.name,
             serialNumber: eq.serialNumber,
             purchaseDate: (eq.purchaseDate || '').slice(0, 10),
-            isWork: eq.isWork,
+            status: eq.status,
+            measurement: eq.measurement,
+            amount: eq.amount,
             description: eq.description,
             departmentId: eq.departmentId && eq.departmentId > 0 ? eq.departmentId : null,
             categoryId: eq.categoryId,
@@ -165,9 +169,9 @@ export class Equipment implements OnInit {
       const newCategory = await this.equipmentService
         .createCategory(name, this.newCategoryDescription())
         .toPromise();
-      
+
       if (newCategory) {
-        this.categories.update(cats => [...cats, newCategory]);
+        this.categories.update((cats) => [...cats, newCategory]);
         this.editedEquipment().categoryId = newCategory.id;
         this.isAddingNewCategory.set(false);
         this.newCategoryName.set('');
@@ -189,9 +193,12 @@ export class Equipment implements OnInit {
         name: current.name,
         serialNumber: current.serialNumber,
         purchaseDate: (current.purchaseDate || '').slice(0, 10),
-        isWork: current.isWork,
+        status: current.status,
+        measurement: current.measurement,
+        amount: current.amount,
         description: current.description,
-        departmentId: current.departmentId && current.departmentId > 0 ? current.departmentId : null,
+        departmentId:
+          current.departmentId && current.departmentId > 0 ? current.departmentId : null,
         categoryId: current.categoryId && current.categoryId > 0 ? current.categoryId : null,
         departmentName: current.departmentName,
         categoryName: current.categoryName,
@@ -219,7 +226,9 @@ export class Equipment implements OnInit {
       name: eq.name,
       serialNumber: eq.serialNumber,
       purchaseDate: eq.purchaseDate,
-      isWork: eq.isWork,
+      status: eq.status,
+      measurement: eq.measurement,
+      amount: eq.amount,
       description: eq.description,
       categoryId: eq.categoryId,
       departmentId: eq.departmentId,
@@ -271,6 +280,29 @@ export class Equipment implements OnInit {
   }
 
   goBack(): void {
-    this.navigationService.goBack('/equipment');
+    this.navigationService.goBackToList('equipment');
+  }
+
+  onEditMeasurementChange(measurement: 'Unit' | 'Meter' | 'Liter') {
+    const current = Number(this.editedEquipment().amount || 1);
+    if (measurement === 'Unit') {
+      this.editedEquipment().amount = Math.max(1, Math.floor(current));
+    } else {
+      this.editedEquipment().amount = Math.max(0.01, Math.round(current * 100) / 100);
+    }
+  }
+
+  onEditAmountInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let val = Number(input.value);
+    if (!isFinite(val)) {
+      val = this.editedEquipment().measurement === 'Unit' ? 1 : 0.01;
+    }
+    if (this.editedEquipment().measurement === 'Unit') {
+      val = Math.max(1, Math.floor(val));
+    } else {
+      val = Math.max(0.01, Math.round(val * 100) / 100);
+    }
+    this.editedEquipment().amount = val;
   }
 }

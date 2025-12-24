@@ -42,7 +42,10 @@ export class EmployeeService {
     departmentId: number,
     page: number = 1,
     pageSize: number = 10,
-    search: string = ''
+    search: string = '',
+    positionId: number | null = null,
+    sortBy: string = '',
+    sortOrder: 'asc' | 'desc' = 'asc'
   ): Observable<{ items: Employee[]; total: number }> {
     let params = new HttpParams()
       .set('departmentId', String(departmentId))
@@ -51,6 +54,15 @@ export class EmployeeService {
 
     if (search && search.trim()) {
       params = params.set('search', search.trim());
+    }
+
+    if (positionId !== null && positionId !== undefined && positionId > 0) {
+      params = params.set('positionId', String(positionId));
+    }
+
+    if (sortBy) {
+      params = params.set('sortBy', sortBy);
+      params = params.set('sortOrder', sortOrder);
     }
 
     return this.httpClient.get<{ items: Employee[]; total: number }>(this.apiUrl, { params }).pipe(

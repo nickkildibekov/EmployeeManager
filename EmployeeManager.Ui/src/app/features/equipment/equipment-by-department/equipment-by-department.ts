@@ -28,7 +28,7 @@ export class EquipmentByDepartmentComponent implements OnInit {
   pageSize = signal(10);
   total = signal(0);
   search = signal('');
-  statusFilter = signal<'all' | 'operational' | 'out_of_service'>('all');
+  statusFilter = signal<'all' | 'used' | 'not_used' | 'broken'>('all');
   isLoading = signal(false);
   error = signal('');
 
@@ -54,10 +54,16 @@ export class EquipmentByDepartmentComponent implements OnInit {
 
   private loadEquipment(depId: number) {
     this.isLoading.set(true);
-    const isWorkParam =
-      this.statusFilter() === 'all' ? null : this.statusFilter() === 'operational' ? true : false;
+    const statusParam =
+      this.statusFilter() === 'all'
+        ? null
+        : this.statusFilter() === 'used'
+        ? 'Used'
+        : this.statusFilter() === 'not_used'
+        ? 'NotUsed'
+        : 'Broken';
     this.equipmentService
-      .getEquipmentByDepartment(depId, this.page(), this.pageSize(), this.search(), isWorkParam)
+      .getEquipmentByDepartment(depId, this.page(), this.pageSize(), this.search(), statusParam)
       .subscribe({
         next: (res) => {
           this.equipment.set(res.items);
@@ -89,7 +95,7 @@ export class EquipmentByDepartmentComponent implements OnInit {
   }
 
   onStatusChange(value: string) {
-    this.statusFilter.set(value as 'all' | 'operational' | 'out_of_service');
+    this.statusFilter.set(value as 'all' | 'used' | 'not_used' | 'broken');
     this.page.set(1);
     const depId = Number(this.route.snapshot.paramMap.get('id'));
     if (depId) this.loadEquipment(depId);

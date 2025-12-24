@@ -63,6 +63,12 @@
         {{ dept.name }}
       </option>
     </select>
+    <select class="filter-select" (change)="onPositionChange($event.target.value)">
+      <option value="">All Positions</option>
+      <option *ngFor="let pos of positions()" [value]="pos.id">
+        {{ pos.title }}
+      </option>
+    </select>
     <input
       type="text"
       class="filter-search"
@@ -74,28 +80,55 @@
   <!-- Loading State -->
   <div *ngIf="isLoading()" class="loading">Loading...</div>
 
-  <!-- List -->
-  <div *ngIf="!isLoading()" class="list-container">
+  <!-- Table -->
+  <div *ngIf="!isLoading()" class="table-container">
     <div *ngIf="employees().length === 0" class="empty-message">No employees found.</div>
 
-    <div *ngFor="let emp of employees()" class="list-item" (click)="openEmployee(emp.id)">
-      <div class="item-content">
-        @if (selectedDepartmentId() === null) {
-        <h4>
-          {{ emp.firstName }} {{ emp.lastName }} - {{ emp.departmentName }} -
-          {{ emp.positionName || 'N/A' }}
-        </h4>
-        } @else {
-        <h4>{{ emp.firstName }} {{ emp.lastName }} - {{ emp.positionName || 'N/A' }}</h4>
-        }
-      </div>
-      <button
-        class="btn btn-danger btn-sm"
-        (click)="deleteEmployee(emp.id); $event.stopPropagation()"
-      >
-        Delete
-      </button>
-    </div>
+    <table *ngIf="employees().length > 0" class="employees-table">
+      <thead>
+        <tr>
+          <th class="sortable" (click)="toggleSort('firstName')">
+            First Name
+            <span class="sort-indicator" *ngIf="sortBy() === 'firstName'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('lastName')">
+            Last Name
+            <span class="sort-indicator" *ngIf="sortBy() === 'lastName'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('phoneNumber')">
+            Phone Number
+            <span class="sort-indicator" *ngIf="sortBy() === 'phoneNumber'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('department')">
+            Department
+            <span class="sort-indicator" *ngIf="sortBy() === 'department'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('position')">
+            Position
+            <span class="sort-indicator" *ngIf="sortBy() === 'position'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let emp of employees()" (click)="openEmployee(emp.id)" class="table-row">
+          <td>{{ emp.firstName }}</td>
+          <td>{{ emp.lastName }}</td>
+          <td>{{ emp.phoneNumber }}</td>
+          <td>{{ emp.departmentName }}</td>
+          <td>{{ emp.positionName || 'N/A' }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 
   <!-- Pagination -->

@@ -18,7 +18,7 @@ namespace EmployeeManager.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int? departmentId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null)
+        public async Task<IActionResult> GetAll([FromQuery] int? departmentId, [FromQuery] int? positionId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? search = null, [FromQuery] string sortBy = "", [FromQuery] string sortOrder = "asc")
         {
             if (page < 1) page = 1;
             if (pageSize < 1) pageSize = 10;
@@ -34,6 +34,12 @@ namespace EmployeeManager.API.Controllers
                 query = query.Where(e => e.DepartmentId == departmentId.Value);
             }
 
+            // Filter by position if specified
+            if (positionId.HasValue && positionId.Value > 0)
+            {
+                query = query.Where(e => e.PositionId == positionId.Value);
+            }
+
             // Search by first name or last name
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -44,6 +50,34 @@ namespace EmployeeManager.API.Controllers
             }
 
             var totalCount = await query.CountAsync();
+
+            // Apply sorting
+            if (!string.IsNullOrWhiteSpace(sortBy))
+            {
+                query = sortBy.ToLower() switch
+                {
+                    "firstname" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase) 
+                        ? query.OrderByDescending(e => e.FirstName)
+                        : query.OrderBy(e => e.FirstName),
+                    "lastname" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.LastName)
+                        : query.OrderBy(e => e.LastName),
+                    "phonenumber" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.PhoneNumber)
+                        : query.OrderBy(e => e.PhoneNumber),
+                    "department" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.Department.Name)
+                        : query.OrderBy(e => e.Department.Name),
+                    "position" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
+                        ? query.OrderByDescending(e => e.Position.Title)
+                        : query.OrderBy(e => e.Position.Title),
+                    _ => query.OrderBy(e => e.FirstName)
+                };
+            }
+            else
+            {
+                query = query.OrderBy(e => e.FirstName);
+            }
 
             var employees = await query
                 .AsNoTracking()

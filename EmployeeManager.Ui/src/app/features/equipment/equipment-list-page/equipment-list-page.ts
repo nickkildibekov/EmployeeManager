@@ -39,11 +39,15 @@ export class EquipmentListPageComponent implements OnInit {
 
   selectedDepartmentId = signal<number | null>(null);
   selectedCategoryId = signal<number | null>(null);
-  statusFilter = signal<'all' | 'operational' | 'out_of_service'>('all');
+  statusFilter = signal<'all' | 'used' | 'not_used' | 'broken'>('all');
   searchTerm = signal('');
   page = signal(1);
   pageSize = signal(10);
   total = signal(0);
+  sortBy = signal<
+    'name' | 'serialNumber' | 'category' | 'purchaseDate' | 'status' | 'department' | 'amount' | ''
+  >('name');
+  sortOrder = signal<'asc' | 'desc'>('asc');
 
   isLoading = signal(false);
   error = signal('');
@@ -55,8 +59,10 @@ export class EquipmentListPageComponent implements OnInit {
   newEquipment = signal<EquipmentCreationPayload>({
     name: '',
     serialNumber: '',
-    purchaseDate: new Date().toISOString().split('T')[0],
-    isWork: true,
+    purchaseDate: '',
+    status: 'Used',
+    measurement: 'Unit',
+    amount: 1,
     description: '',
     categoryId: null,
     departmentId: null,
@@ -105,16 +111,25 @@ export class EquipmentListPageComponent implements OnInit {
 
   loadEquipment() {
     this.isLoading.set(true);
-    const isWorkParam =
-      this.statusFilter() === 'all' ? null : this.statusFilter() === 'operational' ? true : false;
+    const statusParam =
+      this.statusFilter() === 'all'
+        ? null
+        : this.statusFilter() === 'used'
+        ? 'Used'
+        : this.statusFilter() === 'not_used'
+        ? 'NotUsed'
+        : 'Broken';
     const sub = this.equipmentService
       .getEquipmentByDepartment(
         this.selectedDepartmentId() || 0,
         this.page(),
         this.pageSize(),
         this.searchTerm(),
-        isWorkParam,
-        this.selectedCategoryId()
+        statusParam,
+        null,
+        this.selectedCategoryId(),
+        this.sortBy(),
+        this.sortOrder()
       )
       .subscribe({
         next: (res) => {
@@ -149,7 +164,22 @@ export class EquipmentListPageComponent implements OnInit {
   }
 
   onStatusChange(value: string) {
-    this.statusFilter.set(value as 'all' | 'operational' | 'out_of_service');
+    this.statusFilter.set(value as 'all' | 'used' | 'not_used' | 'broken');
+    this.page.set(1);
+    this.loadEquipment();
+  }
+
+  toggleSort(
+    column: 'name' | 'serialNumber' | 'category' | 'purchaseDate' | 'status' | 'department'
+  ) {
+    if (this.sortBy() === column) {
+      // Toggle sort order
+      this.sortOrder.update((order) => (order === 'asc' ? 'desc' : 'asc'));
+    } else {
+      // Switch to new column, default to ascending
+      this.sortBy.set(column);
+      this.sortOrder.set('asc');
+    }
     this.page.set(1);
     this.loadEquipment();
   }
@@ -183,9 +213,9 @@ export class EquipmentListPageComponent implements OnInit {
       const newCategory = await this.equipmentService
         .createCategory(name, this.newCategoryDescription())
         .toPromise();
-      
+
       if (newCategory) {
-        this.categories.update(cats => [...cats, newCategory]);
+        this.categories.update((cats) => [...cats, newCategory]);
         this.newEquipment().categoryId = newCategory.id;
         this.isAddingNewCategory.set(false);
         this.newCategoryName.set('');
@@ -207,22 +237,56 @@ export class EquipmentListPageComponent implements OnInit {
     this.newEquipment.set({
       name: '',
       serialNumber: '',
-      purchaseDate: new Date().toISOString().split('T')[0],
-      isWork: true,
+      purchaseDate: '',
+      status: 'Used',
+      measurement: 'Unit',
+      amount: 1,
       description: '',
       categoryId: null,
       departmentId: null,
     });
   }
 
+  onMeasurementChange(measurement: 'Unit' | 'Meter' | 'Liter') {
+    // Set default amount based on measurement type
+    if (measurement === 'Unit') {
+      // Coerce to integer >= 1
+      const current = Number(this.newEquipment().amount || 1);
+      this.newEquipment().amount = Math.max(1, Math.floor(current));
+    } else if (measurement === 'Meter') {
+      // Round to 2 decimals, min 0.01
+      const current = Number(this.newEquipment().amount || 1);
+      this.newEquipment().amount = Math.max(0.01, Math.round(current * 100) / 100);
+    } else if (measurement === 'Liter') {
+      const current = Number(this.newEquipment().amount || 1);
+      this.newEquipment().amount = Math.max(0.01, Math.round(current * 100) / 100);
+    }
+  }
+
+  onAmountInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    let val = Number(input.value);
+    if (!isFinite(val)) {
+      val = this.newEquipment().measurement === 'Unit' ? 1 : 0.01;
+    }
+    if (this.newEquipment().measurement === 'Unit') {
+      // Integers only, min 1
+      val = Math.max(1, Math.floor(val));
+    } else {
+      // Two decimals, min 0.01
+      val = Math.max(0.01, Math.round(val * 100) / 100);
+    }
+    this.newEquipment().amount = val;
+  }
+
   isFormValid(): boolean {
     const eq = this.newEquipment();
     return !!(
       eq.name.trim() &&
-      eq.serialNumber.trim() &&
       eq.departmentId !== null &&
       eq.categoryId !== null &&
-      eq.purchaseDate
+      eq.purchaseDate &&
+      !!eq.status
     );
   }
 
@@ -235,6 +299,8 @@ export class EquipmentListPageComponent implements OnInit {
         this.resetForm();
         this.isAddFormVisible.set(false);
         this.page.set(1);
+        this.selectedDepartmentId.set(null);
+        this.selectedCategoryId.set(null);
         this.loadEquipment();
         this.toastService.success('Equipment created successfully');
       },

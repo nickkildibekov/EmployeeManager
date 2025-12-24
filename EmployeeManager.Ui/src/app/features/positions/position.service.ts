@@ -23,7 +23,9 @@ export class PositionService {
   getPositionsByDepartmentId(depId: number): Observable<Position[]> {
     // Backend filters positions via query params on the main endpoint
     return this.httpClient
-      .get<{ items: Position[]; total: number }>(`${this.apiUrl}?departmentId=${depId}&page=1&pageSize=100`)
+      .get<{ items: Position[]; total: number }>(
+        `${this.apiUrl}?departmentId=${depId}&page=1&pageSize=100`
+      )
       .pipe(
         map((res) => res.items || []),
         catchError((error) => {

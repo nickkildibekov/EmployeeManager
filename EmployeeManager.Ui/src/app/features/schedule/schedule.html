@@ -1,161 +1,161 @@
-<div class="schedule-container">
-  <div class="schedule-header">
-    <div class="header-top">
-      <h1>Schedule</h1>
-      <div class="controls">
-        <div class="control-group">
-          <label>Department:</label>
-          <select
-            [ngModel]="selectedDepartmentId()"
-            (ngModelChange)="onDepartmentChange($event.toString())"
-          >
-            <option [value]="''">All Departments</option>
-            <option *ngFor="let dept of departments()" [value]="dept.id">
-              {{ dept.name }}
-            </option>
-          </select>
-        </div>
+<div class="schedule-timeline">
+  <!-- Header Controls -->
+  <div class="timeline-controls">
+    <h1>Employee Schedule Timeline</h1>
+    <div class="controls-group">
+      <div class="control-item">
+        <label>Department:</label>
+        <select [ngModel]="selectedDepartmentId()" (ngModelChange)="onDepartmentChange($event.toString())">
+          <option [value]="'0'">All Departments</option>
+          <option *ngFor="let dept of departments()" [value]="dept.id">{{ dept.name }}</option>
+        </select>
+      </div>
 
-        <div class="control-group">
-          <label>Position:</label>
-          <select [ngModel]="selectedPositionId()" (ngModelChange)="selectedPositionId.set($event)">
-            <option [value]="''">All Positions</option>
-            <option *ngFor="let pos of availablePositions()" [value]="pos">
-              {{ pos }}
-            </option>
-          </select>
-        </div>
+      <div class="control-item">
+        <label>Position:</label>
+        <select [ngModel]="selectedPositionId()" (ngModelChange)="selectedPositionId.set($event)">
+          <option [value]="''">All Positions</option>
+          <option *ngFor="let pos of availablePositions()" [value]="pos">{{ pos }}</option>
+        </select>
+      </div>
 
-        <div class="control-group">
-          <label>Zoom:</label>
-          <div class="zoom-buttons">
-            <button [class.active]="mode() === 'hour'" (click)="mode.set('hour')">Hour</button>
-            <button [class.active]="mode() === 'day'" (click)="mode.set('day')">Day</button>
-            <button [class.active]="mode() === 'week'" (click)="mode.set('week')">Week</button>
-            <button [class.active]="mode() === 'month'" (click)="mode.set('month')">Month</button>
-          </div>
+      <div class="control-item">
+        <label>Zoom:</label>
+        <div class="zoom-buttons">
+          <button [class.active]="mode() === 'hour'" (click)="mode.set('hour')">Hour</button>
+          <button [class.active]="mode() === 'day'" (click)="mode.set('day')">Day</button>
+          <button [class.active]="mode() === 'week'" (click)="mode.set('week')">Week</button>
+          <button [class.active]="mode() === 'month'" (click)="mode.set('month')">Month</button>
         </div>
+      </div>
 
-        <div class="control-group">
-          <label>Date:</label>
-          <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)" />
-        </div>
+      <div class="control-item">
+        <label>Date:</label>
+        <input type="date" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)">
+      </div>
 
-        <div class="control-group">
-          <button (click)="exportToCSV()" class="export-btn">📥 CSV</button>
-        </div>
+      <div class="control-item">
+        <button class="btn-export" (click)="exportToCSV()">📥 Export CSV</button>
       </div>
     </div>
 
-    <div class="legend">
-      <div class="legend-item"><span class="bar onwork"></span> On Work</div>
-      <div class="legend-item"><span class="bar vacation"></span> Vacation</div>
-      <div class="legend-item"><span class="bar illness"></span> Illness</div>
-      <div class="legend-item"><span class="bar rest"></span> Rest</div>
+    <!-- Legend -->
+    <div class="timeline-legend">
+      <span class="legend-item"><span class="legend-color work"></span>On Work</span>
+      <span class="legend-item"><span class="legend-color vacation"></span>Vacation</span>
+      <span class="legend-item"><span class="legend-color illness"></span>Illness</span>
+      <span class="legend-item"><span class="legend-color rest"></span>Rest</span>
     </div>
   </div>
 
-  <div class="schedule-content">
+  <!-- Timeline Content -->
+  <div class="timeline-container">
     @if (isLoading()) {
-    <div class="loading">Loading schedule...</div>
+      <div class="timeline-loading">Loading schedule...</div>
     } @else if (errorMessage()) {
-    <div class="error">{{ errorMessage() }}</div>
+      <div class="timeline-error">{{ errorMessage() }}</div>
     } @else {
-    <div class="timeline-wrapper">
-      <!-- Sticky left sidebar with employee names -->
-      <div class="timeline-sidebar">
-        <div class="sidebar-header">Employees</div>
-        <div class="employees-list">
-          <div
-            *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId"
-            class="employee-row"
-          >
-            {{ emp.firstName }} {{ emp.lastName }}
-          </div>
-        </div>
-      </div>
-
-      <!-- Scrollable timeline grid -->
-      <div class="timeline-grid-wrapper">
-        <div class="timeline-header-row">
-          <div
-            *ngFor="let col of timelineColumns(); trackBy: trackByColumn"
-            class="timeline-column-header"
-          >
-            {{ col | date : 'EEE MMM d' }}
+      <div class="timeline-main">
+        <!-- Left Sidebar: Employee List -->
+        <div class="timeline-sidebar">
+          <div class="sidebar-header">Employees</div>
+          <div class="employees-track">
+            <div *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId" 
+                 class="employee-track">
+              <div class="employee-label">
+                <div class="emp-name">{{ emp.firstName }} {{ emp.lastName }}</div>
+                <div class="emp-position">{{ emp.positionName || '—' }}</div>
+              </div>
+            </div>
           </div>
         </div>
 
+        <!-- Right Timeline: Calendar Grid -->
         <div class="timeline-grid">
-          <div *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId" class="grid-row">
-            <div
-              *ngFor="let col of timelineColumns(); trackBy: trackByColumn; let colIdx = index"
-              class="grid-cell"
-              [ngClass]="
-                'state-' + (getEntry(emp.id, getIsoDate(col))?.state?.toLowerCase() || 'rest')
-              "
-              (click)="onCellClick(emp.id, getIsoDate(col))"
-              (dragstart)="onDragStart(emp.id, getIsoDate(col), $event)"
-              (dragover)="onDragOver($event)"
-              (drop)="onDrop(getIsoDate(col), $event)"
-              draggable="true"
-            >
-              <div class="cell-content">
-                <div class="hours">{{ getEntry(emp.id, getIsoDate(col))?.hours || 0 }}h</div>
-                <div class="state">{{ getEntry(emp.id, getIsoDate(col))?.state || 'Rest' }}</div>
+          <!-- Date Header -->
+          <div class="timeline-header">
+            <div class="timeline-header-spacer"></div>
+            <div class="timeline-dates">
+              <div *ngFor="let col of timelineColumns(); trackBy: trackByColumn" 
+                   class="date-column">
+                <div class="date-header">
+                  <div class="date-day">{{ col | date: 'EEE' }}</div>
+                  <div class="date-num">{{ col | date: 'd' }}</div>
+                  <div class="date-month">{{ col | date: 'MMM' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Employee Rows with Timeline Bars -->
+          <div class="timeline-rows">
+            <div *ngFor="let emp of filteredEmployees(); trackBy: trackByEmployeeId" 
+                 class="timeline-row">
+              <div class="row-spacer"></div>
+              <div class="row-timeline">
+                <div *ngFor="let col of timelineColumns(); trackBy: trackByColumn" 
+                     class="date-cell">
+                  <div class="cell-inner">
+                    <!-- Entry Bar -->
+                    @if (getEntry(emp.id, getIsoDate(col))?.hours) {
+                      <div class="entry-bar"
+                           [ngClass]="'state-' + (getEntry(emp.id, getIsoDate(col))?.state?.toLowerCase() || 'rest')"
+                           (click)="onCellClick(emp.id, getIsoDate(col))"
+                           (dragstart)="onDragStart(emp.id, getIsoDate(col), $event)"
+                           (dragover)="onDragOver($event)"
+                           (drop)="onDrop(getIsoDate(col), $event)"
+                           draggable="true"
+                           [title]="getEntry(emp.id, getIsoDate(col))?.hours + 'h - ' + (getEntry(emp.id, getIsoDate(col))?.state || 'Rest')">
+                        <div class="bar-content">
+                          <span class="bar-hours">{{ getEntry(emp.id, getIsoDate(col))?.hours }}h</span>
+                          <span class="bar-state">{{ getEntry(emp.id, getIsoDate(col))?.state }}</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
     }
   </div>
 </div>
 
 <!-- Edit Modal -->
 @if (showEditModal()) {
-<div class="modal-overlay" (click)="closeEditModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <div class="modal-header">
-      <h2>Edit Schedule Entry</h2>
-      <button class="modal-close" (click)="closeEditModal()">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Hours:</label>
-        <input
-          type="number"
-          min="0"
-          max="24"
-          [ngModel]="getEditingEntry()?.hours || 0"
-          placeholder="Hours"
-        />
+  <div class="modal-overlay" (click)="closeEditModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Edit Schedule Entry</h2>
+        <button class="modal-close" (click)="closeEditModal()">×</button>
       </div>
 
-      <div class="form-group">
-        <label>State:</label>
-        <select [ngModel]="getEditingEntry()?.state || 'Rest'">
-          <option value="Rest">Rest</option>
-          <option value="OnWork">On Work</option>
-          <option value="Vacation">Vacation</option>
-          <option value="Illness">Illness</option>
-        </select>
-      </div>
-    </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Hours (0-24):</label>
+          <input type="number" min="0" max="24" [ngModel]="getEditingEntry()?.hours || 0" placeholder="Hours" class="form-input">
+        </div>
 
-    <div class="modal-footer">
-      <button (click)="closeEditModal()" class="btn-cancel">Cancel</button>
-      <button
-        (click)="
-          updateEditingEntry(getEditingEntry()?.hours || 0, getEditingEntry()?.state || 'Rest')
-        "
-        class="btn-save"
-      >
-        Save
-      </button>
+        <div class="form-group">
+          <label>Work State:</label>
+          <select [ngModel]="getEditingEntry()?.state || 'Rest'" class="form-input">
+            <option value="Rest">Rest</option>
+            <option value="OnWork">On Work</option>
+            <option value="Vacation">Vacation</option>
+            <option value="Illness">Illness</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeEditModal()">Cancel</button>
+        <button class="btn-primary" 
+                (click)="updateEditingEntry((getEditingEntry()?.hours || 0), (getEditingEntry()?.state || 'Rest'))">
+          Save Changes
+        </button>
+      </div>
     </div>
   </div>
-</div>
 }

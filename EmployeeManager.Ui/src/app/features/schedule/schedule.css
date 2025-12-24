@@ -1,0 +1,27 @@
+.schedule-container{margin:20px auto;padding:20px;background:var(--bg-secondary);border-radius:var(--radius-lg)}
+.schedule-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.form-control{padding:8px;border:1px solid var(--border-color);border-radius:var(--radius-md);background:var(--bg-primary);color:var(--text-primary)}
+.mode-switch{display:flex;gap:8px}
+.mode-switch button{padding:6px 10px;border:1px solid var(--border-color);background:var(--bg-primary);color:var(--text-primary);border-radius:var(--radius-md);cursor:pointer}
+.mode-switch button.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.schedule-grid{display:grid;grid-template-columns:280px 1fr;gap:12px}
+.employee-header{font-weight:600;padding:8px;background:var(--bg-primary);border-radius:var(--radius-md);margin-bottom:8px}
+.employee-row .employee-cell{display:flex;flex-direction:column;gap:4px;padding:8px;border-bottom:1px solid var(--border-color)}
+.emp-name{font-weight:600;color:var(--text-primary)}
+.emp-position{font-size:12px;color:var(--text-secondary)}
+.mode-header{font-weight:600;padding:8px;background:var(--bg-primary);border-radius:var(--radius-md);margin-bottom:8px}
+.day-entry{display:flex;gap:10px;align-items:center;padding:8px;border-bottom:1px solid var(--border-color)}
+.day-entry .hours-input{display:flex;gap:6px;align-items:center}
+.day-entry input[type=number]{width:80px;padding:6px}
+.week-row,.month-row,.year-row{display:grid;gap:4px}
+.week-row{grid-template-columns:repeat(7,1fr)}
+.month-row{grid-template-columns:repeat(31,1fr)}
+.year-row{grid-template-columns:repeat(12,1fr)}
+.week-cell,.month-cell,.year-cell{background:var(--bg-primary);padding:6px;border-radius:var(--radius-sm);text-align:center}
+.week-entry{display:flex;flex-direction:column;gap:2px;font-size:12px}
+.month-entry{padding:6px;border-radius:var(--radius-sm);font-size:12px}
+.month-entry.work{background:var(--success-light);color:var(--success)}
+.month-entry.rest{background:var(--bg-primary);color:var(--text-secondary)}
+.year-entry{font-size:12px;color:var(--text-secondary)}
+.note{margin-top:12px;color:var(--text-secondary);font-size:12px}

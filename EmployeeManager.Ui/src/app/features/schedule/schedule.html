@@ -6,7 +6,6 @@
       <div class="control-item">
         <label>Department:</label>
         <select [ngModel]="selectedDepartmentId()" (ngModelChange)="onDepartmentChange($event.toString())">
-          <option [value]="'0'">All Departments</option>
           <option *ngFor="let dept of departments()" [value]="dept.id">{{ dept.name }}</option>
         </select>
       </div>

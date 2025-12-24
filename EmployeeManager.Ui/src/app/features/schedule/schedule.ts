@@ -53,7 +53,15 @@ export class ScheduleComponent implements OnInit {
 
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
-      next: (depts) => this.departments.set(depts),
+      next: (depts) => {
+        this.departments.set(depts);
+        // Auto-select first department
+        if (depts.length > 0) {
+          this.selectedDepartmentId.set(depts[0].id);
+          this.loadEmployees();
+          this.loadScheduleEntries();
+        }
+      },
       error: (err: Error) => console.error(err.message),
     });
     this.destroyRef.onDestroy(() => sub.unsubscribe());

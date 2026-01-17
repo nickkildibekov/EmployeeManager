@@ -6,8 +6,8 @@
 <app-confirmation-dialog
   [title]="dialogService.config()?.title || ''"
   [message]="dialogService.config()?.message || ''"
-  [confirmText]="dialogService.config()?.confirmText || 'OK'"
-  [cancelText]="dialogService.config()?.cancelText || 'Cancel'"
+  [confirmText]="dialogService.config()?.confirmText || 'ОК'"
+  [cancelText]="dialogService.config()?.cancelText || 'Скасувати'"
   [variant]="dialogService.config()?.variant || 'warning'"
   (confirm)="dialogService.handleConfirm()"
   (cancel)="dialogService.handleCancel()"

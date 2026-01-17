@@ -32,7 +32,7 @@ export class BreadcrumbComponent {
   private createBreadcrumbs(): BreadcrumbItem[] {
     const url = this.router.url;
     const segments = url.split('/').filter((s) => s && !s.includes('?'));
-    const crumbs: BreadcrumbItem[] = [{ label: 'Home', url: '/dashboard', icon: '🏠' }];
+    const crumbs: BreadcrumbItem[] = [{ label: 'Головна', url: '/home', icon: '🏠' }];
 
     let currentPath = '';
     let skipNext = false;
@@ -46,8 +46,8 @@ export class BreadcrumbComponent {
       const segment = segments[i];
       currentPath += `/${segment}`;
 
-      // Skip duplicate dashboard crumb since Home already points to /dashboard
-      if (segment === 'dashboard') {
+      // Skip home segment since Home already points to /home
+      if (segment === 'home') {
         continue;
       }
 
@@ -81,11 +81,11 @@ export class BreadcrumbComponent {
 
   private getLabelForSegment(segment: string, allSegments: string[], index: number): string {
     const labels: Record<string, string> = {
-      dashboard: 'Dashboard',
-      departments: 'Departments',
-      employees: 'Employees',
-      positions: 'Positions',
-      equipment: 'Equipment',
+      home: 'Головна',
+      departments: 'Відділи',
+      employees: 'Співробітники',
+      positions: 'Посади',
+      equipment: 'Обладнання',
     };
 
     return labels[segment] || this.capitalize(segment);
@@ -93,18 +93,18 @@ export class BreadcrumbComponent {
 
   private getLabelForDetail(segment: string): string {
     const labels: Record<string, string> = {
-      departments: 'Department Details',
-      employees: 'Employee Details',
-      positions: 'Position Details',
-      equipment: 'Equipment Details',
+      departments: 'Деталі відділу',
+      employees: 'Деталі співробітника',
+      positions: 'Деталі посади',
+      equipment: 'Деталі обладнання',
     };
 
-    return labels[segment] || 'Details';
+    return labels[segment] || 'Деталі';
   }
 
   private getIconForSegment(segment: string): string {
     const icons: Record<string, string> = {
-      dashboard: '📊',
+      home: '🏠',
       departments: '🏢',
       employees: '👥',
       positions: '💼',

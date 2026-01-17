@@ -1,15 +1,15 @@
 <div class="department-container">
   @if (isFetching() && !error()) {
-  <p class="fallback-text">Fetching available departments...</p>
+  <p class="fallback-text">Завантаження відділів...</p>
   } @else if (error()) {
   <p class="fallback-text">{{ error() }}</p>
   } @else if (departments() && departments()!.length > 0) {
 
   <div class="container">
     <header class="header">
-      <h1>Departments</h1>
+      <h1>Відділи</h1>
       <button class="btn btn-primary" (click)="toggleAddForm()">
-        {{ isAddFormVisible() ? 'Cancel' : '+ Add Department' }}
+        {{ isAddFormVisible() ? 'Скасувати' : '+ Додати відділ' }}
       </button>
     </header>
 
@@ -19,7 +19,7 @@
       <div class="form-row">
         <input
           class="form-control"
-          placeholder="Department Name"
+          placeholder="Назва відділу"
           [(ngModel)]="newDepartmentName"
           [ngModelOptions]="{ updateOn: 'change' }"
           (keyup.enter)="addDepartment()"
@@ -31,9 +31,9 @@
           (click)="addDepartment()"
           [disabled]="!isFormValid() || isSubmitting()"
         >
-          {{ isSubmitting() ? 'Creating...' : 'Add' }}
+          {{ isSubmitting() ? 'Створення...' : 'Додати' }}
         </button>
-        <button class="btn btn-secondary" (click)="cancelAdd()">Cancel</button>
+        <button class="btn btn-secondary" (click)="cancelAdd()">Скасувати</button>
       </div>
     </div>
     }
@@ -63,6 +63,6 @@
   </div>
 
   } @else {
-  <p class="fallback-text">No departments available.</p>
+  <p class="fallback-text">Відділів немає.</p>
   }
 </div>

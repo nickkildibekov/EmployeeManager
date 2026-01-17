@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: 'home', pathMatch: 'full' },
   {
-    path: 'dashboard',
-    loadComponent: () => import('./features/dashboard/dashboard').then((m) => m.DashboardComponent),
+    path: 'home',
+    loadComponent: () => import('./features/home/home').then((m) => m.HomeComponent),
   },
   {
     path: 'employees',
@@ -75,13 +75,5 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/equipment/equipment/equipment').then((m) => m.Equipment),
   },
-  {
-    path: 'schedule',
-    loadComponent: () => import('./features/schedule/schedule').then((m) => m.ScheduleComponent),
-  },
-  {
-    path: 'calendar',
-    loadComponent: () => import('./features/calendar/calendar').then((m) => m.CalendarComponent),
-  },
-  { path: '**', redirectTo: 'departments' },
+  { path: '**', redirectTo: 'home' },
 ];

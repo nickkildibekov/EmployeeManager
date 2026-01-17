@@ -91,6 +91,17 @@
   color: var(--text-primary);
 }
 
+.form-input.readonly {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  min-height: 2.5rem;
+  display: flex;
+  align-items: center;
+}
+
 .form-input {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -119,11 +130,30 @@
     flex-direction: column;
   }
 
+  .form-group label {
+    font-size: 0.9rem;
+    word-wrap: break-word;
+  }
+
+  .form-input {
+    font-size: 14px;
+    word-wrap: break-word;
+  }
+
   .button-group {
     flex-direction: column;
+    gap: 8px;
   }
 
   .btn {
     width: 100%;
+    font-size: 0.9rem;
+    padding: 10px 16px;
+    white-space: nowrap;
+  }
+
+  .back-button {
+    font-size: 1rem;
+    padding: 6px 8px;
   }
 }

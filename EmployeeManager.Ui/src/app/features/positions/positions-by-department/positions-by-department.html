@@ -1,22 +1,22 @@
 <div class="positions-container">
-  <h3>Positions</h3>
+  <h3>Посади</h3>
   <div class="controls">
     <input
       type="text"
-      placeholder="Search positions"
+      placeholder="Пошук посад"
       (input)="onSearch($any($event.target).value)"
     />
     <div class="pagination">
-      <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Prev</button>
-      <span>Page {{ page() }} / {{ Math.ceil((total() || 0) / pageSize()) || 1 }}</span>
+      <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Попередня</button>
+      <span>Сторінка {{ page() }} / {{ Math.ceil((total() || 0) / pageSize()) || 1 }}</span>
       <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= (total() || 0)">
-        Next
+        Наступна
       </button>
     </div>
   </div>
 
   @if (isLoading()) {
-  <p>Loading...</p>
+  <p>Завантаження...</p>
   } @else if (error()) {
   <p class="text-danger">{{ error() }}</p>
   } @else {

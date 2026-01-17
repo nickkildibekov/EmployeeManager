@@ -76,13 +76,13 @@ export class DepartmentListComponent implements OnInit {
       .subscribe({
         next: (newDepartment) => {
           this.departments.update((deps) => [...(deps || []), newDepartment]);
-          this.toastService.success('Department created successfully!');
+          this.toastService.success('Відділ успішно створено!');
           this.resetForm();
           this.isAddFormVisible.set(false);
           this.isSubmitting.set(false);
         },
         error: (error: Error) => {
-          this.toastService.error(error.message || 'Failed to create department');
+          this.toastService.error(error.message || 'Не вдалося створити відділ');
           this.isSubmitting.set(false);
         },
       });

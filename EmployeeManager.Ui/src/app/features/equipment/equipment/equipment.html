@@ -1,18 +1,18 @@
 <div class="container">
   <div class="header-section">
-    <button class="back-button" (click)="goBack()">← Back to List</button>
+    <button class="back-button" (click)="goBack()">← Назад до списку</button>
   </div>
 
   @if (isFetching()) {
   <div class="loading">
-    <p>Loading equipment details...</p>
+    <p>Завантаження деталей обладнання...</p>
   </div>
   } @else if (equipment()) {
   <div class="content">
     <div class="edit-section">
       <div class="button-group">
         <button class="btn btn-primary" (click)="toggleEditMode()" [disabled]="isSaving()">
-          {{ isEditMode() ? '✕ Cancel Editing' : '✏️ Edit Equipment' }}
+          {{ isEditMode() ? '✕ Скасувати редагування' : '✏️ Редагувати обладнання' }}
         </button>
 
         @if (isEditMode()) {
@@ -21,7 +21,7 @@
           (click)="saveEquipment()"
           [disabled]="isSaving() || !isFormValid()"
         >
-          @if (isSaving()) { Saving... } @else { 💾 Save Changes }
+          @if (isSaving()) { Збереження... } @else { 💾 Зберегти зміни }
         </button>
         }
 
@@ -30,7 +30,7 @@
           (click)="deleteEquipment()"
           [disabled]="isEditMode() || isSaving()"
         >
-          🗑️ Delete Equipment
+          🗑️ Видалити обладнання
         </button>
       </div>
     </div>
@@ -44,7 +44,7 @@
     <div class="equipment-form">
       <div class="form-row">
         <div class="form-group">
-          <label>Equipment Name</label>
+          <label>Назва обладнання</label>
           <input
             type="text"
             [(ngModel)]="editedEquipment().name"
@@ -54,7 +54,7 @@
         </div>
 
         <div class="form-group">
-          <label>Serial Number</label>
+          <label>Серійний номер</label>
           <input
             type="text"
             [(ngModel)]="editedEquipment().serialNumber"
@@ -66,10 +66,10 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label>Purchase Date</label>
+          <label>Дата покупки</label>
           <input
             type="date"
-            placeholder="Purchase Date"
+            placeholder="Дата покупки"
             [(ngModel)]="editedEquipment().purchaseDate"
             [readonly]="!isEditMode()"
             class="form-input"
@@ -77,43 +77,48 @@
         </div>
 
         <div class="form-group">
-          <label>Department</label>
+          <label>Відділ</label>
+          @if (isEditMode()) {
           <select
             [(ngModel)]="editedEquipment().departmentId"
-            [disabled]="!isEditMode()"
             class="form-input"
           >
-            <option [ngValue]="null" disabled>Select Department</option>
+            <option [ngValue]="null">Склад</option>
             <option *ngFor="let dep of departments()" [ngValue]="dep.id">
               {{ dep.name }}
             </option>
           </select>
+          } @else {
+          <div class="form-input readonly">
+            {{ editedEquipment().departmentName || 'Склад' }}
+          </div>
+          }
         </div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
-          <label>Category</label>
+          <label>Категорія</label>
           @if (!isEditMode()) {
           <input type="text" [value]="editedEquipment().categoryName" readonly class="form-input" />
           } @else { @if (!isAddingNewCategory()) {
           <div class="select-with-button">
             <select [(ngModel)]="editedEquipment().categoryId" class="form-input">
-              <option [ngValue]="null" disabled>Select Category</option>
+              <option [ngValue]="null" disabled>Оберіть категорію</option>
               <option *ngFor="let cat of categories()" [ngValue]="cat.id">
                 {{ cat.name }}
               </option>
             </select>
             <button class="btn btn-secondary btn-sm" type="button" (click)="toggleAddNewCategory()">
-              + New
+              + Нова
             </button>
           </div>
           } @else {
           <div class="inline-form-vertical">
-            <input class="form-input" placeholder="Category Name" [(ngModel)]="newCategoryName" />
+            <input class="form-input" placeholder="Назва категорії" [(ngModel)]="newCategoryName" />
             <input
               class="form-input"
-              placeholder="Description (optional)"
+              placeholder="Опис (необов'язково)"
               [(ngModel)]="newCategoryDescription"
             />
             <div class="button-stack">
@@ -122,14 +127,14 @@
                 type="button"
                 (click)="createAndSelectCategory()"
               >
-                Create
+                Створити
               </button>
               <button
                 class="btn btn-secondary btn-sm"
                 type="button"
                 (click)="toggleAddNewCategory()"
               >
-                Cancel
+                Скасувати
               </button>
             </div>
           </div>
@@ -137,7 +142,7 @@
         </div>
 
         <div class="form-group">
-          <label>Description</label>
+          <label>Опис</label>
           <input
             type="text"
             [(ngModel)]="editedEquipment().description"
@@ -149,7 +154,7 @@
 
       <div class="form-row">
         <div class="form-group status-group">
-          <label>Status</label>
+          <label>Статус</label>
           <div class="status-options">
             <label class="status-option">
               <input
@@ -159,7 +164,7 @@
                 [(ngModel)]="editedEquipment().status"
                 [disabled]="!isEditMode()"
               />
-              Used
+              Використовується
             </label>
             <label class="status-option">
               <input
@@ -169,7 +174,7 @@
                 [(ngModel)]="editedEquipment().status"
                 [disabled]="!isEditMode()"
               />
-              Not Used
+              Не використовується
             </label>
             <label class="status-option">
               <input
@@ -179,13 +184,13 @@
                 [(ngModel)]="editedEquipment().status"
                 [disabled]="!isEditMode()"
               />
-              Broken
+              Пошкоджено
             </label>
           </div>
         </div>
 
         <div class="form-group measurement-group">
-          <label>Measurement</label>
+          <label>Одиниця виміру</label>
           <div class="measurement-options">
             <label class="measurement-option">
               <input
@@ -196,7 +201,7 @@
                 [disabled]="!isEditMode()"
                 (change)="onEditMeasurementChange('Unit')"
               />
-              Unit
+              Штука
             </label>
             <label class="measurement-option">
               <input
@@ -207,7 +212,7 @@
                 [disabled]="!isEditMode()"
                 (change)="onEditMeasurementChange('Meter')"
               />
-              Meter
+              Метр
             </label>
             <label class="measurement-option">
               <input
@@ -218,13 +223,13 @@
                 [disabled]="!isEditMode()"
                 (change)="onEditMeasurementChange('Liter')"
               />
-              Liter
+              Літр
             </label>
           </div>
         </div>
 
         <div class="form-group">
-          <label>Amount</label>
+          <label>Кількість</label>
           <input
             type="number"
             [step]="editedEquipment().measurement === 'Unit' ? 1 : 0.01"
@@ -240,7 +245,7 @@
 
       <div class="form-row">
         <div class="form-group image-group">
-          <label>Equipment Image (Optional)</label>
+          <label>Зображення обладнання (необов'язково)</label>
           @if (isEditMode()) {
           <input
             type="file"
@@ -251,16 +256,16 @@
           } @else {
           <div class="view-image">
             @if (editedEquipment().imageData) {
-            <img [src]="editedEquipment().imageData" alt="Equipment image" class="detail-image" />
+            <img [src]="editedEquipment().imageData" alt="Зображення обладнання" class="detail-image" />
             } @else {
-            <div class="no-image-placeholder">No image</div>
+            <div class="no-image-placeholder">Зображення немає</div>
             }
           </div>
           } @if (editedEquipment().imageData && isEditMode()) {
           <div class="image-preview">
-            <img [src]="editedEquipment().imageData" alt="Equipment preview" class="preview-img" />
+            <img [src]="editedEquipment().imageData" alt="Попередній перегляд" class="preview-img" />
             <button type="button" class="btn btn-sm btn-secondary" (click)="clearEditImage()">
-              Remove Image
+              Видалити зображення
             </button>
           </div>
           }
@@ -271,7 +276,7 @@
   } @else {
   <div class="loading">
     <p style="color: #e53e3e; font-weight: 600">
-      ⚠️ Equipment not found or an error occurred: {{ error() }}
+      ⚠️ Обладнання не знайдено або сталася помилка: {{ error() }}
     </p>
   </div>
   }

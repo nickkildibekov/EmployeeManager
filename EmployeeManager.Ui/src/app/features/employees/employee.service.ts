@@ -18,6 +18,7 @@ export class EmployeeService {
       phoneNumber: employeeData.phoneNumber,
       positionId: employeeData.positionId,
       departmentId: employeeData.departmentId,
+      specializationId: employeeData.specializationId,
     };
 
     return this.httpClient.post<Employee>(this.apiUrl, payload).pipe(

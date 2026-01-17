@@ -9,10 +9,10 @@ import { CommonModule } from '@angular/common';
   styleUrl: './confirmation-dialog.css',
 })
 export class ConfirmationDialogComponent {
-  @Input() title = 'Confirm Action';
-  @Input() message = 'Are you sure you want to proceed?';
-  @Input() confirmText = 'OK';
-  @Input() cancelText = 'Cancel';
+  @Input() title = 'Підтвердити дію';
+  @Input() message = 'Ви впевнені, що хочете продовжити?';
+  @Input() confirmText = 'ОК';
+  @Input() cancelText = 'Скасувати';
   @Input() variant: 'warning' | 'danger' | 'info' = 'warning';
 
   @Output() confirm = new EventEmitter<void>();

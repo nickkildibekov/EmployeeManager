@@ -222,7 +222,7 @@ export class EquipmentListPageComponent implements OnInit {
   async createAndSelectCategory() {
     const name = this.newCategoryName().trim();
     if (!name) {
-      this.toastService.error('Category name is required');
+      this.toastService.error('Назва категорії обов\'язкова');
       return;
     }
 
@@ -237,7 +237,7 @@ export class EquipmentListPageComponent implements OnInit {
         this.isAddingNewCategory.set(false);
         this.newCategoryName.set('');
         this.newCategoryDescription.set('');
-        this.toastService.success('Category created successfully');
+        this.toastService.success('Категорію успішно створено');
       }
     } catch (err: any) {
       this.error.set(err.message);
@@ -272,7 +272,7 @@ export class EquipmentListPageComponent implements OnInit {
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      this.toastService.error('Image size must not exceed 2MB');
+      this.toastService.error('Розмір зображення не повинен перевищувати 2 МБ');
       return;
     }
 
@@ -280,10 +280,10 @@ export class EquipmentListPageComponent implements OnInit {
     reader.onload = (e) => {
       const result = e.target?.result as string;
       this.newEquipment().imageData = result; // Base64-encoded image
-      this.toastService.success('Image selected');
+      this.toastService.success('Зображення вибрано');
     };
     reader.onerror = () => {
-      this.toastService.error('Failed to read image file');
+      this.toastService.error('Не вдалося прочитати файл зображення');
     };
     reader.readAsDataURL(file);
   }
@@ -347,7 +347,7 @@ export class EquipmentListPageComponent implements OnInit {
         this.selectedDepartmentId.set(null);
         this.selectedCategoryId.set(null);
         this.loadEquipment();
-        this.toastService.success('Equipment created successfully');
+        this.toastService.success('Обладнання успішно створено');
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -358,14 +358,14 @@ export class EquipmentListPageComponent implements OnInit {
 
   async deleteEquipment(id: number): Promise<void> {
     const confirmed = await this.dialogService.confirm(
-      'Are you sure you want to delete this equipment?'
+      'Ви впевнені, що хочете видалити це обладнання?'
     );
     if (!confirmed) return;
 
     this.equipmentService.deleteEquipment(id).subscribe({
       next: () => {
         this.loadEquipment();
-        this.toastService.success('Equipment deleted successfully');
+        this.toastService.success('Обладнання успішно видалено');
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -378,9 +378,9 @@ export class EquipmentListPageComponent implements OnInit {
   }
 
   getDepartmentName(depId: number | null): string {
-    if (!depId) return 'N/A';
+    if (!depId) return 'Склад';
     const dep = this.departments().find((d) => d.id === depId);
-    return dep ? dep.name : 'Unknown';
+    return dep ? dep.name : 'Невідомо';
   }
 
   // Open/close image modal

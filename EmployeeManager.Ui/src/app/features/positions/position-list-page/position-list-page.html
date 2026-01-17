@@ -1,8 +1,8 @@
 <div class="container">
   <div class="header">
-    <h2>Positions</h2>
+    <h2>Посади</h2>
     <button class="btn btn-primary" (click)="toggleAddForm()">
-      {{ isAddFormVisible() ? 'Cancel' : '+ Add Position' }}
+      {{ isAddFormVisible() ? 'Скасувати' : '+ Додати посаду' }}
     </button>
   </div>
 
@@ -13,10 +13,10 @@
   <!-- Add Form -->
   <div *ngIf="isAddFormVisible()" class="add-form">
     <div class="form-row">
-      <input class="form-control" placeholder="Position Title" [(ngModel)]="newPosition().title" />
+      <input class="form-control" placeholder="Назва посади" [(ngModel)]="newPosition().title" />
     </div>
     <div class="departments-section">
-      <label class="section-label">Select Departments:</label>
+      <label class="section-label">Оберіть відділи:</label>
       <div class="departments-checkboxes">
         <label *ngFor="let dep of departments()" class="checkbox-label">
           <input
@@ -27,21 +27,21 @@
           />
           <span>{{ dep.name }}</span>
         </label>
-        <p *ngIf="departments().length === 0" class="text-muted">No departments available</p>
+        <p *ngIf="departments().length === 0" class="text-muted">Відділів немає</p>
       </div>
     </div>
     <div class="button-row">
       <button class="btn btn-success" (click)="addPosition()" [disabled]="!isFormValid()">
-        Add
+        Додати
       </button>
-      <button class="btn btn-secondary" (click)="cancelAdd()">Cancel</button>
+      <button class="btn btn-secondary" (click)="cancelAdd()">Скасувати</button>
     </div>
   </div>
 
   <!-- Filters -->
   <div class="filters">
     <select class="filter-select" (change)="onDepartmentChange($event.target.value)">
-      <option value="">All Departments</option>
+      <option value="">Всі відділи</option>
       <option *ngFor="let dept of departments()" [value]="dept.id">
         {{ dept.name }}
       </option>
@@ -49,17 +49,17 @@
     <input
       type="text"
       class="filter-search"
-      placeholder="Search by title..."
+      placeholder="Пошук за назвою..."
       (keyup)="onSearch($event.target.value)"
     />
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="isLoading()" class="loading">Loading...</div>
+  <div *ngIf="isLoading()" class="loading">Завантаження...</div>
 
   <!-- List -->
   <div *ngIf="!isLoading()" class="list-container">
-    <div *ngIf="positions().length === 0" class="empty-message">No positions found.</div>
+    <div *ngIf="positions().length === 0" class="empty-message">Посад не знайдено.</div>
 
     <div *ngFor="let pos of positions()" class="list-item" (click)="openPosition(pos.id)">
       <div class="item-content">
@@ -69,7 +69,7 @@
         class="btn btn-danger btn-sm"
         (click)="deletePosition(pos.id); $event.stopPropagation()"
       >
-        Delete
+        Видалити
       </button>
     </div>
   </div>
@@ -77,17 +77,17 @@
   <!-- Pagination -->
   <div *ngIf="positions().length > 0" class="pagination">
     <button class="btn btn-sm" (click)="changePage(page() - 1)" [disabled]="page() === 1">
-      ← Previous
+      ← Попередня
     </button>
     <span class="page-info">
-      Page {{ page() }} of {{ Math.ceil(total() / pageSize()) }} (Total: {{ total() }})
+      Сторінка {{ page() }} з {{ Math.ceil(total() / pageSize()) }} (Всього: {{ total() }})
     </span>
     <button
       class="btn btn-sm"
       (click)="changePage(page() + 1)"
       [disabled]="page() >= Math.ceil(total() / pageSize())"
     >
-      Next →
+      Наступна →
     </button>
   </div>
 </div>

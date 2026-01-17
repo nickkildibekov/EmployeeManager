@@ -234,12 +234,46 @@
     padding: 15px;
   }
 
+  .header h2 {
+    font-size: 1.5rem;
+    word-wrap: break-word;
+  }
+
   .form-row {
     flex-direction: column;
   }
 
   .filters {
     flex-direction: column;
+    gap: 8px;
+  }
+
+  .filter-select,
+  .filter-search {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .employees-table {
+    font-size: 0.85rem;
+  }
+
+  .employees-table th,
+  .employees-table td {
+    padding: 8px 4px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .page-info {
+    font-size: 0.85rem;
+    text-align: center;
+    width: 100%;
   }
 
   .list-item {
@@ -251,5 +285,11 @@
   .button-row {
     width: 100%;
     flex-wrap: wrap;
+  }
+
+  .btn {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    white-space: nowrap;
   }
 }

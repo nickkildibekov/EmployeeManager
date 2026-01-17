@@ -1,8 +1,8 @@
 <div class="container">
   <div class="header">
-    <h2>Equipment</h2>
+    <h2>Обладнання</h2>
     <button class="btn btn-primary" (click)="toggleAddForm()" *ngIf="!isAddFormVisible()">
-      + Add Equipment
+      + Додати обладнання
     </button>
   </div>
 
@@ -14,15 +14,15 @@
   <div *ngIf="isAddFormVisible()" class="add-form">
     <!-- Row 1: Name | Serial | Description -->
     <div class="form-row row-1">
-      <input class="form-control" placeholder="Equipment Name" [(ngModel)]="newEquipment().name" />
+      <input class="form-control" placeholder="Назва обладнання" [(ngModel)]="newEquipment().name" />
       <input
         class="form-control"
-        placeholder="Serial Number (Optional)"
+        placeholder="Серійний номер (необов'язково)"
         [(ngModel)]="newEquipment().serialNumber"
       />
       <input
         class="form-control"
-        placeholder="Description"
+        placeholder="Опис"
         [(ngModel)]="newEquipment().description"
       />
     </div>
@@ -32,11 +32,11 @@
       <input
         class="form-control"
         type="date"
-        placeholder="Purchase Date"
+        placeholder="Дата покупки"
         [(ngModel)]="newEquipment().purchaseDate"
       />
       <select class="form-control" [(ngModel)]="newEquipment().departmentId">
-        <option [ngValue]="null" disabled>Select Department</option>
+        <option [ngValue]="null">Склад</option>
         <option *ngFor="let dep of departments()" [ngValue]="dep.id">
           {{ dep.name }}
         </option>
@@ -45,29 +45,29 @@
       @if (!isAddingNewCategory()) {
       <div class="select-with-button">
         <select class="form-control" [(ngModel)]="newEquipment().categoryId">
-          <option [ngValue]="null" disabled>Select Category</option>
+          <option [ngValue]="null" disabled>Оберіть категорію</option>
           <option *ngFor="let cat of categories()" [ngValue]="cat.id">
             {{ cat.name }}
           </option>
         </select>
         <button class="btn btn-secondary" type="button" (click)="toggleAddNewCategory()">
-          + New Category
+          + Нова категорія
         </button>
       </div>
       } @else {
       <div class="inline-form-vertical">
-        <input class="form-control" placeholder="Category Name" [(ngModel)]="newCategoryName" />
+        <input class="form-control" placeholder="Назва категорії" [(ngModel)]="newCategoryName" />
         <input
           class="form-control"
-          placeholder="Description (optional)"
+          placeholder="Опис (необов'язково)"
           [(ngModel)]="newCategoryDescription"
         />
         <div class="button-stack">
           <button class="btn btn-success" type="button" (click)="createAndSelectCategory()">
-            Create
+            Створити
           </button>
           <button class="btn btn-secondary" type="button" (click)="toggleAddNewCategory()">
-            Cancel
+            Скасувати
           </button>
         </div>
       </div>
@@ -77,7 +77,7 @@
     <!-- Row 3: Status Radios | Measurement Radios | Amount -->
     <div class="form-row row-3">
       <div class="status-group">
-        <label>Status</label>
+        <label>Статус</label>
         <div class="status-options">
           <label class="status-option">
             <input
@@ -86,7 +86,7 @@
               [value]="'Used'"
               [(ngModel)]="newEquipment().status"
             />
-            Used
+            Використовується
           </label>
           <label class="status-option">
             <input
@@ -95,7 +95,7 @@
               [value]="'NotUsed'"
               [(ngModel)]="newEquipment().status"
             />
-            Not Used
+            Не використовується
           </label>
           <label class="status-option">
             <input
@@ -104,13 +104,13 @@
               [value]="'Broken'"
               [(ngModel)]="newEquipment().status"
             />
-            Broken
+            Пошкоджено
           </label>
         </div>
       </div>
 
       <div class="measurement-group">
-        <label>Measurement</label>
+        <label>Одиниця виміру</label>
         <div class="measurement-options">
           <label class="measurement-option">
             <input
@@ -120,7 +120,7 @@
               [(ngModel)]="newEquipment().measurement"
               (change)="onMeasurementChange('Unit')"
             />
-            Unit
+            Штука
           </label>
           <label class="measurement-option">
             <input
@@ -130,7 +130,7 @@
               [(ngModel)]="newEquipment().measurement"
               (change)="onMeasurementChange('Meter')"
             />
-            Meter
+            Метр
           </label>
           <label class="measurement-option">
             <input
@@ -140,22 +140,22 @@
               [(ngModel)]="newEquipment().measurement"
               (change)="onMeasurementChange('Liter')"
             />
-            Liter
+            Літр
           </label>
         </div>
       </div>
 
       <div class="amount-group">
         <label>
-          Amount
+          Кількість
           <span class="unit-hint">
             (
             {{
               newEquipment().measurement === 'Unit'
-                ? 'Unit'
+                ? 'Штука'
                 : newEquipment().measurement === 'Meter'
-                ? 'm'
-                : 'L'
+                ? 'м'
+                : 'л'
             }}
             )
           </span>
@@ -168,7 +168,7 @@
           inputmode="numeric"
           (input)="onAmountInput($event)"
           [(ngModel)]="newEquipment().amount"
-          placeholder="Amount"
+          placeholder="Кількість"
         />
       </div>
     </div>
@@ -176,7 +176,7 @@
     <!-- Row 4: Image Upload -->
     <div class="form-row row-4">
       <div class="image-group">
-        <label>Equipment Image (Optional)</label>
+        <label>Зображення обладнання (необов'язково)</label>
         <input
           type="file"
           accept="image/*"
@@ -185,9 +185,9 @@
         />
         @if (newEquipment().imageData) {
         <div class="image-preview">
-          <img [src]="newEquipment().imageData" alt="Equipment preview" class="preview-img" />
+          <img [src]="newEquipment().imageData" alt="Попередній перегляд" class="preview-img" />
           <button type="button" class="btn btn-sm btn-secondary" (click)="clearImage()">
-            Remove Image
+            Видалити зображення
           </button>
         </div>
         }
@@ -197,36 +197,36 @@
     <!-- Row 5: Create/Cancel buttons -->
     <div class="button-row">
       <button class="btn btn-success" (click)="addEquipment()" [disabled]="!isFormValid()">
-        Create
+        Створити
       </button>
-      <button class="btn btn-secondary" (click)="cancelAdd()">Cancel</button>
+      <button class="btn btn-secondary" (click)="cancelAdd()">Скасувати</button>
     </div>
   </div>
 
   <!-- Filters -->
   <div class="filters">
     <select class="filter-select" (change)="onDepartmentChange($event.target.value)">
-      <option value="">All Departments</option>
+      <option value="">Всі відділи</option>
       <option *ngFor="let dept of departments()" [value]="dept.id">
         {{ dept.name }}
       </option>
     </select>
     <select class="filter-select" (change)="onCategoryChange($event.target.value)">
-      <option value="">All Categories</option>
+      <option value="">Всі категорії</option>
       <option *ngFor="let cat of categories()" [value]="cat.id">
         {{ cat.name }}
       </option>
     </select>
     <select class="filter-select" (change)="onStatusChange($event.target.value)">
-      <option value="all">All Statuses</option>
-      <option value="used">Used</option>
-      <option value="not_used">Not Used</option>
-      <option value="broken">Broken</option>
+      <option value="all">Всі статуси</option>
+      <option value="used">Використовується</option>
+      <option value="not_used">Не використовується</option>
+      <option value="broken">Пошкоджено</option>
     </select>
     <input
       type="text"
       class="filter-search"
-      placeholder="Search by name..."
+      placeholder="Пошук за назвою..."
       (keyup)="onSearch($event.target.value)"
     />
   </div>
@@ -238,61 +238,61 @@
 
   <!-- List -->
   <div *ngIf="!isLoading()" class="table-container">
-    <div *ngIf="equipment().length === 0" class="empty-message">No equipment found.</div>
+    <div *ngIf="equipment().length === 0" class="empty-message">Обладнання не знайдено.</div>
 
     <table *ngIf="equipment().length > 0" class="equipment-table">
       <thead>
         <tr>
           <th class="sortable" (click)="toggleSort('name')">
-            Name
+            Назва
             <span class="sort-indicator" *ngIf="sortBy() === 'name'">
               {{ sortOrder() === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
           <th class="sortable" (click)="toggleSort('serialNumber')">
-            Serial Number
+            Серійний номер
             <span class="sort-indicator" *ngIf="sortBy() === 'serialNumber'">
               {{ sortOrder() === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
           <th class="sortable" (click)="toggleSort('category')">
-            Category
+            Категорія
             <span class="sort-indicator" *ngIf="sortBy() === 'category'">
               {{ sortOrder() === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
           <th class="sortable" (click)="toggleSort('purchaseDate')">
-            Purchase Date
+            Дата покупки
             <span class="sort-indicator" *ngIf="sortBy() === 'purchaseDate'">
               {{ sortOrder() === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
           <th class="sortable" (click)="toggleSort('status')">
-            Status
+            Статус
             <span class="sort-indicator" *ngIf="sortBy() === 'status'">
               {{ sortOrder() === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
           <th class="sortable" (click)="toggleSort('department')">
-            Department
+            Відділ
             <span class="sort-indicator" *ngIf="sortBy() === 'department'">
               {{ sortOrder() === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
           <th class="sortable" (click)="toggleSort('amount')">
-            Amount
+            Кількість
             <span class="sort-indicator" *ngIf="sortBy() === 'amount'">
               {{ sortOrder() === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
-          <th>Image</th>
+          <th>Зображення</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let item of equipment()" class="table-row" (click)="openEquipment(item.id)">
           <td>{{ item.name }}</td>
           <td>{{ item.serialNumber }}</td>
-          <td>{{ item.categoryName || 'N/A' }}</td>
+          <td>{{ item.categoryName || 'Не вказано' }}</td>
           <td>{{ item.purchaseDate | date : 'MMM dd, yyyy' }}</td>
           <td>
             <span
@@ -304,22 +304,22 @@
               }"
             >
               {{
-                item.status === 'Used' ? 'Used' : item.status === 'NotUsed' ? 'Not Used' : 'Broken'
+                item.status === 'Used' ? 'Використовується' : item.status === 'NotUsed' ? 'Не використовується' : 'Пошкоджено'
               }}
             </span>
           </td>
-          <td>{{ item.departmentName || 'N/A' }}</td>
+          <td>{{ item.departmentName || 'Склад' }}</td>
           <td>{{ item.amount }}</td>
           <td>
             @if (item.imageData) {
             <img
               [src]="item.imageData"
-              [alt]="item.name + ' thumbnail'"
+              [alt]="item.name + ' мініатюра'"
               class="table-image"
               (click)="openImageModal(item.imageData, item.name); $event.stopPropagation()"
             />
             } @else {
-            <div class="table-image-placeholder">No Image</div>
+            <div class="table-image-placeholder">Зображення немає</div>
             }
           </td>
         </tr>
@@ -330,17 +330,17 @@
   <!-- Pagination -->
   <div *ngIf="equipment().length > 0" class="pagination">
     <button class="btn btn-sm" (click)="changePage(page() - 1)" [disabled]="page() === 1">
-      ← Previous
+      ← Попередня
     </button>
     <span class="page-info">
-      Page {{ page() }} of {{ Math.ceil(total() / pageSize()) }} (Total: {{ total() }})
+      Сторінка {{ page() }} з {{ Math.ceil(total() / pageSize()) }} (Всього: {{ total() }})
     </span>
     <button
       class="btn btn-sm"
       (click)="changePage(page() + 1)"
       [disabled]="page() >= Math.ceil(total() / pageSize())"
     >
-      Next →
+      Наступна →
     </button>
   </div>
 
@@ -348,15 +348,15 @@
   @if (selectedImage()) {
   <div class="modal-backdrop" (click)="closeImageModal()">
     <div class="modal-content fixed" (click)="$event.stopPropagation()">
-      <button class="modal-close" (click)="closeImageModal()" aria-label="Close">✕</button>
+      <button class="modal-close" (click)="closeImageModal()" aria-label="Закрити">✕</button>
       <div class="modal-image-wrap">
-        <button class="modal-nav prev" (click)="prevImage()" aria-label="Previous">‹</button>
+        <button class="modal-nav prev" (click)="prevImage()" aria-label="Попереднє">‹</button>
         <img [src]="selectedImage()!.src" [alt]="selectedImage()!.name" class="modal-image" />
-        <button class="modal-nav next" (click)="nextImage()" aria-label="Next">›</button>
+        <button class="modal-nav next" (click)="nextImage()" aria-label="Наступне">›</button>
       </div>
       <div class="modal-caption">
         <span class="caption-text">{{ selectedImage()!.name }}</span>
-        <button class="modal-action" (click)="openSelectedDetails()">Open details</button>
+        <button class="modal-action" (click)="openSelectedDetails()">Відкрити деталі</button>
       </div>
     </div>
   </div>

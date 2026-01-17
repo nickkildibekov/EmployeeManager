@@ -1,18 +1,18 @@
 <div class="container">
   <div class="header-section">
-    <button class="back-button" (click)="goBack()">← Back to List</button>
+    <button class="back-button" (click)="goBack()">← Назад до списку</button>
   </div>
 
   @if (isFetching()) {
   <div class="loading">
-    <p>Loading position details...</p>
+    <p>Завантаження деталей посади...</p>
   </div>
   } @else if (position()) {
   <div class="content">
     <div class="edit-section">
       <div class="button-group">
         <button class="btn btn-primary" (click)="toggleEditMode()" [disabled]="isSaving()">
-          {{ isEditMode() ? '✕ Cancel Editing' : '✏️ Edit Position' }}
+          {{ isEditMode() ? '✕ Скасувати редагування' : '✏️ Редагувати посаду' }}
         </button>
 
         @if (isEditMode()) {
@@ -21,7 +21,7 @@
           (click)="savePosition()"
           [disabled]="isSaving() || !editedPosition().title.trim()"
         >
-          @if (isSaving()) { Saving... } @else { 💾 Save Changes }
+          @if (isSaving()) { Збереження... } @else { 💾 Зберегти зміни }
         </button>
         }
 
@@ -30,7 +30,7 @@
           (click)="deletePosition()"
           [disabled]="isEditMode() || isSaving()"
         >
-          🗑️ Delete Position
+          🗑️ Видалити посаду
         </button>
       </div>
     </div>
@@ -43,7 +43,7 @@
 
     <div class="position-form">
       <div class="form-group">
-        <label>Position Title</label>
+        <label>Назва посади</label>
         <input
           type="text"
           [(ngModel)]="editedPosition().title"
@@ -53,7 +53,7 @@
       </div>
 
       <div class="form-group">
-        <label>Departments</label>
+        <label>Відділи</label>
         @if (isEditMode()) {
         <div class="departments-checkboxes">
           @for (dep of departments(); track dep.id) {
@@ -67,7 +67,7 @@
             <span>{{ dep.name }}</span>
           </label>
           } @if (departments().length === 0) {
-          <p class="text-muted">No departments available</p>
+          <p class="text-muted">Відділів немає</p>
           }
         </div>
         } @else {
@@ -79,7 +79,7 @@
   } @else {
   <div class="loading">
     <p style="color: #e53e3e; font-weight: 600">
-      ⚠️ Position not found or an error occurred: {{ error() }}
+      ⚠️ Посаду не знайдено або сталася помилка: {{ error() }}
     </p>
   </div>
   }

@@ -8,9 +8,11 @@ import { DialogService } from '../../../shared/services/dialog.service';
 import { EmployeeService } from '../employee.service';
 import { DepartmentService } from '../../departments/department.service';
 import { PositionService } from '../../positions/position.service';
+import { SpecializationService } from '../specialization.service';
 import { Employee } from '../../../shared/models/employee.model';
 import { Department } from '../../../shared/models/department.model';
 import { Position } from '../../../shared/models/position.model';
+import { Specialization } from '../../../shared/models/specialization.model';
 import { NewEmployeeData } from '../../../shared/models/payloads';
 
 @Component({
@@ -24,6 +26,7 @@ export class EmployeeListPageComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private departmentService = inject(DepartmentService);
   private positionService = inject(PositionService);
+  private specializationService = inject(SpecializationService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   private navigationService = inject(NavigationService);
@@ -33,6 +36,7 @@ export class EmployeeListPageComponent implements OnInit {
   employees = signal<Employee[]>([]);
   departments = signal<Department[]>([]);
   positions = signal<Position[]>([]);
+  specializations = signal<Specialization[]>([]);
   // Positions available for the add form, filtered by selected department
   formPositions = signal<Position[]>([]);
 
@@ -55,6 +59,7 @@ export class EmployeeListPageComponent implements OnInit {
     phoneNumber: '',
     positionId: null,
     departmentId: null,
+    specializationId: 0,
   });
 
   Math = Math;
@@ -62,6 +67,7 @@ export class EmployeeListPageComponent implements OnInit {
   ngOnInit(): void {
     this.loadDepartments();
     this.loadPositions();
+    this.loadSpecializations();
     this.loadEmployees();
   }
 
@@ -79,6 +85,23 @@ export class EmployeeListPageComponent implements OnInit {
   private loadPositions() {
     const sub = this.positionService.getAllPositions().subscribe({
       next: (pos) => this.positions.set(pos),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  private loadSpecializations() {
+    const sub = this.specializationService.getAllSpecializations().subscribe({
+      next: (specs) => {
+        this.specializations.set(specs);
+        // Set default specialization if available
+        if (specs.length > 0 && this.newEmployee().specializationId === 0) {
+          this.newEmployee.update(emp => ({ ...emp, specializationId: specs[0].id }));
+        }
+      },
       error: (err: Error) => {
         this.error.set(err.message);
         this.toastService.error(err.message);
@@ -171,12 +194,14 @@ export class EmployeeListPageComponent implements OnInit {
   }
 
   resetForm() {
+    const defaultSpecId = this.specializations().length > 0 ? this.specializations()[0].id : 0;
     this.newEmployee.set({
       firstName: '',
       lastName: '',
       phoneNumber: '',
       positionId: null,
       departmentId: null,
+      specializationId: defaultSpecId,
     });
     this.formPositions.set([]);
   }
@@ -187,8 +212,7 @@ export class EmployeeListPageComponent implements OnInit {
       emp.firstName.trim() &&
       emp.lastName.trim() &&
       emp.phoneNumber.trim() &&
-      emp.positionId !== null &&
-      emp.departmentId !== null
+      emp.specializationId > 0
     );
   }
 
@@ -204,7 +228,7 @@ export class EmployeeListPageComponent implements OnInit {
         this.selectedDepartmentId.set(null);
         this.selectedPositionId.set(null);
         this.loadEmployees();
-        this.toastService.success('Employee created successfully');
+        this.toastService.success('Співробітника успішно створено');
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -232,14 +256,14 @@ export class EmployeeListPageComponent implements OnInit {
 
   async deleteEmployee(id: number): Promise<void> {
     const confirmed = await this.dialogService.confirm(
-      'Are you sure you want to delete this employee?'
+      'Ви впевнені, що хочете видалити цього співробітника?'
     );
     if (!confirmed) return;
 
     this.employeeService.deleteEmployee(id).subscribe({
       next: () => {
         this.loadEmployees();
-        this.toastService.success('Employee deleted successfully');
+        this.toastService.success('Співробітника успішно видалено');
       },
       error: (err: Error) => {
         this.error.set(err.message);

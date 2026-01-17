@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+# UI/UX Guidelines 
+
+- Forms: simple, intuitive, real-time validation feedback, good placeholders, tooltips on hover, clear error messages (red + icon)
+- Layout: use modern grid/flex, good spacing/padding, visual hierarchy
+- Buttons: large enough, clear CTAs, hover/focus states
+- Design: minimalistic, clean, modern look suitable for demo (light/dark theme support if possible)
+- Mobile-friendly: everything must look good on phones (test with dev tools)

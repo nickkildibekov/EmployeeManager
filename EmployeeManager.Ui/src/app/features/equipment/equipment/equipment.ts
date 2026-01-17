@@ -87,7 +87,8 @@ export class Equipment implements OnInit {
 
           if (!id || isNaN(id)) {
             this.error.set('Equipment Id is missing or invalid!');
-            this.toastService.error('Equipment Id is missing or invalid!');
+            const errorMsg = 'ID обладнання відсутній або недійсний!';
+            this.toastService.error(errorMsg);
             this.isFetching.set(false);
             return [];
           }
@@ -163,7 +164,7 @@ export class Equipment implements OnInit {
   async createAndSelectCategory() {
     const name = this.newCategoryName().trim();
     if (!name) {
-      this.toastService.error('Category name is required');
+      this.toastService.error('Назва категорії обов\'язкова');
       return;
     }
 
@@ -178,7 +179,7 @@ export class Equipment implements OnInit {
         this.isAddingNewCategory.set(false);
         this.newCategoryName.set('');
         this.newCategoryDescription.set('');
-        this.toastService.success('Category created successfully');
+        this.toastService.success('Категорію успішно створено');
       }
     } catch (err: any) {
       this.error.set(err.message);
@@ -212,12 +213,9 @@ export class Equipment implements OnInit {
   saveEquipment(): void {
     const eq = this.editedEquipment();
     if (!this.isFormValid()) {
-      this.error.set(
-        'Please fill all required fields (name, serial, category, department, purchase date).'
-      );
-      this.toastService.error(
-        'Please fill all required fields (name, serial, category, department, purchase date).'
-      );
+      const errorMsg = 'Будь ласка, заповніть всі обов\'язкові поля (назва, серійний номер, категорія, відділ, дата покупки).';
+      this.error.set(errorMsg);
+      this.toastService.error(errorMsg);
       return;
     }
 
@@ -250,7 +248,7 @@ export class Equipment implements OnInit {
         this.equipment.set(merged);
         this.isEditMode.set(false);
         this.isSaving.set(false);
-        this.toastService.success('Equipment updated successfully');
+        this.toastService.success('Обладнання успішно оновлено');
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -262,9 +260,9 @@ export class Equipment implements OnInit {
 
   async deleteEquipment(): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Delete Equipment',
-      message: 'Are you sure you want to delete this equipment? This action cannot be undone.',
-      confirmText: 'Delete',
+      title: 'Видалити обладнання',
+      message: 'Ви впевнені, що хочете видалити це обладнання? Цю дію неможливо скасувати.',
+      confirmText: 'Видалити',
       variant: 'danger',
     });
     if (!confirmed) return;
@@ -317,7 +315,7 @@ export class Equipment implements OnInit {
 
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
-      this.toastService.error('Image size must not exceed 2MB');
+      this.toastService.error('Розмір зображення не повинен перевищувати 2 МБ');
       return;
     }
 
@@ -325,10 +323,10 @@ export class Equipment implements OnInit {
     reader.onload = (e) => {
       const result = e.target?.result as string;
       this.editedEquipment().imageData = result; // Base64-encoded image
-      this.toastService.success('Image selected');
+      this.toastService.success('Зображення вибрано');
     };
     reader.onerror = () => {
-      this.toastService.error('Failed to read image file');
+      this.toastService.error('Не вдалося прочитати файл зображення');
     };
     reader.readAsDataURL(file);
   }

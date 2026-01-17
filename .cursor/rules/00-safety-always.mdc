@@ -1,0 +1,26 @@
+---
+alwaysApply: true
+---
+# Critical Safety & Preservation Rules - ALWAYS APPLY
+
+## Core Principles
+- NEVER break, remove, refactor or change existing working functionality unless the user EXPLICITLY asks for it in clear words.
+- When the task is "improve UI/UX, design, forms, layout, styling" — change ONLY visual/template/HTML/CSS parts.
+- Preserve 100%: business logic, data flow, service calls, API interactions, form submission handlers, event bindings, routing, guards, resolvers, state management, observables/signals usage, @Input/@Output, types/interfaces that affect behavior.
+- If a proposed change might affect logic (moving code, new services, changing method names, etc.) → FIRST describe the plan in comments, explain risks and ASK for explicit confirmation.
+
+## Change Strategy
+- Prefer minimal, targeted, incremental changes (diff-style) instead of full rewrites.
+- For forms: keep the same FormGroup structure, validators, valueChanges subscriptions, submit logic — enhance only UI (labels, placeholders, error display, layout, classes, responsiveness).
+- Always think step-by-step: 
+  1. Analyze what currently works and must be preserved
+  2. List preserved parts explicitly
+  3. Propose ONLY UI/visual improvements
+- Add comments in code like:
+  // PRESERVED: original submission logic and API call
+  // PRESERVED: existing form validation rules
+
+## General Safety
+- Before large edits — suggest creating backup (.bak) of file
+- Use small, focused Composer sessions
+- If refactoring structure (new wrappers/divs) is really needed → explain why and confirm it won't break bindings/logic

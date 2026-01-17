@@ -9,7 +9,7 @@ export interface Equipment {
   description: string;
   categoryId: number;
   categoryName: string;
-  departmentId: number;
-  departmentName: string;
+  departmentId: number | null;
+  departmentName: string | null;
   imageData?: string; // Base64-encoded image
 }

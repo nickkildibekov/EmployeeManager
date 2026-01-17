@@ -19,7 +19,7 @@ export class NavigationService {
   }
 
   // Smart back navigation
-  goBack(fallbackRoute: string = '/dashboard') {
+  goBack(fallbackRoute: string = '/home') {
     if (window.history.length > 1) {
       this.location.back();
     } else {

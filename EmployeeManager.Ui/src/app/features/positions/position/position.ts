@@ -41,7 +41,7 @@ export class PositionComponent implements OnInit {
   currentDepartments = computed(() => {
     const pos = this.position();
     if (!pos || !pos.departments || pos.departments.length === 0) {
-      return 'No departments assigned';
+      return 'Відділи не призначено';
     }
     return pos.departments.map((d) => d.name).join(', ');
   });
@@ -63,7 +63,7 @@ export class PositionComponent implements OnInit {
           const id = idParam ? +idParam : undefined;
 
           if (!id || isNaN(id)) {
-            this.error.set('Position Id is missing or invalid!');
+            this.error.set('ID посади відсутній або недійсний!');
             this.isFetching.set(false);
             return [];
           }
@@ -100,7 +100,7 @@ export class PositionComponent implements OnInit {
     const sub = this.departmentService.getAllDepartments().subscribe({
       next: (depts) => this.departments.set(depts),
       error: (err: Error) => {
-        this.toastService.error('Failed to load departments');
+        this.toastService.error('Не вдалося завантажити відділи');
         this.error.set(err.message);
       },
     });
@@ -143,7 +143,7 @@ export class PositionComponent implements OnInit {
   savePosition(): void {
     const pos = this.editedPosition();
     if (!pos.title.trim()) {
-      this.toastService.warning('Please fill all required fields');
+      this.toastService.warning('Будь ласка, заповніть всі обов\'язкові поля');
       return;
     }
 
@@ -166,9 +166,9 @@ export class PositionComponent implements OnInit {
 
   async deletePosition(): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Delete Position',
-      message: 'Are you sure you want to delete this position? This action cannot be undone.',
-      confirmText: 'Delete',
+      title: 'Видалити посаду',
+      message: 'Ви впевнені, що хочете видалити цю посаду? Цю дію неможливо скасувати.',
+      confirmText: 'Видалити',
       variant: 'danger',
     });
     if (!confirmed) return;

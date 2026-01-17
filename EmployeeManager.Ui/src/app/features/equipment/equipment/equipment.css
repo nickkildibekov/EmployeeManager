@@ -276,11 +276,36 @@
     flex-direction: column;
   }
 
+  .form-group label {
+    font-size: 0.9rem;
+    word-wrap: break-word;
+  }
+
+  .form-input {
+    font-size: 14px;
+    word-wrap: break-word;
+  }
+
+  .status-option,
+  .measurement-option {
+    font-size: 0.85rem;
+    word-wrap: break-word;
+  }
+
   .button-group {
     flex-direction: column;
+    gap: 8px;
   }
 
   .btn {
     width: 100%;
+    font-size: 0.9rem;
+    padding: 10px 16px;
+    white-space: nowrap;
+  }
+
+  .back-button {
+    font-size: 1rem;
+    padding: 6px 8px;
   }
 }

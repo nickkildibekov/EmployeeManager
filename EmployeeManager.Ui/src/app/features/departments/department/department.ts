@@ -6,6 +6,7 @@ import { switchMap } from 'rxjs';
 
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { DialogService } from '../../../shared/services/dialog.service';
 import { Department } from '../../../shared/models/department.model';
 import { DepartmentUpdateDTO } from '../../../shared/models/payloads';
 
@@ -25,6 +26,7 @@ export class DepartmentComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
+  private dialogService = inject(DialogService);
 
   department = signal<Department | undefined>(undefined);
   editedDepartment = signal<DepartmentUpdateDTO>({ id: 0, name: '' });
@@ -32,7 +34,9 @@ export class DepartmentComponent implements OnInit {
   isFetching = signal(false);
   isSaving = signal(false);
   isEditMode = signal(false);
+  isDeleting = signal(false);
   error = signal('');
+  selectedPositionId = signal<number | null>(null);
 
   departmentId: number | undefined;
 
@@ -55,13 +59,22 @@ export class DepartmentComponent implements OnInit {
     const dept = this.department();
     if (!dept || !dept.employees) return [];
 
-    return dept.employees.map((emp) => {
+    let employees = dept.employees.map((emp) => {
       return {
         id: emp.id,
         fullName: `${emp.firstName} ${emp.lastName}`,
-        position: emp.positionName || 'N/A',
+        position: emp.positionName || 'Не вказано',
+        positionId: emp.positionId,
       };
     });
+
+    // Filter by selected position if one is selected
+    const selectedPosId = this.selectedPositionId();
+    if (selectedPosId !== null) {
+      employees = employees.filter((emp) => emp.positionId === selectedPosId);
+    }
+
+    return employees;
   });
 
   equipmentList = computed(() => {
@@ -95,7 +108,7 @@ export class DepartmentComponent implements OnInit {
       count: data.count,
       operational: data.operational,
       nonOperational: data.nonOperational,
-      statusText: `${data.operational} operational, ${data.nonOperational} out of service`,
+      statusText: `${data.operational} ${this.getOperationalText(data.operational)}, ${data.nonOperational} ${this.getNonOperationalText(data.nonOperational)}`,
     }));
   });
 
@@ -107,8 +120,9 @@ export class DepartmentComponent implements OnInit {
           const id = idParam ? +idParam : undefined;
 
           if (!id || isNaN(id)) {
-            this.error.set('Department Id is missing or invalid!');
-            this.toastService.error('Department Id is missing or invalid!');
+            const errorMsg = 'ID відділу відсутній або недійсний!';
+            this.error.set(errorMsg);
+            this.toastService.error(errorMsg);
             this.isFetching.set(false);
             return [];
           }
@@ -155,7 +169,7 @@ export class DepartmentComponent implements OnInit {
     const id = this.departmentId;
     const { name } = this.editedDepartment();
     if (!id || !name.trim()) {
-      this.toastService.warning('Cannot save: Invalid ID or empty name.');
+      this.toastService.warning('Неможливо зберегти: недійсний ID або порожня назва.');
       return;
     }
 
@@ -173,7 +187,7 @@ export class DepartmentComponent implements OnInit {
         }));
         this.isEditMode.set(false);
         this.isSaving.set(false);
-        this.toastService.success('Department updated successfully');
+        this.toastService.success('Відділ успішно оновлено');
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -187,6 +201,18 @@ export class DepartmentComponent implements OnInit {
     this.navigationService.goBack('/departments');
   }
 
+  togglePositionFilter(positionId: number, event: Event): void {
+    event.stopPropagation();
+    const currentSelected = this.selectedPositionId();
+    if (currentSelected === positionId) {
+      // If clicking the same position, remove filter
+      this.selectedPositionId.set(null);
+    } else {
+      // Set new filter
+      this.selectedPositionId.set(positionId);
+    }
+  }
+
   navigateToPosition(positionId: number): void {
     this.router.navigate(['/positions', positionId]);
   }
@@ -197,5 +223,93 @@ export class DepartmentComponent implements OnInit {
 
   navigateToEquipment(equipmentId: number): void {
     this.router.navigate(['/equipment', equipmentId]);
+  }
+
+  async deleteDepartment(): Promise<void> {
+    const dept = this.department();
+    if (!dept || !this.departmentId) return;
+
+    const employeeCount = dept.employees?.length || 0;
+    const equipmentCount = dept.equipments?.length || 0;
+
+    let message = `Ви впевнені, що хочете видалити відділ "${dept.name}"?`;
+    
+    if (employeeCount > 0 || equipmentCount > 0) {
+      const parts: string[] = [];
+      if (employeeCount > 0) {
+        parts.push(`${employeeCount} ${this.getEmployeeCountText(employeeCount)} буде переміщено до Резерву (DepartmentId буде встановлено як null)`);
+      }
+      if (equipmentCount > 0) {
+        parts.push(`${equipmentCount} ${this.getEquipmentCountText(equipmentCount)} обладнання буде переміщено до Складу (DepartmentId буде встановлено як null)`);
+      }
+      message += ` ${parts.join('. ')}. Цю дію неможливо скасувати.`;
+    } else {
+      message += ' Цю дію неможливо скасувати.';
+    }
+
+    const confirmed = await this.dialogService.confirm({
+      title: 'Видалити відділ',
+      message: message,
+      confirmText: 'Видалити',
+      cancelText: 'Скасувати',
+      variant: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.isDeleting.set(true);
+
+    this.departmentService.deleteDepartment(this.departmentId).subscribe({
+      next: () => {
+        this.toastService.success('Відділ успішно видалено');
+        this.navigationService.goBack('/departments');
+      },
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+        this.isDeleting.set(false);
+      },
+    });
+  }
+
+  // Helper methods for Ukrainian pluralization
+  getEmployeeCountText(count: number): string {
+    if (count % 10 === 1 && count % 100 !== 11) {
+      return 'співробітник';
+    } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+      return 'співробітники';
+    } else {
+      return 'співробітників';
+    }
+  }
+
+  getEquipmentCountText(count: number): string {
+    if (count % 10 === 1 && count % 100 !== 11) {
+      return 'одиниця';
+    } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+      return 'одиниці';
+    } else {
+      return 'одиниць';
+    }
+  }
+
+  getOperationalText(count: number): string {
+    if (count % 10 === 1 && count % 100 !== 11) {
+      return 'працює';
+    } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+      return 'працюють';
+    } else {
+      return 'працюють';
+    }
+  }
+
+  getNonOperationalText(count: number): string {
+    if (count % 10 === 1 && count % 100 !== 11) {
+      return 'не працює';
+    } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+      return 'не працюють';
+    } else {
+      return 'не працюють';
+    }
   }
 }

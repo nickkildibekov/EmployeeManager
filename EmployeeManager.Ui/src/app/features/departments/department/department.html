@@ -1,63 +1,103 @@
 <div class="container">
   <div class="header-section">
-    <button class="back-button" (click)="goBack()">← Back to List</button>
+    <button class="back-button" (click)="goBack()">← Назад до списку</button>
   </div>
 
   @if (isFetching()) {
   <div class="loading">
-    <p>Loading department details...</p>
+    <p>Завантаження деталей відділу...</p>
   </div>
   } @else if (department()) {
   <div class="content">
-    <div class="edit-section">
-      <div class="button-group">
-        <button class="btn btn-primary" (click)="toggleEditMode()" [disabled]="isSaving()">
-          {{ isEditMode() ? '✕ Cancel Editing' : '✏️ Edit Department' }}
-        </button>
-
+    <div class="department-header">
+      <div class="department-name-section">
         @if (isEditMode()) {
-        <button
-          class="btn btn-success"
-          (click)="saveDepartment()"
-          [disabled]="isSaving() || !editedDepartment().name.trim()"
-        >
-          @if (isSaving()) { Saving... } @else { 💾 Save Changes }
-        </button>
-        }
-      </div>
-    </div>
-
-    <div class="department-form">
-      <div class="form-group">
-        <label>Department Name</label>
         <input
           type="text"
           [(ngModel)]="editedDepartment().name"
-          [readonly]="!isEditMode()"
-          class="form-input"
+          class="department-name-input"
+          [disabled]="isSaving()"
         />
+        <div class="edit-actions">
+          <button
+            class="icon-button btn-success"
+            (click)="saveDepartment()"
+            [disabled]="isSaving() || !editedDepartment().name.trim()"
+            title="Зберегти"
+          >
+            @if (isSaving()) { ⏳ } @else { ✓ }
+          </button>
+          <button
+            class="icon-button btn-secondary"
+            (click)="toggleEditMode()"
+            [disabled]="isSaving()"
+            title="Скасувати"
+          >
+            ✕
+          </button>
+        </div>
+        } @else {
+        <h1 class="department-name">{{ department()?.name }}</h1>
+        <div class="department-actions">
+          <button
+            class="icon-button btn-primary"
+            (click)="toggleEditMode()"
+            [disabled]="isSaving() || isDeleting()"
+            title="Редагувати відділ"
+          >
+            ✏️
+          </button>
+          <button
+            class="icon-button btn-danger"
+            (click)="deleteDepartment()"
+            [disabled]="isSaving() || isDeleting()"
+            title="Видалити відділ"
+          >
+            🗑️
+          </button>
+        </div>
+        }
       </div>
     </div>
 
     <div class="sections-container">
       <!-- Positions Section -->
       <div class="info-section">
-        <h3>Positions</h3>
+        <h3>Посади</h3>
         <div class="info-list">
           @if (positionsList().length > 0) { @for (pos of positionsList(); track pos.id) {
-          <div class="info-item" (click)="navigateToPosition(pos.id)" style="cursor: pointer">
+          <div
+            class="info-item"
+            [class.filtered]="selectedPositionId() === pos.id"
+            (click)="togglePositionFilter(pos.id, $event)"
+            style="cursor: pointer"
+          >
             <span class="info-label">{{ pos.name }}</span>
-            <span class="info-value">{{ pos.count }} employee(s)</span>
+            <span class="info-value">{{ pos.count }} {{ getEmployeeCountText(pos.count) }}</span>
+            @if (selectedPositionId() === pos.id) {
+            <span class="filter-indicator" title="Фільтр активний">🔍</span>
+            }
           </div>
           } } @else {
-          <p class="no-data">No positions available</p>
+          <p class="no-data">Посад немає</p>
           }
         </div>
       </div>
 
       <!-- Employees Section -->
       <div class="info-section">
-        <h3>Employees</h3>
+        <div class="section-header-with-filter">
+          <h3>Співробітники</h3>
+          @if (selectedPositionId() !== null) {
+          <button
+            class="clear-filter-button"
+            (click)="selectedPositionId.set(null)"
+            title="Очистити фільтр"
+          >
+            Очистити ✕
+          </button>
+          }
+        </div>
         <div class="info-list">
           @if (employeesList().length > 0) { @for (emp of employeesList(); track emp.id) {
           <div class="info-item" (click)="navigateToEmployee(emp.id)" style="cursor: pointer">
@@ -65,22 +105,25 @@
             <span class="info-value">{{ emp.position }}</span>
           </div>
           } } @else {
-          <p class="no-data">No employees available</p>
+          <p class="no-data">
+            @if (selectedPositionId() !== null) { Співробітників на вибраній посаді не знайдено } @else {
+            Співробітників немає }
+          </p>
           }
         </div>
       </div>
 
       <!-- Equipment Section -->
       <div class="info-section">
-        <h3>Equipment</h3>
+        <h3>Обладнання</h3>
         <div class="info-list">
           @if (equipmentList().length > 0) { @for (eq of equipmentList(); track eq.id) {
           <div class="info-item" (click)="navigateToEquipment(eq.id)" style="cursor: pointer">
             <span class="info-label">{{ eq.name }}</span>
-            <span class="info-value"> {{ eq.count }} unit(s) - {{ eq.statusText }} </span>
+            <span class="info-value"> {{ eq.count }} {{ getEquipmentCountText(eq.count) }} - {{ eq.statusText }} </span>
           </div>
           } } @else {
-          <p class="no-data">No equipment available</p>
+          <p class="no-data">Обладнання немає</p>
           }
         </div>
       </div>
@@ -89,7 +132,7 @@
   } @else {
   <div class="loading">
     <p style="color: #e53e3e; font-weight: 600">
-      ⚠️ Department not found or an error occurred: {{ error() }}
+      ⚠️ Відділ не знайдено або сталася помилка: {{ error() }}
     </p>
   </div>
   }

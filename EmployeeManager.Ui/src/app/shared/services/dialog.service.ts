@@ -22,10 +22,10 @@ export class DialogService {
     return new Promise((resolve) => {
       this.resolveCallback = resolve;
       this.dialogConfig.set({
-        title: dialogConfig.title || 'Confirm Action',
+        title: dialogConfig.title || 'Підтвердити дію',
         message: dialogConfig.message,
-        confirmText: dialogConfig.confirmText || 'OK',
-        cancelText: dialogConfig.cancelText || 'Cancel',
+        confirmText: dialogConfig.confirmText || 'ОК',
+        cancelText: dialogConfig.cancelText || 'Скасувати',
         variant: dialogConfig.variant || 'warning',
       });
       this.isOpen.set(true);

@@ -130,11 +130,24 @@
 
   .header h1 {
     font-size: 2rem;
+    word-wrap: break-word;
+  }
+
+  .header .btn {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    white-space: nowrap;
   }
 
   .departments-grid {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  .department-name {
+    font-size: 1.5rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
   }
 
   .plate-header {
@@ -143,19 +156,43 @@
 
   .plate-header h2 {
     font-size: 1.25rem;
+    word-wrap: break-word;
   }
 
   .plate-body {
     padding: 20px;
+  }
+
+  .add-form {
+    padding: 16px;
+  }
+
+  .form-control {
+    font-size: 14px;
+  }
+
+  .button-row {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 }
 
 @media (max-width: 480px) {
   .header h1 {
     font-size: 1.75rem;
+    word-wrap: break-word;
+  }
+
+  .header .btn {
+    font-size: 0.85rem;
+    padding: 6px 10px;
   }
 
   .stat-block {
     padding: 12px;
+  }
+
+  .department-name {
+    font-size: 1.25rem;
   }
 }

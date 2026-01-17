@@ -431,20 +431,71 @@
     padding: 15px;
   }
 
+  .header h2 {
+    font-size: 1.5rem;
+    word-wrap: break-word;
+  }
+
   .row-1,
   .row-2,
   .row-3 {
     grid-template-columns: 1fr;
   }
 
+  .form-control {
+    font-size: 14px;
+    word-wrap: break-word;
+  }
+
   .filters {
     flex-direction: column;
+    gap: 8px;
+  }
+
+  .filter-select,
+  .filter-search {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .equipment-table {
+    font-size: 0.85rem;
+  }
+
+  .equipment-table th,
+  .equipment-table td {
+    padding: 8px 4px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .status-badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    white-space: nowrap;
   }
 
   .button-row {
     width: 100%;
     flex-wrap: wrap;
     justify-content: stretch;
+  }
+
+  .btn {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    white-space: nowrap;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .page-info {
+    font-size: 0.85rem;
+    text-align: center;
+    width: 100%;
   }
 }
 

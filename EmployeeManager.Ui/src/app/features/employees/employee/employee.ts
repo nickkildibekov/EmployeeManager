@@ -12,8 +12,10 @@ import { EmployeeUpdateData } from '../../../shared/models/payloads';
 import { EmployeeService } from '../employee.service';
 import { DepartmentService } from '../../departments/department.service';
 import { PositionService } from '../../positions/position.service';
+import { SpecializationService } from '../specialization.service';
 import { Department } from '../../../shared/models/department.model';
 import { Position } from '../../../shared/models/position.model';
+import { Specialization } from '../../../shared/models/specialization.model';
 
 @Component({
   selector: 'app-employee',
@@ -25,6 +27,7 @@ export class EmployeeComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private departmentService = inject(DepartmentService);
   private positionService = inject(PositionService);
+  private specializationService = inject(SpecializationService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
@@ -35,6 +38,7 @@ export class EmployeeComponent implements OnInit {
   employee = signal<Employee | undefined>(undefined);
   departments = signal<Department[]>([]);
   positions = signal<Position[]>([]);
+  specializations = signal<Specialization[]>([]);
 
   editedEmployee = signal<EmployeeUpdateData>({
     id: 0,
@@ -42,7 +46,8 @@ export class EmployeeComponent implements OnInit {
     lastName: '',
     phoneNumber: '',
     positionId: null,
-    departmentId: 0,
+    departmentId: null,
+    specializationId: 0,
   });
 
   isFetching = signal(false);
@@ -55,6 +60,7 @@ export class EmployeeComponent implements OnInit {
   ngOnInit(): void {
     this.loadDepartments();
     this.loadPositions();
+    this.loadSpecializations();
 
     const subscription = this.route.paramMap
       .pipe(
@@ -63,8 +69,9 @@ export class EmployeeComponent implements OnInit {
           const id = idParam ? +idParam : undefined;
 
           if (!id || isNaN(id)) {
-            this.error.set('Employee Id is missing or invalid!');
-            this.toastService.error('Employee Id is missing or invalid!');
+            const errorMsg = 'ID співробітника відсутній або недійсний!';
+            this.error.set(errorMsg);
+            this.toastService.error(errorMsg);
             this.isFetching.set(false);
             return [];
           }
@@ -84,6 +91,7 @@ export class EmployeeComponent implements OnInit {
             phoneNumber: emp.phoneNumber,
             positionId: emp.positionId,
             departmentId: emp.departmentId,
+            specializationId: emp.specializationId,
           });
           this.isFetching.set(false);
         },
@@ -121,6 +129,29 @@ export class EmployeeComponent implements OnInit {
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
+  private loadSpecializations() {
+    const sub = this.specializationService.getAllSpecializations().subscribe({
+      next: (specs) => this.specializations.set(specs),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  getDepartmentDisplayName(departmentId: number | null): string {
+    if (departmentId === null) return 'Резерв';
+    const dept = this.departments().find(d => d.id === departmentId);
+    return dept ? dept.name : 'Невідомо';
+  }
+
+  getPositionDisplayName(positionId: number | null): string {
+    if (positionId === null) return 'Не вказано';
+    const pos = this.positions().find(p => p.id === positionId);
+    return pos ? pos.title : 'Невідомо';
+  }
+
   toggleEditMode(): void {
     this.isEditMode.update((val) => !val);
     if (!this.isEditMode() && this.employee()) {
@@ -132,6 +163,7 @@ export class EmployeeComponent implements OnInit {
         phoneNumber: currentEmp.phoneNumber,
         positionId: currentEmp.positionId,
         departmentId: currentEmp.departmentId,
+        specializationId: currentEmp.specializationId,
       });
     }
   }
@@ -139,7 +171,7 @@ export class EmployeeComponent implements OnInit {
   saveEmployee(): void {
     const emp = this.editedEmployee();
     if (!emp.firstName.trim() || !emp.lastName.trim() || !emp.phoneNumber.trim()) {
-      this.toastService.warning('Please fill all required fields.');
+      this.toastService.warning('Будь ласка, заповніть всі обов\'язкові поля.');
       return;
     }
 
@@ -150,7 +182,7 @@ export class EmployeeComponent implements OnInit {
         this.employee.set(updatedEmp);
         this.isEditMode.set(false);
         this.isSaving.set(false);
-        this.toastService.success('Employee updated successfully');
+        this.toastService.success('Співробітника успішно оновлено');
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -162,9 +194,9 @@ export class EmployeeComponent implements OnInit {
 
   async deleteEmployee(): Promise<void> {
     const confirmed = await this.dialogService.confirm({
-      title: 'Delete Employee',
-      message: 'Are you sure you want to delete this employee? This action cannot be undone.',
-      confirmText: 'Delete',
+      title: 'Видалити співробітника',
+      message: 'Ви впевнені, що хочете видалити цього співробітника? Цю дію неможливо скасувати.',
+      confirmText: 'Видалити',
       variant: 'danger',
     });
     if (!confirmed) return;

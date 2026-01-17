@@ -33,9 +33,9 @@ export class ThemeToggleComponent {
   getCurrentThemeLabel(): string {
     const theme = this.themeService.theme();
     return {
-      light: 'Light Mode',
-      dark: 'Dark Mode',
-      auto: 'Auto Mode (System)',
+      light: 'Світла тема',
+      dark: 'Темна тема',
+      auto: 'Автоматична тема (системна)',
     }[theme];
   }
 }

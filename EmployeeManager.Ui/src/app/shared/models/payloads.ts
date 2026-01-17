@@ -8,6 +8,7 @@ export interface NewEmployeeData {
   phoneNumber: string;
   positionId: number | null;
   departmentId: number | null;
+  specializationId: number;
 }
 
 export interface EmployeeUpdateData {
@@ -16,7 +17,8 @@ export interface EmployeeUpdateData {
   lastName: string;
   phoneNumber: string;
   positionId: number | null;
-  departmentId: number;
+  departmentId: number | null;
+  specializationId: number;
 }
 
 export interface PositionCreationPayload {

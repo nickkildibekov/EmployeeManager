@@ -1,22 +1,22 @@
 <div class="equipment-container">
-  <h3>Equipment</h3>
+  <h3>Обладнання</h3>
   <div class="controls">
     <input
       type="text"
-      placeholder="Search equipment"
+      placeholder="Пошук обладнання"
       (input)="onSearch($any($event.target).value)"
     />
     <select (change)="onStatusChange($event.target.value)">
-      <option value="all">All Statuses</option>
-      <option value="used">Used</option>
-      <option value="not_used">Not Used</option>
-      <option value="broken">Broken</option>
+      <option value="all">Всі статуси</option>
+      <option value="used">Використовується</option>
+      <option value="not_used">Не використовується</option>
+      <option value="broken">Пошкоджено</option>
     </select>
     <div class="pagination">
-      <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Prev</button>
-      <span>Page {{ page() }} / {{ Math.ceil((total() || 0) / pageSize()) || 1 }}</span>
+      <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Попередня</button>
+      <span>Сторінка {{ page() }} / {{ Math.ceil((total() || 0) / pageSize()) || 1 }}</span>
       <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= (total() || 0)">
-        Next
+        Наступна
       </button>
     </div>
   </div>
@@ -35,18 +35,18 @@
         <div>🔢 {{ eq.serialNumber }}</div>
         <div class="category">{{ eq.categoryName }}</div>
         <div>
-          Status:
-          {{ eq.status === 'Used' ? 'Used' : eq.status === 'NotUsed' ? 'Not Used' : 'Broken' }}
+          Статус:
+          {{ eq.status === 'Used' ? 'Використовується' : eq.status === 'NotUsed' ? 'Не використовується' : 'Пошкоджено' }}
         </div>
       </div>
       <button (click)="onDelete(eq.id); $event.stopPropagation()" class="btn btn-danger btn-sm">
-        Delete
+        Видалити
       </button>
     </li>
     }
   </ul>
 
   } @else {
-  <p class="empty-list">No equipment in this department</p>
+  <p class="empty-list">Обладнання в цьому відділі немає</p>
   }
 </div>

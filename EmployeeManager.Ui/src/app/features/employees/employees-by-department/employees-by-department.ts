@@ -4,9 +4,11 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { EmployeeService } from '../employee.service';
 import { DepartmentService } from '../../departments/department.service';
 import { PositionService } from '../../positions/position.service';
+import { SpecializationService } from '../specialization.service';
 import { EmployeeListComponent } from '../employee-list/employee-list';
 import { Department } from '../../../shared/models/department.model';
 import { Position } from '../../../shared/models/position.model';
+import { Specialization } from '../../../shared/models/specialization.model';
 import { NewEmployeeData } from '../../../shared/models/payloads';
 
 @Component({
@@ -22,9 +24,11 @@ export class EmployeesByDepartmentComponent implements OnInit {
   private employeeService = inject(EmployeeService);
   private departmentService = inject(DepartmentService);
   private positionService = inject(PositionService);
+  private specializationService = inject(SpecializationService);
 
   department = signal<Department | undefined>(undefined);
   positions = signal<Position[] | undefined>(undefined);
+  specializations = signal<Specialization[]>([]);
 
   // pagination & search
   page = signal(1);
@@ -47,6 +51,7 @@ export class EmployeesByDepartmentComponent implements OnInit {
 
     this.loadDepartment(idParam);
     this.loadPositions(idParam);
+    this.loadSpecializations();
     this.loadEmployees(idParam);
   }
 
@@ -61,6 +66,13 @@ export class EmployeesByDepartmentComponent implements OnInit {
     this.positionService.getPositionsByDepartmentId(depId).subscribe({
       next: (p) => this.positions.set(p),
       error: (err: Error) => this.positions.set([]),
+    });
+  }
+
+  private loadSpecializations() {
+    this.specializationService.getAllSpecializations().subscribe({
+      next: (specs) => this.specializations.set(specs),
+      error: (err: Error) => this.specializations.set([]),
     });
   }
 

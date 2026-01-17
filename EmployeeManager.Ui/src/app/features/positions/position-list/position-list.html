@@ -1,12 +1,12 @@
 <div class="section">
   <div class="section-header">
-    <h2>💼 Positions ({{ getDisplayPositions()?.length || 0 }})</h2>
+    <h2>💼 Посади ({{ getDisplayPositions()?.length || 0 }})</h2>
   </div>
 
   @if (isEditMode()) {
   <div class="add-button-container">
     <button class="btn-add" (click)="toggleAddMode()">
-      {{ showAddForm() ? '✕ Cancel' : '➕ Add Position' }}
+      {{ showAddForm() ? '✕ Скасувати' : '➕ Додати посаду' }}
     </button>
   </div>
   } @if(isEditMode() && showAddForm()){
@@ -14,12 +14,12 @@
     <input
       type="text"
       [(ngModel)]="newPositionTitle"
-      placeholder="Enter position title"
+      placeholder="Введіть назву посади"
       class="form-input"
       (keyup.enter)="addPosition()"
     />
     <button class="btn-save" (click)="addPosition()" [disabled]="!newPositionTitle().trim()">
-      Add
+      Додати
     </button>
   </div>
   } @if (getDisplayPositions() && getDisplayPositions().length > 0) {
@@ -34,9 +34,9 @@
             class="btn-delete"
             (click)="deletePosition(position.id)"
             [disabled]="!isEditMode()"
-            title="Delete position"
+            title="Видалити посаду"
           >
-            Delete
+            Видалити
           </button>
         </td>
         }
@@ -46,7 +46,7 @@
   </table>
   } @else {
   <div class="empty-state">
-    <p>No positions yet</p>
+    <p>Посад ще немає</p>
   </div>
   }
 </div>

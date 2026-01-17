@@ -134,7 +134,7 @@ export class PositionListPageComponent implements OnInit {
         this.page.set(1);
         this.selectedDepartmentId.set(null);
         this.loadPositions();
-        this.toastService.success('Position created successfully!');
+        this.toastService.success('Посаду успішно створено!');
       },
       error: (err: Error) => this.toastService.error(err.message),
     });
@@ -142,23 +142,23 @@ export class PositionListPageComponent implements OnInit {
 
   async deletePosition(id: number): Promise<void> {
     const confirmed = await this.dialogService.confirm(
-      'Are you sure you want to delete this position?'
+      'Ви впевнені, що хочете видалити цю посаду?'
     );
     if (!confirmed) return;
 
     this.positionService.deletePosition(id).subscribe({
       next: () => {
         this.loadPositions();
-        this.toastService.success('Position deleted successfully!');
+        this.toastService.success('Посаду успішно видалено!');
       },
       error: (err: Error) => this.toastService.error(err.message),
     });
   }
 
   getDepartmentName(depId: number | null): string {
-    if (!depId) return 'N/A';
+    if (!depId) return 'Не вказано';
     const dep = this.departments().find((d) => d.id === depId);
-    return dep ? dep.name : 'Unknown';
+    return dep ? dep.name : 'Невідомо';
   }
 
   openPosition(id: number) {

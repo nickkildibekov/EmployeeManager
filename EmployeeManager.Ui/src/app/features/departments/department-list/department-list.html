@@ -1,0 +1,68 @@
+<div class="department-container">
+  @if (isFetching() && !error()) {
+  <p class="fallback-text">Завантаження відділів...</p>
+  } @else if (error()) {
+  <p class="fallback-text">{{ error() }}</p>
+  } @else if (departments() && departments()!.length > 0) {
+
+  <div class="container">
+    <header class="header">
+      <h1>Відділи</h1>
+      <button class="btn btn-primary" (click)="toggleAddForm()">
+        {{ isAddFormVisible() ? 'Скасувати' : '+ Додати відділ' }}
+      </button>
+    </header>
+
+    <!-- Add Form -->
+    @if (isAddFormVisible()) {
+    <div class="add-form">
+      <div class="form-row">
+        <input
+          class="form-control"
+          placeholder="Назва відділу"
+          [(ngModel)]="newDepartmentName"
+          [ngModelOptions]="{ updateOn: 'change' }"
+          (keyup.enter)="addDepartment()"
+        />
+      </div>
+      <div class="button-row">
+        <button
+          class="btn btn-success"
+          (click)="addDepartment()"
+          [disabled]="!isFormValid() || isSubmitting()"
+        >
+          {{ isSubmitting() ? 'Створення...' : 'Додати' }}
+        </button>
+        <button class="btn btn-secondary" (click)="cancelAdd()">Скасувати</button>
+      </div>
+    </div>
+    }
+
+    <div class="departments-grid">
+      @for(dep of departments(); track dep.id){
+      <div class="department-plate" (click)="onSelectedDepartment(dep)">
+        <div class="plate-image">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+            />
+          </svg>
+        </div>
+        <h2 class="department-name">{{ dep.name }}</h2>
+      </div>
+      }
+    </div>
+  </div>
+
+  } @else {
+  <p class="fallback-text">Відділів немає.</p>
+  }
+</div>

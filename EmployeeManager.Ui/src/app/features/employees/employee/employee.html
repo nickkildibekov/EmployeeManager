@@ -1,0 +1,150 @@
+<div class="container">
+  <div class="header-section">
+    <button class="back-button" (click)="goBack()">← Назад до списку</button>
+  </div>
+
+  @if (isFetching()) {
+  <div class="loading">
+    <p>Завантаження деталей співробітника...</p>
+  </div>
+  } @else if (employee()) {
+  <div class="content">
+    <div class="edit-section">
+      <div class="button-group">
+        <button class="btn btn-primary" (click)="toggleEditMode()" [disabled]="isSaving()">
+          {{ isEditMode() ? '✕ Скасувати редагування' : '✏️ Редагувати співробітника' }}
+        </button>
+
+        @if (isEditMode()) {
+        <button
+          class="btn btn-success"
+          (click)="saveEmployee()"
+          [disabled]="
+            isSaving() || !editedEmployee().firstName.trim() || !editedEmployee().lastName.trim()
+          "
+        >
+          @if (isSaving()) { Збереження... } @else { 💾 Зберегти зміни }
+        </button>
+        }
+
+        <button
+          class="btn btn-danger"
+          (click)="deleteEmployee()"
+          [disabled]="isEditMode() || isSaving()"
+        >
+          🗑️ Видалити співробітника
+        </button>
+      </div>
+    </div>
+
+    @if (error()) {
+    <div class="alert alert-danger">
+      {{ error() }}
+    </div>
+    }
+
+    <div class="employee-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Ім'я</label>
+          <input
+            type="text"
+            [(ngModel)]="editedEmployee().firstName"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Прізвище</label>
+          <input
+            type="text"
+            [(ngModel)]="editedEmployee().lastName"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Номер телефону</label>
+          <input
+            type="text"
+            [(ngModel)]="editedEmployee().phoneNumber"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Відділ</label>
+          @if (isEditMode()) {
+          <select
+            [(ngModel)]="editedEmployee().departmentId"
+            class="form-input"
+          >
+            <option [ngValue]="null">Резерв</option>
+            <option *ngFor="let dep of departments()" [ngValue]="dep.id">
+              {{ dep.name }}
+            </option>
+          </select>
+          } @else {
+          <div class="form-input readonly">
+            {{ getDepartmentDisplayName(employee()?.departmentId ?? null) }}
+          </div>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Посада</label>
+          @if (isEditMode()) {
+          <select
+            [(ngModel)]="editedEmployee().positionId"
+            class="form-input"
+          >
+            <option [ngValue]="null">Не вказано</option>
+            <option *ngFor="let pos of positions()" [ngValue]="pos.id">
+              {{ pos.title }}
+            </option>
+          </select>
+          } @else {
+          <div class="form-input readonly">
+            {{ getPositionDisplayName(employee()?.positionId ?? null) }}
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Спеціалізація <span style="color: red">*</span></label>
+          @if (isEditMode()) {
+          <select
+            [(ngModel)]="editedEmployee().specializationId"
+            class="form-input"
+            required
+          >
+            <option *ngFor="let spec of specializations()" [value]="spec.id">
+              {{ spec.name }}
+            </option>
+          </select>
+          } @else {
+          <div class="form-input readonly">
+            {{ employee()?.specializationName ?? 'Не вказано' }}
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+  } @else {
+  <div class="loading">
+    <p style="color: #e53e3e; font-weight: 600">
+      ⚠️ Співробітника не знайдено або сталася помилка: {{ error() }}
+    </p>
+  </div>
+  }
+</div>

@@ -1,5 +1,5 @@
 # ====================
-# Visual Studio & .NET
+# Visual Studio & .NET (EmployeeManager.API)
 # ====================
 
 ## User-specific files
@@ -12,16 +12,13 @@
 *.vs/
 .vscode/
 
-## Build results
+## BUIld results
 [Bb]in/
 [Oo]bj/
 publish/
 
 ## Rider
 .idea/
-
-## VS Code settings folder
-.vscode/
 
 ## Visual Studio profiler
 *.psess
@@ -37,7 +34,7 @@ publish/
 *.tlog
 *.tmp
 *.tmp_proj
-*.lastbuildstate
+*.lastbUIldstate
 
 ## NuGet
 *.nupkg
@@ -47,18 +44,15 @@ publish/
 *.xamarin.templates.cache
 
 # ====================
-# Angular / Node.js
+# Angular / Node.js (EmployeeManager.UI)
 # ====================
 
-# Node dependencies
-node_modules/
-
-# Angular build output
-dist/
-out-tsc/
+/EmployeeManager.UI/node_modules/
+/EmployeeManager.UI/dist/
+/EmployeeManager.UI/out-tsc/
 
 # Environment files (customize if needed)
-src/environments/*.ts
+/EmployeeManager.UI/src/environments/*.ts
 
 # Logs
 npm-debug.log*
@@ -84,7 +78,7 @@ _ReSharper*/
 *.DotSettings
 
 # Visual Studio Code Workspace Storage
-.vscode/*
+.vscode/
 !.vscode/extensions.json
 !.vscode/settings.json
 !.vscode/launch.json
@@ -99,3 +93,15 @@ _ReSharper*/
 
 # Git files
 .git
+
+# ====================
+# Documentation & Generated Files
+# ====================
+
+# Generated documentation and optimization reports
+CODE_ARCHITECTURE.md
+IMPLEMENTATION_SUMMARY.md
+OPTIMIZATION_REPORT.md
+OPTIMIZATION_SUMMARY.md
+QUICK_REFERENCE.md
+README_OPTIMIZATIONS.md

@@ -1,0 +1,24 @@
+.positions-container {
+  padding: 12px;
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+}
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.controls input {
+  flex: 1;
+  padding: 6px 8px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}

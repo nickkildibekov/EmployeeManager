@@ -1,0 +1,20 @@
+---
+alwaysApply: true
+---
+# Logic & Architecture Best Practices 
+
+## General Architecture
+- Use layered architecture: Presentation (Angular), API (.NET Core), Domain (entities/services), Data (EF Core repos).
+- Prefer RESTful API design: proper HTTP methods, status codes, versioning (e.g., /api/v1/pets).
+- CQRS pattern if complex: separate queries (GET) and commands (POST/PUT) with MediatR.
+- State management: Signals for local, NgRx/Effect for global (auth, cart, announcements).
+
+## Security & Performance
+- Auth: JWT with roles, refresh tokens, secure cookies.
+- Validation: Backend (FluentValidation) + frontend (reactive forms).
+- Performance: Async everything, caching (Redis/IMemoryCache), pagination (skip/take), image optimization.
+- Testing: Unit tests for services/logic, integration for API.
+
+## Incremental Improvements
+- Suggest changes only where needed: e.g., add caching to frequent queries.
+- Always preserve core flows unless explicitly asked.

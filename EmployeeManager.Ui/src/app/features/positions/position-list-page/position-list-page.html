@@ -1,0 +1,93 @@
+<div class="container">
+  <div class="header">
+    <h2>Посади</h2>
+    <button class="btn btn-primary" (click)="toggleAddForm()">
+      {{ isAddFormVisible() ? 'Скасувати' : '+ Додати посаду' }}
+    </button>
+  </div>
+
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+  </div>
+
+  <!-- Add Form -->
+  <div *ngIf="isAddFormVisible()" class="add-form">
+    <div class="form-row">
+      <input class="form-control" placeholder="Назва посади" [(ngModel)]="newPosition().title" />
+    </div>
+    <div class="departments-section">
+      <label class="section-label">Оберіть відділи:</label>
+      <div class="departments-checkboxes">
+        <label *ngFor="let dep of departments()" class="checkbox-label">
+          <input
+            type="checkbox"
+            [checked]="isDepartmentSelected(dep.id)"
+            (change)="toggleDepartment(dep.id)"
+            class="checkbox-input"
+          />
+          <span>{{ dep.name }}</span>
+        </label>
+        <p *ngIf="departments().length === 0" class="text-muted">Відділів немає</p>
+      </div>
+    </div>
+    <div class="button-row">
+      <button class="btn btn-success" (click)="addPosition()" [disabled]="!isFormValid()">
+        Додати
+      </button>
+      <button class="btn btn-secondary" (click)="cancelAdd()">Скасувати</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <select class="filter-select" (change)="onDepartmentChange($event.target.value)">
+      <option value="">Всі відділи</option>
+      <option *ngFor="let dept of departments()" [value]="dept.id">
+        {{ dept.name }}
+      </option>
+    </select>
+    <input
+      type="text"
+      class="filter-search"
+      placeholder="Пошук за назвою..."
+      (keyup)="onSearch($event.target.value)"
+    />
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading">Завантаження...</div>
+
+  <!-- List -->
+  <div *ngIf="!isLoading()" class="list-container">
+    <div *ngIf="positions().length === 0" class="empty-message">Посад не знайдено.</div>
+
+    <div *ngFor="let pos of positions()" class="list-item" (click)="openPosition(pos.id)">
+      <div class="item-content">
+        <h4>{{ pos.title }}</h4>
+      </div>
+      <button
+        class="btn btn-danger btn-sm"
+        (click)="deletePosition(pos.id); $event.stopPropagation()"
+      >
+        Видалити
+      </button>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="positions().length > 0" class="pagination">
+    <button class="btn btn-sm" (click)="changePage(page() - 1)" [disabled]="page() === 1">
+      ← Попередня
+    </button>
+    <span class="page-info">
+      Сторінка {{ page() }} з {{ Math.ceil(total() / pageSize()) }} (Всього: {{ total() }})
+    </span>
+    <button
+      class="btn btn-sm"
+      (click)="changePage(page() + 1)"
+      [disabled]="page() >= Math.ceil(total() / pageSize())"
+    >
+      Наступна →
+    </button>
+  </div>
+</div>

@@ -1,0 +1,10 @@
+<div class="theme-toggle">
+  <button
+    class="theme-btn"
+    (click)="cycleTheme()"
+    [attr.aria-label]="'Перемкнути на ' + getNextTheme() + ' тему'"
+    [title]="getCurrentThemeLabel()"
+  >
+    <span class="theme-icon">{{ getThemeIcon() }}</span>
+  </button>
+</div>

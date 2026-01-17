@@ -1,0 +1,32 @@
+<div class="home-container">
+  <div class="container">
+    <header class="home-header">
+      <h1>Менеджер співробітників</h1>
+      <p class="subtitle">Ласкаво просимо до панелі управління</p>
+    </header>
+
+    <div class="tiles-grid">
+      @for (tile of tiles; track tile.route) {
+      @if (tile.route === '#') {
+      <div
+        [class.coming-soon]="true"
+        class="tile"
+        [style.--tile-color]="tile.color"
+      >
+        <div class="tile-icon">{{ tile.icon }}</div>
+        <h2 class="tile-title">{{ tile.title }}</h2>
+        <p class="tile-description">{{ tile.description }}</p>
+        <div class="coming-soon-badge">Скоро</div>
+      </div>
+      } @else {
+      <a [routerLink]="tile.route" class="tile" [style.--tile-color]="tile.color">
+        <div class="tile-icon">{{ tile.icon }}</div>
+        <h2 class="tile-title">{{ tile.title }}</h2>
+        <p class="tile-description">{{ tile.description }}</p>
+        <div class="tile-arrow">→</div>
+      </a>
+      }
+      }
+    </div>
+  </div>
+</div>

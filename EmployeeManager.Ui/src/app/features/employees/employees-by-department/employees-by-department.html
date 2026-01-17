@@ -1,0 +1,36 @@
+<div class="employees-container">
+  <h3>Відділ: {{ department()?.name || '...' }}</h3>
+  <p class="text-muted">{{ department()?.description }}</p>
+
+  <div class="controls">
+    <input
+      type="text"
+      placeholder="Пошук співробітників"
+      (input)="onSearch($any($event.target).value)"
+    />
+    <div class="pagination">
+      <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Попередня</button>
+      <span>Сторінка {{ page() }} / {{ Math.ceil(total() / pageSize()) || 1 }}</span>
+      <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= total()">
+        Наступна
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <p>Завантаження...</p>
+  } @else if (error()) {
+  <p class="text-danger">{{ error() }}</p>
+  } @else {
+
+  <app-employee-list
+    [department]="department"
+    [positions]="positions"
+    [specializations]="specializations"
+    [isEditMode]="true"
+    (onEmployeeAdded)="handleAdd($event)"
+    (onEmployeeDeleted)="handleDelete($event)"
+  ></app-employee-list>
+
+  }
+</div>

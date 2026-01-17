@@ -1,0 +1,283 @@
+<div class="container">
+  <div class="header-section">
+    <button class="back-button" (click)="goBack()">← Назад до списку</button>
+  </div>
+
+  @if (isFetching()) {
+  <div class="loading">
+    <p>Завантаження деталей обладнання...</p>
+  </div>
+  } @else if (equipment()) {
+  <div class="content">
+    <div class="edit-section">
+      <div class="button-group">
+        <button class="btn btn-primary" (click)="toggleEditMode()" [disabled]="isSaving()">
+          {{ isEditMode() ? '✕ Скасувати редагування' : '✏️ Редагувати обладнання' }}
+        </button>
+
+        @if (isEditMode()) {
+        <button
+          class="btn btn-success"
+          (click)="saveEquipment()"
+          [disabled]="isSaving() || !isFormValid()"
+        >
+          @if (isSaving()) { Збереження... } @else { 💾 Зберегти зміни }
+        </button>
+        }
+
+        <button
+          class="btn btn-danger"
+          (click)="deleteEquipment()"
+          [disabled]="isEditMode() || isSaving()"
+        >
+          🗑️ Видалити обладнання
+        </button>
+      </div>
+    </div>
+
+    @if (error()) {
+    <div class="alert alert-danger">
+      {{ error() }}
+    </div>
+    }
+
+    <div class="equipment-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Назва обладнання</label>
+          <input
+            type="text"
+            [(ngModel)]="editedEquipment().name"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Серійний номер</label>
+          <input
+            type="text"
+            [(ngModel)]="editedEquipment().serialNumber"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Дата покупки</label>
+          <input
+            type="date"
+            placeholder="Дата покупки"
+            [(ngModel)]="editedEquipment().purchaseDate"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Відділ</label>
+          @if (isEditMode()) {
+          <select
+            [(ngModel)]="editedEquipment().departmentId"
+            class="form-input"
+          >
+            <option [ngValue]="null">Склад</option>
+            <option *ngFor="let dep of departments()" [ngValue]="dep.id">
+              {{ dep.name }}
+            </option>
+          </select>
+          } @else {
+          <div class="form-input readonly">
+            {{ editedEquipment().departmentName || 'Склад' }}
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label>Категорія</label>
+          @if (!isEditMode()) {
+          <input type="text" [value]="editedEquipment().categoryName" readonly class="form-input" />
+          } @else { @if (!isAddingNewCategory()) {
+          <div class="select-with-button">
+            <select [(ngModel)]="editedEquipment().categoryId" class="form-input">
+              <option [ngValue]="null" disabled>Оберіть категорію</option>
+              <option *ngFor="let cat of categories()" [ngValue]="cat.id">
+                {{ cat.name }}
+              </option>
+            </select>
+            <button class="btn btn-secondary btn-sm" type="button" (click)="toggleAddNewCategory()">
+              + Нова
+            </button>
+          </div>
+          } @else {
+          <div class="inline-form-vertical">
+            <input class="form-input" placeholder="Назва категорії" [(ngModel)]="newCategoryName" />
+            <input
+              class="form-input"
+              placeholder="Опис (необов'язково)"
+              [(ngModel)]="newCategoryDescription"
+            />
+            <div class="button-stack">
+              <button
+                class="btn btn-success btn-sm"
+                type="button"
+                (click)="createAndSelectCategory()"
+              >
+                Створити
+              </button>
+              <button
+                class="btn btn-secondary btn-sm"
+                type="button"
+                (click)="toggleAddNewCategory()"
+              >
+                Скасувати
+              </button>
+            </div>
+          </div>
+          } }
+        </div>
+
+        <div class="form-group">
+          <label>Опис</label>
+          <input
+            type="text"
+            [(ngModel)]="editedEquipment().description"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group status-group">
+          <label>Статус</label>
+          <div class="status-options">
+            <label class="status-option">
+              <input
+                type="radio"
+                name="edit-status"
+                [value]="'Used'"
+                [(ngModel)]="editedEquipment().status"
+                [disabled]="!isEditMode()"
+              />
+              Використовується
+            </label>
+            <label class="status-option">
+              <input
+                type="radio"
+                name="edit-status"
+                [value]="'NotUsed'"
+                [(ngModel)]="editedEquipment().status"
+                [disabled]="!isEditMode()"
+              />
+              Не використовується
+            </label>
+            <label class="status-option">
+              <input
+                type="radio"
+                name="edit-status"
+                [value]="'Broken'"
+                [(ngModel)]="editedEquipment().status"
+                [disabled]="!isEditMode()"
+              />
+              Пошкоджено
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group measurement-group">
+          <label>Одиниця виміру</label>
+          <div class="measurement-options">
+            <label class="measurement-option">
+              <input
+                type="radio"
+                name="edit-measurement"
+                [value]="'Unit'"
+                [(ngModel)]="editedEquipment().measurement"
+                [disabled]="!isEditMode()"
+                (change)="onEditMeasurementChange('Unit')"
+              />
+              Штука
+            </label>
+            <label class="measurement-option">
+              <input
+                type="radio"
+                name="edit-measurement"
+                [value]="'Meter'"
+                [(ngModel)]="editedEquipment().measurement"
+                [disabled]="!isEditMode()"
+                (change)="onEditMeasurementChange('Meter')"
+              />
+              Метр
+            </label>
+            <label class="measurement-option">
+              <input
+                type="radio"
+                name="edit-measurement"
+                [value]="'Liter'"
+                [(ngModel)]="editedEquipment().measurement"
+                [disabled]="!isEditMode()"
+                (change)="onEditMeasurementChange('Liter')"
+              />
+              Літр
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Кількість</label>
+          <input
+            type="number"
+            [step]="editedEquipment().measurement === 'Unit' ? 1 : 0.01"
+            [min]="editedEquipment().measurement === 'Unit' ? 1 : 0.01"
+            inputmode="numeric"
+            (input)="onEditAmountInput($event)"
+            [(ngModel)]="editedEquipment().amount"
+            [readonly]="!isEditMode()"
+            class="form-input"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group image-group">
+          <label>Зображення обладнання (необов'язково)</label>
+          @if (isEditMode()) {
+          <input
+            type="file"
+            accept="image/*"
+            class="form-input"
+            (change)="onEditImageSelected($event)"
+          />
+          } @else {
+          <div class="view-image">
+            @if (editedEquipment().imageData) {
+            <img [src]="editedEquipment().imageData" alt="Зображення обладнання" class="detail-image" />
+            } @else {
+            <div class="no-image-placeholder">Зображення немає</div>
+            }
+          </div>
+          } @if (editedEquipment().imageData && isEditMode()) {
+          <div class="image-preview">
+            <img [src]="editedEquipment().imageData" alt="Попередній перегляд" class="preview-img" />
+            <button type="button" class="btn btn-sm btn-secondary" (click)="clearEditImage()">
+              Видалити зображення
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+  } @else {
+  <div class="loading">
+    <p style="color: #e53e3e; font-weight: 600">
+      ⚠️ Обладнання не знайдено або сталася помилка: {{ error() }}
+    </p>
+  </div>
+  }
+</div>

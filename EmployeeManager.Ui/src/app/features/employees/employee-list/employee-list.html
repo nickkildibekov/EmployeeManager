@@ -1,0 +1,88 @@
+<div class="list-section employee-list-section">
+  <h2>Співробітники ({{ getEmployees().length }})</h2>
+
+  @if (isEditMode()) {
+  <div class="add-button-container">
+    <button class="btn btn-add" (click)="toggleAddForm()">
+      {{ isAddFormVisible() ? '✕ Скасувати' : '➕ Додати співробітника' }}
+    </button>
+  </div>
+  } @if (isEditMode() && isAddFormVisible()) {
+  <div class="add-form card p-3 mb-4">
+    <h5 class="card-title"></h5>
+    <div class="row g-2">
+      <div class="col-md-3">
+        <input
+          type="text"
+          [(ngModel)]="newEmployee().firstName"
+          placeholder="Ім'я"
+          class="form-control"
+        />
+      </div>
+
+      <div class="col-md-3">
+        <input
+          type="text"
+          [(ngModel)]="newEmployee().lastName"
+          placeholder="Прізвище"
+          class="form-control"
+        />
+      </div>
+
+      <div class="col-md-3">
+        <input
+          type="tel"
+          [(ngModel)]="newEmployee().phoneNumber"
+          placeholder="Номер телефону"
+          class="form-control"
+        />
+      </div>
+
+      <div class="col-md-3">
+        <select [(ngModel)]="newEmployee().positionId" class="form-select">
+          <option [ngValue]="null">Не вказано</option>
+          @for (position of positions() || []; track position.id) {
+          <option [ngValue]="position.id">{{ position.title }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <select [(ngModel)]="newEmployee().specializationId" class="form-select" required>
+          <option *ngFor="let spec of specializations() || []" [value]="spec.id">
+            {{ spec.name }}
+          </option>
+        </select>
+      </div>
+
+      <div class="col-12 text-end mt-3">
+        <button class="btn btn-primary me-2" (click)="addEmployee()" [disabled]="!isFormValid()">
+          Додати співробітника
+        </button>
+        <button class="btn btn-secondary" (click)="cancelAdd()">Скасувати</button>
+      </div>
+    </div>
+  </div>
+  } @if (getEmployees().length > 0) {
+  <ul class="item-list">
+    @for (employee of getEmployees(); track employee.id) {
+    <li class="list-item employee-item">
+      <div class="employee-details">
+        <span class="employee-name">{{ employee.firstName }} {{ employee.lastName }}</span>
+        <span class="employee-position">
+          {{ getPositionTitle(employee.positionId) }}
+        </span>
+      </div>
+
+      @if (isEditMode()) {
+      <button class="btn btn-danger btn-small" (click)="onEmployeeDeleted.emit(employee.id)">
+        Видалити
+      </button>
+      }
+    </li>
+    }
+  </ul>
+  } @else {
+  <p class="empty-list">Співробітників у цьому відділі немає</p>
+  }
+</div>

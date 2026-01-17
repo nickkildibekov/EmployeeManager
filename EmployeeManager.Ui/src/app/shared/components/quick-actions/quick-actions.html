@@ -1,0 +1,31 @@
+<div class="quick-actions">
+  <button
+    class="fab-main"
+    (click)="toggleMenu()"
+    [class.active]="isOpen()"
+    aria-label="Меню швидких дій"
+  >
+    {{ isOpen() ? '✕' : '+' }}
+  </button>
+
+  @if (isOpen()) {
+  <div class="fab-menu">
+    <button class="fab-item" (click)="navigate('/employees')" aria-label="Додати співробітника">
+      <span class="icon">👤</span>
+      <span class="label">Додати співробітника</span>
+    </button>
+    <button class="fab-item" (click)="navigate('/departments')" aria-label="Додати відділ">
+      <span class="icon">🏢</span>
+      <span class="label">Додати відділ</span>
+    </button>
+    <button class="fab-item" (click)="navigate('/positions')" aria-label="Додати посаду">
+      <span class="icon">💼</span>
+      <span class="label">Додати посаду</span>
+    </button>
+    <button class="fab-item" (click)="navigate('/equipment')" aria-label="Додати обладнання">
+      <span class="icon">🔧</span>
+      <span class="label">Додати обладнання</span>
+    </button>
+  </div>
+  }
+</div>

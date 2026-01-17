@@ -1,0 +1,158 @@
+<div class="container">
+  <div class="header">
+    <h2>Співробітники</h2>
+    <button class="btn btn-primary" (click)="toggleAddForm()">
+      {{ isAddFormVisible() ? 'Скасувати' : '+ Додати співробітника' }}
+    </button>
+  </div>
+
+  <div *ngIf="error()" class="alert alert-danger">
+    {{ error() }}
+  </div>
+
+  <!-- Add Form -->
+  <div *ngIf="isAddFormVisible()" class="add-form">
+    <div class="form-row">
+      <input class="form-control" placeholder="Ім'я" [(ngModel)]="newEmployee().firstName" />
+      <input class="form-control" placeholder="Прізвище" [(ngModel)]="newEmployee().lastName" />
+    </div>
+    <div class="form-row">
+      <input
+        class="form-control"
+        placeholder="Номер телефону"
+        [(ngModel)]="newEmployee().phoneNumber"
+      />
+    </div>
+    <div class="form-row">
+      <select
+        class="form-control"
+        (change)="onNewDepartmentChange($event.target.value)"
+        [ngModel]="newEmployee().departmentId"
+      >
+        <option [ngValue]="null">Резерв</option>
+        <option *ngFor="let dep of departments()" [ngValue]="dep.id">
+          {{ dep.name }}
+        </option>
+      </select>
+      <select
+        class="form-control"
+        [(ngModel)]="newEmployee().specializationId"
+        required
+      >
+        <option *ngFor="let spec of specializations()" [value]="spec.id">
+          {{ spec.name }}
+        </option>
+      </select>
+    </div>
+    <div class="form-row">
+      <select
+        class="form-control"
+        [(ngModel)]="newEmployee().positionId"
+      >
+        <option [ngValue]="null">Не вказано</option>
+        <option *ngFor="let pos of positions()" [ngValue]="pos.id">
+          {{ pos.title }}
+        </option>
+      </select>
+    </div>
+    <div class="button-row">
+      <button class="btn btn-success" (click)="addEmployee()" [disabled]="!isFormValid()">
+        Додати
+      </button>
+      <button class="btn btn-secondary" (click)="cancelAdd()">Скасувати</button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <select class="filter-select" (change)="onDepartmentChange($event.target.value)">
+      <option value="">Всі відділи</option>
+      <option *ngFor="let dept of departments()" [value]="dept.id">
+        {{ dept.name }}
+      </option>
+    </select>
+    <select class="filter-select" (change)="onPositionChange($event.target.value)">
+      <option value="">Всі посади</option>
+      <option *ngFor="let pos of positions()" [value]="pos.id">
+        {{ pos.title }}
+      </option>
+    </select>
+    <input
+      type="text"
+      class="filter-search"
+      placeholder="Пошук за ім'ям..."
+      (keyup)="onSearch($event.target.value)"
+    />
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading()" class="loading">Завантаження...</div>
+
+  <!-- Table -->
+  <div *ngIf="!isLoading()" class="table-container">
+    <div *ngIf="employees().length === 0" class="empty-message">Співробітників не знайдено.</div>
+
+    <table *ngIf="employees().length > 0" class="employees-table">
+      <thead>
+        <tr>
+          <th class="sortable" (click)="toggleSort('firstName')">
+            Ім'я
+            <span class="sort-indicator" *ngIf="sortBy() === 'firstName'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('lastName')">
+            Прізвище
+            <span class="sort-indicator" *ngIf="sortBy() === 'lastName'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('phoneNumber')">
+            Номер телефону
+            <span class="sort-indicator" *ngIf="sortBy() === 'phoneNumber'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('department')">
+            Відділ
+            <span class="sort-indicator" *ngIf="sortBy() === 'department'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+          <th class="sortable" (click)="toggleSort('position')">
+            Посада
+            <span class="sort-indicator" *ngIf="sortBy() === 'position'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let emp of employees()" (click)="openEmployee(emp.id)" class="table-row">
+          <td>{{ emp.firstName }}</td>
+          <td>{{ emp.lastName }}</td>
+          <td>{{ emp.phoneNumber }}</td>
+          <td>{{ emp.departmentName || 'Резерв' }}</td>
+          <td>{{ emp.positionName || 'Не вказано' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="employees().length > 0" class="pagination">
+    <button class="btn btn-sm" (click)="changePage(page() - 1)" [disabled]="page() === 1">
+      ← Попередня
+    </button>
+    <span class="page-info">
+      Сторінка {{ page() }} з {{ Math.ceil(total() / pageSize()) }} (Всього: {{ total() }})
+    </span>
+    <button
+      class="btn btn-sm"
+      (click)="changePage(page() + 1)"
+      [disabled]="page() >= Math.ceil(total() / pageSize())"
+    >
+      Наступна →
+    </button>
+  </div>
+</div>

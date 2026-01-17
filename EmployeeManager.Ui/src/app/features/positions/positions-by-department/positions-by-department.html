@@ -1,0 +1,27 @@
+<div class="positions-container">
+  <h3>Посади</h3>
+  <div class="controls">
+    <input
+      type="text"
+      placeholder="Пошук посад"
+      (input)="onSearch($any($event.target).value)"
+    />
+    <div class="pagination">
+      <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Попередня</button>
+      <span>Сторінка {{ page() }} / {{ Math.ceil((total() || 0) / pageSize()) || 1 }}</span>
+      <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= (total() || 0)">
+        Наступна
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <p>Завантаження...</p>
+  } @else if (error()) {
+  <p class="text-danger">{{ error() }}</p>
+  } @else {
+
+  <app-position-list [positions]="filtered"></app-position-list>
+
+  }
+</div>

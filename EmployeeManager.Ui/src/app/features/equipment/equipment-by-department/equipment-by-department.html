@@ -1,0 +1,52 @@
+<div class="equipment-container">
+  <h3>Обладнання</h3>
+  <div class="controls">
+    <input
+      type="text"
+      placeholder="Пошук обладнання"
+      (input)="onSearch($any($event.target).value)"
+    />
+    <select (change)="onStatusChange($event.target.value)">
+      <option value="all">Всі статуси</option>
+      <option value="used">Використовується</option>
+      <option value="not_used">Не використовується</option>
+      <option value="broken">Пошкоджено</option>
+    </select>
+    <div class="pagination">
+      <button (click)="changePage(page() - 1)" [disabled]="page() <= 1">Попередня</button>
+      <span>Сторінка {{ page() }} / {{ Math.ceil((total() || 0) / pageSize()) || 1 }}</span>
+      <button (click)="changePage(page() + 1)" [disabled]="page() * pageSize() >= (total() || 0)">
+        Наступна
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <app-skeleton-loader [count]="5"></app-skeleton-loader>
+  } @else if (error()) {
+  <p class="text-danger">{{ error() }}</p>
+  } @else if (filtered() && filtered()!.length > 0) {
+
+  <ul class="equipment-list">
+    @for (eq of filtered(); track eq.id) {
+    <li class="equipment-item" (click)="onEquipmentSelected(eq.id)">
+      <div class="equipment-info">
+        <strong>{{ eq.name }}</strong>
+        <div>🔢 {{ eq.serialNumber }}</div>
+        <div class="category">{{ eq.categoryName }}</div>
+        <div>
+          Статус:
+          {{ eq.status === 'Used' ? 'Використовується' : eq.status === 'NotUsed' ? 'Не використовується' : 'Пошкоджено' }}
+        </div>
+      </div>
+      <button (click)="onDelete(eq.id); $event.stopPropagation()" class="btn btn-danger btn-sm">
+        Видалити
+      </button>
+    </li>
+    }
+  </ul>
+
+  } @else {
+  <p class="empty-list">Обладнання в цьому відділі немає</p>
+  }
+</div>

@@ -1,0 +1,52 @@
+.equipment-container {
+  padding: 12px;
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+}
+.controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+.controls input {
+  flex: 1;
+  padding: 6px 8px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.equipment-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.equipment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--border-color);
+  margin-bottom: 8px;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-primary);
+}
+.equipment-info {
+  flex: 1;
+  color: var(--text-primary);
+}
+.category {
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  margin-left: 8px;
+}
+.btn-sm {
+  padding: 4px 8px;
+  font-size: 0.85em;
+}

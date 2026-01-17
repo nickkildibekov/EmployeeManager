@@ -1,0 +1,14 @@
+---
+alwaysApply: true
+---
+# Angular 18+ Best Practices
+
+- Use standalone components (no NgModules whenever possible)
+- Prefer reactive forms over template-driven
+- Avoid 'any' type — use 'unknown' or proper interfaces
+- Strict typing everywhere: inputs, outputs, services, http responses
+- Signals for local/component state where appropriate
+- Follow Angular style guide: kebab-case for selectors/files, meaningful names
+- Mobile-first responsive design + media queries
+- Accessibility: semantic HTML, ARIA where needed, keyboard navigation
+- Styling: prefer Tailwind CSS or Angular Material (choose one consistently)

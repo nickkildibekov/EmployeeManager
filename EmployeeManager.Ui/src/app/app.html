@@ -1,0 +1,20 @@
+<app-toast-container></app-toast-container>
+<app-quick-actions></app-quick-actions>
+<app-theme-toggle></app-theme-toggle>
+
+@if (dialogService.isOpen()) {
+<app-confirmation-dialog
+  [title]="dialogService.config()?.title || ''"
+  [message]="dialogService.config()?.message || ''"
+  [confirmText]="dialogService.config()?.confirmText || 'ОК'"
+  [cancelText]="dialogService.config()?.cancelText || 'Скасувати'"
+  [variant]="dialogService.config()?.variant || 'warning'"
+  (confirm)="dialogService.handleConfirm()"
+  (cancel)="dialogService.handleCancel()"
+></app-confirmation-dialog>
+}
+
+<main class="app-container">
+  <app-breadcrumb></app-breadcrumb>
+  <router-outlet></router-outlet>
+</main>

@@ -1,0 +1,28 @@
+---
+alwaysApply: true
+---
+# Testing Best Practices 
+
+## General Principles
+- Aim for 70-80% coverage on critical paths; avoid 100% for diminishing returns.
+- Tests must be isolated, fast, deterministic; 
+- Use descriptive names: e.g., GetAnnouncementById_ShouldReturnData_WhenValidId.
+- After tests: Analyze failures → provide recommendations (fix bugs, optimize logic, add validation).
+
+## Frontend (Angular)
+- Unit/Component Tests: Use Vitest + jsdom (default in CLI); Jasmine/Karma as fallback.
+- Test components: Inputs/Outputs, rendering, events; use Angular Testing Library for user-perspective.
+- Services: Mock HttpClient with HttpTestingController; test observables/signals.
+- E2E: Use Playwright for full flows (registration, form submit, map display).
+- Mock externals: Geocoding/maps with stubs; avoid real API calls.
+
+## Backend (.NET Core)
+- Unit Tests: xUnit/NUnit + Moq for mocking; FluentAssertions for readable asserts.
+- Integration Tests: WebApplicationFactory for API endpoints; test HTTP responses, status codes.
+- API Best Practices: Test async methods, validation (FluentValidation), error handling, auth (JWT).
+- Database: Use in-memory EF Core for fast tests; avoid real DB.
+
+## Post-Test Recommendations
+- If test fails: Suggest code fixes, e.g., "Add null check in service".
+- Optimize: If slow → recommend caching; if brittle → better mocks.
+- Integrate: Suggest adding tests to CI, coverage reports.

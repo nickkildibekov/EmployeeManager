@@ -1,5 +1,8 @@
-﻿using EmployeeManager.API.Data;
+using EmployeeManager.API.Data;
 using EmployeeManager.API.Middleware;
+using EmployeeManager.API.Models;
+using EmployeeManager.API.Repositories;
+using EmployeeManager.API.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
@@ -33,6 +36,27 @@ builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Register Repositories
+builder.Services.AddScoped<IRepository<Department>, DepartmentRepository>();
+builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddScoped<IRepository<Employee>, EmployeeRepository>();
+builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IRepository<Equipment>, EquipmentRepository>();
+builder.Services.AddScoped<IEquipmentRepository, EquipmentRepository>();
+builder.Services.AddScoped<IRepository<Position>, PositionRepository>();
+builder.Services.AddScoped<IPositionRepository, PositionRepository>();
+builder.Services.AddScoped<IRepository<Specialization>, SpecializationRepository>();
+builder.Services.AddScoped<ISpecializationRepository, SpecializationRepository>();
+builder.Services.AddScoped<IRepository<EquipmentCategory>, EquipmentCategoryRepository>();
+builder.Services.AddScoped<IEquipmentCategoryRepository, EquipmentCategoryRepository>();
+builder.Services.AddScoped<IRepository<ScheduleEntry>, ScheduleEntryRepository>();
+builder.Services.AddScoped<IScheduleEntryRepository, ScheduleEntryRepository>();
+builder.Services.AddScoped<IDepartmentPositionRepository, DepartmentPositionRepository>();
+
+// Register Services
+builder.Services.AddScoped<IDepartmentService, DepartmentService>();
+builder.Services.AddScoped<IPositionService, PositionService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<DataSeedHelper>();
@@ -47,6 +71,7 @@ using (var scope = app.Services.CreateScope())
     {
         var context = services.GetRequiredService<AppDbContext>();
 
+        // Suppress pending model changes warning - migrations are handled manually
         await context.Database.MigrateAsync();
         var seeder = services.GetRequiredService<DataSeedHelper>();
         
@@ -80,3 +105,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Make Program class accessible for integration tests
+public partial class Program { }

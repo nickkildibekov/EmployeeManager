@@ -20,10 +20,10 @@ namespace EmployeeManager.API.Controllers
         // GET api/Schedule?departmentId=1&startDate=2025-01-01&endDate=2025-01-31&positionId=2&state=OnWork
         [HttpGet]
         public async Task<IActionResult> GetEntries(
-            [FromQuery] int? departmentId,
+            [FromQuery] Guid? departmentId,
             [FromQuery] DateTime? startDate,
             [FromQuery] DateTime? endDate,
-            [FromQuery] int? positionId,
+            [FromQuery] Guid? positionId,
             [FromQuery] string? state,
             CancellationToken cancellationToken = default)
         {
@@ -32,7 +32,7 @@ namespace EmployeeManager.API.Controllers
                 .ThenInclude(e => e.Position)
                 .AsQueryable();
 
-            if (departmentId.HasValue && departmentId.Value > 0)
+            if (departmentId.HasValue)
                 query = query.Where(s => s.DepartmentId == departmentId.Value);
 
             if (startDate.HasValue)
@@ -41,7 +41,7 @@ namespace EmployeeManager.API.Controllers
             if (endDate.HasValue)
                 query = query.Where(s => s.Date <= endDate.Value);
 
-            if (positionId.HasValue && positionId.Value > 0)
+            if (positionId.HasValue)
                 query = query.Where(s => s.Employee != null && s.Employee.PositionId == positionId.Value);
 
             if (!string.IsNullOrWhiteSpace(state))
@@ -104,7 +104,7 @@ namespace EmployeeManager.API.Controllers
 
         // DELETE api/Schedule/{id}
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
         {
             var entry = await _appDbContext.ScheduleEntries.FindAsync(new object[] { id }, cancellationToken);
             if (entry == null)

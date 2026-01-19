@@ -4,55 +4,69 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PositionService } from '../position.service';
 import { DepartmentService } from '../../departments/department.service';
+import { SpecializationService } from '../../employees/specialization.service';
 import { Position } from '../../../shared/models/position.model';
 import { Department } from '../../../shared/models/department.model';
-import { Employee } from '../../../shared/models/employee.model';
+import { Specialization } from '../../../shared/models/specialization.model';
 import { PositionCreationPayload } from '../../../shared/models/payloads';
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { DialogService } from '../../../shared/services/dialog.service';
+import { getPositionDisplayName, getSpecializationDisplayName } from '../../../shared/utils/display.utils';
+import { PositionModalComponent } from '../position-modal/position-modal.component';
+import { SpecializationModalComponent } from '../specialization-modal/specialization-modal.component';
 
 @Component({
   selector: 'app-position-list-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PositionModalComponent, SpecializationModalComponent],
   templateUrl: './position-list-page.html',
   styleUrls: ['./position-list-page.css'],
 })
 export class PositionListPageComponent implements OnInit {
   private positionService = inject(PositionService);
   private departmentService = inject(DepartmentService);
+  private specializationService = inject(SpecializationService);
   private router = inject(Router);
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
   private dialogService = inject(DialogService);
   private destroyRef = inject(DestroyRef);
 
+  // Tab management
+  activeTab = signal<'positions' | 'specializations'>('positions');
+
+  // Positions data
   positions = signal<Position[]>([]);
   departments = signal<Department[]>([]);
-
-  selectedDepartmentId = signal<number | null>(null);
+  selectedDepartmentId = signal<string | null>(null);
   searchTerm = signal('');
   page = signal(1);
   pageSize = signal(10);
   total = signal(0);
+  isPositionModalOpen = signal(false);
+
+  // Specializations data
+  specializations = signal<Specialization[]>([]);
+  isSpecializationModalOpen = signal(false);
 
   isLoading = signal(false);
   error = signal('');
-  isAddFormVisible = signal(false);
-
-  newPosition = signal<PositionCreationPayload>({
-    title: '',
-    departmentIds: [],
-  });
 
   Math = Math;
 
   ngOnInit(): void {
     this.loadDepartments();
     this.loadPositions();
+    this.loadSpecializations();
   }
 
+  // Tab switching
+  setActiveTab(tab: 'positions' | 'specializations'): void {
+    this.activeTab.set(tab);
+  }
+
+  // Departments
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
       next: (depts) => this.departments.set(depts),
@@ -61,11 +75,12 @@ export class PositionListPageComponent implements OnInit {
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
+  // Positions
   loadPositions() {
     this.isLoading.set(true);
     const sub = this.positionService
       .getPositionsByDepartmentIdWithPagination(
-        this.selectedDepartmentId() ?? 0,
+        this.selectedDepartmentId(),
         this.page(),
         this.pageSize(),
         this.searchTerm()
@@ -91,7 +106,7 @@ export class PositionListPageComponent implements OnInit {
   }
 
   onDepartmentChange(depId: string) {
-    const id = depId ? parseInt(depId, 10) : null;
+    const id = depId || null;
     this.selectedDepartmentId.set(id);
     this.page.set(1);
     this.loadPositions();
@@ -102,35 +117,18 @@ export class PositionListPageComponent implements OnInit {
     this.loadPositions();
   }
 
-  toggleAddForm() {
-    this.isAddFormVisible.update((v) => !v);
+  openPositionModal() {
+    this.isPositionModalOpen.set(true);
   }
 
-  cancelAdd() {
-    this.resetForm();
-    this.isAddFormVisible.set(false);
+  closePositionModal() {
+    this.isPositionModalOpen.set(false);
   }
 
-  resetForm() {
-    this.newPosition.set({
-      title: '',
-      departmentIds: [],
-    });
-  }
-
-  isFormValid(): boolean {
-    const pos = this.newPosition();
-    return !!(pos.title.trim() && pos.departmentIds.length > 0);
-  }
-
-  addPosition() {
-    if (!this.isFormValid()) return;
-
-    const pos = this.newPosition();
-    this.positionService.addPosition(pos).subscribe({
-      next: (created) => {
-        this.resetForm();
-        this.isAddFormVisible.set(false);
+  onPositionSave(positionData: PositionCreationPayload) {
+    this.positionService.addPosition(positionData).subscribe({
+      next: () => {
+        this.closePositionModal();
         this.page.set(1);
         this.selectedDepartmentId.set(null);
         this.loadPositions();
@@ -140,54 +138,120 @@ export class PositionListPageComponent implements OnInit {
     });
   }
 
-  async deletePosition(id: number): Promise<void> {
+  async deletePosition(id: string): Promise<void> {
+    const position = this.positions().find(p => p.id === id);
+    if (!position) return;
+
+    // Prevent deletion of Unemployed position
+    if (this.isUnemployedPosition(position.title)) {
+      this.toastService.error('Неможливо видалити посаду "Без Посади" (Unemployed)');
+      return;
+    }
+
     const confirmed = await this.dialogService.confirm(
-      'Ви впевнені, що хочете видалити цю посаду?'
+      'Ви впевнені, що хочете видалити цю посаду? Співробітники з цією посадою отримають посаду "Без Посади"'
     );
     if (!confirmed) return;
 
     this.positionService.deletePosition(id).subscribe({
       next: () => {
         this.loadPositions();
-        this.toastService.success('Посаду успішно видалено!');
+        this.toastService.success('Посаду успішно видалено! Співробітники перепризначені на "Без Посади"');
+      },
+      error: (err: Error) => {
+        const errorMessage = err.message || 'Помилка при видаленні посади';
+        this.toastService.error(errorMessage);
+      },
+    });
+  }
+
+  isUnemployedPosition(title: string): boolean {
+    return title === 'Unemployed' || title === 'Без Посади';
+  }
+
+  getPositionDisplayName(title: string): string {
+    return getPositionDisplayName(title);
+  }
+
+  openPosition(id: string) {
+    this.router.navigate(['/positions', id]);
+  }
+
+  // Specializations
+  loadSpecializations() {
+    const sub = this.specializationService.getAllSpecializations().subscribe({
+      next: (specs) => this.specializations.set(specs),
+      error: (err: Error) => {
+        this.toastService.error(err.message);
+        this.error.set(err.message);
+      },
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  openSpecializationModal() {
+    this.isSpecializationModalOpen.set(true);
+  }
+
+  closeSpecializationModal() {
+    this.isSpecializationModalOpen.set(false);
+  }
+
+  onSpecializationSave(name: string) {
+    this.specializationService.createSpecialization(name).subscribe({
+      next: () => {
+        this.closeSpecializationModal();
+        this.loadSpecializations();
+        this.toastService.success('Спеціальність успішно створено!');
       },
       error: (err: Error) => this.toastService.error(err.message),
     });
   }
 
-  getDepartmentName(depId: number | null): string {
-    if (!depId) return 'Не вказано';
-    const dep = this.departments().find((d) => d.id === depId);
-    return dep ? dep.name : 'Невідомо';
-  }
+  async deleteSpecialization(id: string): Promise<void> {
+    const specialization = this.specializations().find(s => s.id === id);
+    if (!specialization) return;
 
-  openPosition(id: number) {
-    this.router.navigate(['/positions', id]);
-  }
-
-  isDepartmentSelected(departmentId: number): boolean {
-    return this.newPosition().departmentIds.includes(departmentId);
-  }
-
-  toggleDepartment(departmentId: number): void {
-    const currentIds = [...this.newPosition().departmentIds];
-    const index = currentIds.indexOf(departmentId);
-
-    if (index > -1) {
-      currentIds.splice(index, 1);
-    } else {
-      currentIds.push(departmentId);
+    // Prevent deletion of Intern specialization
+    if (this.isInternSpecialization(specialization.name)) {
+      this.toastService.error('Неможливо видалити спеціальність "Без Спец." (Intern)');
+      return;
     }
 
-    this.newPosition.update((pos) => ({
-      ...pos,
-      departmentIds: currentIds,
-    }));
+    const confirmed = await this.dialogService.confirm(
+      'Ви впевнені, що хочете видалити цю спеціальність? Співробітники з цією спеціальністю отримають спеціальність "Без Спец."'
+    );
+    if (!confirmed) return;
+
+    this.specializationService.deleteSpecialization(id).subscribe({
+      next: () => {
+        this.loadSpecializations();
+        this.toastService.success('Спеціальність успішно видалено! Співробітники перепризначені на "Без Спец."');
+      },
+      error: (err: Error) => {
+        // Try to extract error message from response
+        let errorMessage = 'Помилка при видаленні спеціальності';
+        if (err.message) {
+          errorMessage = err.message;
+        }
+        this.toastService.error(errorMessage);
+      },
+    });
   }
 
-  getEmployeeCount(posId: number): number {
-    const dept = this.departments().find((d) => d.id === this.selectedDepartmentId());
-    if (!dept || !dept.employees) return 0;
-    return dept.employees.filter((e) => e.positionId === posId).length;
+  getSpecializationDisplayName(name: string): string {
+    return getSpecializationDisplayName(name);
+  }
+
+  isInternSpecialization(name: string): boolean {
+    return name === 'Intern' || name === 'Без Спец.';
+  }
+
+  trackByPositionId(index: number, position: Position): string {
+    return position.id;
+  }
+
+  trackBySpecializationId(index: number, specialization: Specialization): string {
+    return specialization.id;
   }
 }

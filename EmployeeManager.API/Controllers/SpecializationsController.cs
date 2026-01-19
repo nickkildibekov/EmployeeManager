@@ -33,7 +33,7 @@ namespace EmployeeManager.API.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken = default)
         {
             var specialization = await _appDbContext.Specializations
                 .Where(s => s.Id == id)
@@ -74,7 +74,7 @@ namespace EmployeeManager.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] SpecializationDTO specializationDto, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Update(Guid id, [FromBody] SpecializationDTO specializationDto, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -96,7 +96,7 @@ namespace EmployeeManager.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
         {
             var specialization = await _appDbContext.Specializations
                 .Include(s => s.Employees)
@@ -105,10 +105,28 @@ namespace EmployeeManager.API.Controllers
             if (specialization == null)
                 return NotFound(new { message = $"Specialization with ID {id} not found." });
 
-            // Check if any employees are using this specialization
+            // Prevent deletion of Intern (Без Спец.) specialization
+            if (specialization.Name == "Intern" || specialization.Name == "Без Спец.")
+            {
+                return BadRequest(new { message = "Cannot delete the default specialization 'Intern' (Без Спец.)." });
+            }
+
+            // Find the Intern specialization to reassign employees
+            var internSpecialization = await _appDbContext.Specializations
+                .FirstOrDefaultAsync(s => s.Name == "Intern" || s.Name == "Без Спец.", cancellationToken);
+
+            if (internSpecialization == null)
+            {
+                return BadRequest(new { message = "Default specialization 'Intern' (Без Спец.) not found. Cannot proceed with deletion." });
+            }
+
+            // Reassign all employees with this specialization to Intern
             if (specialization.Employees?.Any() == true)
             {
-                return Conflict(new { message = $"Cannot delete specialization with {specialization.Employees.Count} employee(s). Reassign employees first." });
+                foreach (var employee in specialization.Employees)
+                {
+                    employee.SpecializationId = internSpecialization.Id;
+                }
             }
 
             _appDbContext.Specializations.Remove(specialization);

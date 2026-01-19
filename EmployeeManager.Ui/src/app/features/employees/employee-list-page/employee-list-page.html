@@ -1,66 +1,13 @@
 <div class="container">
   <div class="header">
     <h2>Співробітники</h2>
-    <button class="btn btn-primary" (click)="toggleAddForm()">
-      {{ isAddFormVisible() ? 'Скасувати' : '+ Додати співробітника' }}
+    <button class="btn btn-primary" (click)="openAddModal()">
+      + Додати співробітника
     </button>
   </div>
 
   <div *ngIf="error()" class="alert alert-danger">
     {{ error() }}
-  </div>
-
-  <!-- Add Form -->
-  <div *ngIf="isAddFormVisible()" class="add-form">
-    <div class="form-row">
-      <input class="form-control" placeholder="Ім'я" [(ngModel)]="newEmployee().firstName" />
-      <input class="form-control" placeholder="Прізвище" [(ngModel)]="newEmployee().lastName" />
-    </div>
-    <div class="form-row">
-      <input
-        class="form-control"
-        placeholder="Номер телефону"
-        [(ngModel)]="newEmployee().phoneNumber"
-      />
-    </div>
-    <div class="form-row">
-      <select
-        class="form-control"
-        (change)="onNewDepartmentChange($event.target.value)"
-        [ngModel]="newEmployee().departmentId"
-      >
-        <option [ngValue]="null">Резерв</option>
-        <option *ngFor="let dep of departments()" [ngValue]="dep.id">
-          {{ dep.name }}
-        </option>
-      </select>
-      <select
-        class="form-control"
-        [(ngModel)]="newEmployee().specializationId"
-        required
-      >
-        <option *ngFor="let spec of specializations()" [value]="spec.id">
-          {{ spec.name }}
-        </option>
-      </select>
-    </div>
-    <div class="form-row">
-      <select
-        class="form-control"
-        [(ngModel)]="newEmployee().positionId"
-      >
-        <option [ngValue]="null">Не вказано</option>
-        <option *ngFor="let pos of positions()" [ngValue]="pos.id">
-          {{ pos.title }}
-        </option>
-      </select>
-    </div>
-    <div class="button-row">
-      <button class="btn btn-success" (click)="addEmployee()" [disabled]="!isFormValid()">
-        Додати
-      </button>
-      <button class="btn btn-secondary" (click)="cancelAdd()">Скасувати</button>
-    </div>
   </div>
 
   <!-- Filters -->
@@ -95,6 +42,12 @@
     <table *ngIf="employees().length > 0" class="employees-table">
       <thead>
         <tr>
+          <th class="sortable" (click)="toggleSort('callSign')">
+            Позивний
+            <span class="sort-indicator" *ngIf="sortBy() === 'callSign'">
+              {{ sortOrder() === 'asc' ? '▲' : '▼' }}
+            </span>
+          </th>
           <th class="sortable" (click)="toggleSort('firstName')">
             Ім'я
             <span class="sort-indicator" *ngIf="sortBy() === 'firstName'">
@@ -125,15 +78,25 @@
               {{ sortOrder() === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
+          <th>Дії</th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let emp of employees()" (click)="openEmployee(emp.id)" class="table-row">
-          <td>{{ emp.firstName }}</td>
-          <td>{{ emp.lastName }}</td>
-          <td>{{ emp.phoneNumber }}</td>
-          <td>{{ emp.departmentName || 'Резерв' }}</td>
-          <td>{{ emp.positionName || 'Не вказано' }}</td>
+        <tr *ngFor="let emp of employees()" class="table-row">
+          <td (click)="openEmployee(emp.id)" style="cursor: pointer">{{ emp.callSign || 'Не вказано' }}</td>
+          <td (click)="openEmployee(emp.id)" style="cursor: pointer">{{ emp.firstName || '-' }}</td>
+          <td (click)="openEmployee(emp.id)" style="cursor: pointer">{{ emp.lastName || '-' }}</td>
+          <td (click)="openEmployee(emp.id)" style="cursor: pointer">{{ emp.phoneNumber }}</td>
+          <td (click)="openEmployee(emp.id)" style="cursor: pointer">{{ getDepartmentDisplayName(emp.departmentName) }}</td>
+          <td (click)="openEmployee(emp.id)" style="cursor: pointer">{{ getPositionDisplayName(emp.positionName) }}</td>
+          <td class="actions-cell" (click)="$event.stopPropagation()">
+            <button class="btn-icon btn-edit" (click)="openEditModal(emp)" title="Редагувати">
+              ✏️
+            </button>
+            <button class="btn-icon btn-delete" (click)="confirmDelete(emp)" title="Видалити">
+              🗑️
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -155,4 +118,30 @@
       Наступна →
     </button>
   </div>
+
+  <!-- Employee Modal -->
+  <app-employee-modal
+    [isOpen]="isModalOpen"
+    [employee]="selectedEmployee()"
+    [departments]="departments()"
+    [positions]="positions()"
+    [specializations]="specializations()"
+    [formPositions]="formPositions()"
+    (save)="onEmployeeSave($event)"
+    (close)="closeModal()"
+    (departmentChange)="onModalDepartmentChange($event)"
+  />
+
+  <!-- Confirmation Dialog -->
+  @if (dialogService.isOpen()) {
+  <app-confirmation-dialog
+    [title]="dialogService.config()?.title || 'Підтвердити дію'"
+    [message]="dialogService.config()?.message || ''"
+    [confirmText]="dialogService.config()?.confirmText || 'ОК'"
+    [cancelText]="dialogService.config()?.cancelText || 'Скасувати'"
+    [variant]="dialogService.config()?.variant || 'warning'"
+    (confirm)="dialogService.handleConfirm()"
+    (cancel)="dialogService.handleCancel()"
+  />
+  }
 </div>

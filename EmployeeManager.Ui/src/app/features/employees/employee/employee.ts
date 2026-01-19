@@ -1,14 +1,14 @@
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { switchMap } from 'rxjs';
+import { switchMap, take } from 'rxjs';
 
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { DialogService } from '../../../shared/services/dialog.service';
 import { Employee } from '../../../shared/models/employee.model';
-import { EmployeeUpdateData } from '../../../shared/models/payloads';
+import { EmployeeUpdateData, NewEmployeeData } from '../../../shared/models/payloads';
 import { EmployeeService } from '../employee.service';
 import { DepartmentService } from '../../departments/department.service';
 import { PositionService } from '../../positions/position.service';
@@ -16,10 +16,12 @@ import { SpecializationService } from '../specialization.service';
 import { Department } from '../../../shared/models/department.model';
 import { Position } from '../../../shared/models/position.model';
 import { Specialization } from '../../../shared/models/specialization.model';
+import { getDepartmentDisplayName, getPositionDisplayName, getSpecializationDisplayName, formatDateDDMMYYYY } from '../../../shared/utils/display.utils';
+import { EmployeeModalComponent } from '../employee-modal/employee-modal.component';
 
 @Component({
   selector: 'app-employee',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EmployeeModalComponent],
   templateUrl: './employee.html',
   styleUrl: './employee.css',
 })
@@ -37,25 +39,22 @@ export class EmployeeComponent implements OnInit {
 
   employee = signal<Employee | undefined>(undefined);
   departments = signal<Department[]>([]);
+  allDepartmentsWithPositions = signal<Department[]>([]); // Store all departments with positions for filtering
   positions = signal<Position[]>([]);
   specializations = signal<Specialization[]>([]);
 
-  editedEmployee = signal<EmployeeUpdateData>({
-    id: 0,
-    firstName: '',
-    lastName: '',
-    phoneNumber: '',
-    positionId: null,
-    departmentId: null,
-    specializationId: 0,
-  });
+  // Employee modal state
+  isModalOpen = signal(false);
+  selectedEmployeeForModal = signal<Employee | null>(null);
+  formPositions = signal<Position[]>([]);
+
+
 
   isFetching = signal(false);
   isSaving = signal(false);
-  isEditMode = signal(false);
   error = signal('');
 
-  employeeId: number | undefined;
+  employeeId: string | undefined;
 
   ngOnInit(): void {
     this.loadDepartments();
@@ -65,10 +64,9 @@ export class EmployeeComponent implements OnInit {
     const subscription = this.route.paramMap
       .pipe(
         switchMap((params) => {
-          const idParam = params.get('id');
-          const id = idParam ? +idParam : undefined;
+          const id = params.get('id');
 
-          if (!id || isNaN(id)) {
+          if (!id) {
             const errorMsg = 'ID співробітника відсутній або недійсний!';
             this.error.set(errorMsg);
             this.toastService.error(errorMsg);
@@ -84,15 +82,22 @@ export class EmployeeComponent implements OnInit {
       .subscribe({
         next: (emp) => {
           this.employee.set(emp);
-          this.editedEmployee.set({
-            id: emp.id,
-            firstName: emp.firstName,
-            lastName: emp.lastName,
-            phoneNumber: emp.phoneNumber,
-            positionId: emp.positionId,
-            departmentId: emp.departmentId,
-            specializationId: emp.specializationId,
-          });
+          
+          // Check if employee's department is Reserve - if so, set departmentId to null
+          // We need to check this by comparing with departmentName from API
+          let departmentId = emp.departmentId;
+          if (emp.departmentName && (emp.departmentName === 'Reserve' || emp.departmentName === 'Резерв' || emp.departmentName === 'Global Reserve')) {
+            departmentId = null; // Set to null so it shows as "Резерв" option in select
+          }
+          
+          // Ensure positionId is set - if null, find Unemployed position
+          let positionId = emp.positionId;
+          if (!positionId) {
+            const allPositions = this.positions();
+            const unemployedPosition = allPositions.find(p => p.title === 'Unemployed' || p.title === 'Без Посади');
+            positionId = unemployedPosition ? unemployedPosition.id : null;
+          }
+          
           this.isFetching.set(false);
         },
         error: (error: Error) => {
@@ -109,7 +114,13 @@ export class EmployeeComponent implements OnInit {
 
   private loadDepartments() {
     const sub = this.departmentService.getAllDepartments().subscribe({
-      next: (depts) => this.departments.set(depts),
+      next: (depts) => {
+        // Store all departments with positions for filtering
+        this.allDepartmentsWithPositions.set(depts);
+        // Filter out Reserve department to avoid duplication (it's represented by null option)
+        const filtered = depts.filter(d => d.name !== 'Reserve' && d.name !== 'Резерв' && d.name !== 'Global Reserve');
+        this.departments.set(filtered);
+      },
       error: (err: Error) => {
         this.error.set(err.message);
         this.toastService.error(err.message);
@@ -140,57 +151,106 @@ export class EmployeeComponent implements OnInit {
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
-  getDepartmentDisplayName(departmentId: number | null): string {
+  getDepartmentDisplayName(departmentId: string | null): string {
     if (departmentId === null) return 'Резерв';
     const dept = this.departments().find(d => d.id === departmentId);
-    return dept ? dept.name : 'Невідомо';
+    return dept ? getDepartmentDisplayName(dept.name) : 'Резерв';
   }
 
-  getPositionDisplayName(positionId: number | null): string {
-    if (positionId === null) return 'Не вказано';
+  getDepartmentDisplayNameFromEmployee(): string {
+    const emp = this.employee();
+    if (!emp) return 'Резерв';
+    // Use departmentName from API if available, otherwise find by ID
+    if (emp.departmentName) {
+      return getDepartmentDisplayName(emp.departmentName);
+    }
+    return this.getDepartmentDisplayName(emp.departmentId);
+  }
+
+  getPositionDisplayName(positionId: string | null): string {
+    if (positionId === null) return 'Без Посади';
     const pos = this.positions().find(p => p.id === positionId);
-    return pos ? pos.title : 'Невідомо';
+    return pos ? getPositionDisplayName(pos.title) : 'Без Посади';
+  }
+
+  getPositionDisplayNameFromEmployee(): string {
+    const emp = this.employee();
+    if (!emp) return 'Без Посади';
+    // Use positionName from API if available, otherwise find by ID
+    if (emp.positionName) {
+      return getPositionDisplayName(emp.positionName);
+    }
+    return this.getPositionDisplayName(emp.positionId);
+  }
+
+  getSpecializationDisplayName(specializationName: string | null | undefined): string {
+    return getSpecializationDisplayName(specializationName);
+  }
+
+  formatDateForDisplay(dateString: string | null | undefined): string {
+    return formatDateDDMMYYYY(dateString);
   }
 
   toggleEditMode(): void {
-    this.isEditMode.update((val) => !val);
-    if (!this.isEditMode() && this.employee()) {
-      const currentEmp = this.employee()!;
-      this.editedEmployee.set({
-        id: currentEmp.id,
-        firstName: currentEmp.firstName,
-        lastName: currentEmp.lastName,
-        phoneNumber: currentEmp.phoneNumber,
-        positionId: currentEmp.positionId,
-        departmentId: currentEmp.departmentId,
-        specializationId: currentEmp.specializationId,
+    // Open edit modal instead of inline editing
+    const emp = this.employee();
+    if (emp) {
+      this.openEditModal(emp);
+    }
+  }
+
+  openEditModal(employee: Employee): void {
+    // Store employee for modal before opening
+    this.selectedEmployeeForModal.set(employee);
+    if (employee.departmentId) {
+      this.loadPositionsForDepartment(employee.departmentId);
+    } else {
+      this.formPositions.set([]);
+    }
+    this.isModalOpen.set(true);
+  }
+
+  closeModal(): void {
+    this.isModalOpen.set(false);
+    this.selectedEmployeeForModal.set(null);
+    this.formPositions.set([]);
+  }
+
+  private loadPositionsForDepartment(departmentId: string): void {
+    const allDepts = this.allDepartmentsWithPositions();
+    const dept = allDepts.find(d => d.id === departmentId);
+    if (dept && dept.positions) {
+      this.formPositions.set(dept.positions);
+    } else {
+      this.formPositions.set([]);
+    }
+  }
+
+  onModalDepartmentChange(departmentId: string | null): void {
+    if (departmentId) {
+      this.loadPositionsForDepartment(departmentId);
+    } else {
+      this.formPositions.set([]);
+    }
+  }
+
+  onEmployeeSave(data: NewEmployeeData | EmployeeUpdateData): void {
+    if ('id' in data) {
+      // Update existing employee
+      this.employeeService.updateEmployee(data as EmployeeUpdateData).subscribe({
+        next: (updatedEmp) => {
+          this.employee.set(updatedEmp);
+          this.closeModal();
+          this.toastService.success('Співробітника успішно оновлено');
+        },
+        error: (err: Error) => {
+          this.error.set(err.message);
+          this.toastService.error(err.message);
+        },
       });
     }
   }
 
-  saveEmployee(): void {
-    const emp = this.editedEmployee();
-    if (!emp.firstName.trim() || !emp.lastName.trim() || !emp.phoneNumber.trim()) {
-      this.toastService.warning('Будь ласка, заповніть всі обов\'язкові поля.');
-      return;
-    }
-
-    this.isSaving.set(true);
-
-    this.employeeService.updateEmployee(emp).subscribe({
-      next: (updatedEmp) => {
-        this.employee.set(updatedEmp);
-        this.isEditMode.set(false);
-        this.isSaving.set(false);
-        this.toastService.success('Співробітника успішно оновлено');
-      },
-      error: (err: Error) => {
-        this.error.set(err.message);
-        this.toastService.error(err.message);
-        this.isSaving.set(false);
-      },
-    });
-  }
 
   async deleteEmployee(): Promise<void> {
     const confirmed = await this.dialogService.confirm({

@@ -15,7 +15,9 @@ export class EmployeeService {
     const payload = {
       firstName: employeeData.firstName,
       lastName: employeeData.lastName,
+      callSign: employeeData.callSign,
       phoneNumber: employeeData.phoneNumber,
+      birthDate: employeeData.birthDate,
       positionId: employeeData.positionId,
       departmentId: employeeData.departmentId,
       specializationId: employeeData.specializationId,
@@ -30,8 +32,8 @@ export class EmployeeService {
     );
   }
 
-  deleteEmployee(employeeId: number): Observable<any> {
-    return this.httpClient.delete(this.apiUrl + employeeId).pipe(
+  deleteEmployee(employeeId: string): Observable<Employee | null> {
+    return this.httpClient.delete<Employee | null>(this.apiUrl + employeeId).pipe(
       catchError((error) => {
         console.error('Error in deleteEmployee:', error);
         return throwError(() => new Error('Error deleting employee: ' + employeeId));
@@ -40,25 +42,28 @@ export class EmployeeService {
   }
 
   getEmployeesByDepartment(
-    departmentId: number,
+    departmentId: string | null,
     page: number = 1,
     pageSize: number = 10,
     search: string = '',
-    positionId: number | null = null,
+    positionId: string | null = null,
     sortBy: string = '',
     sortOrder: 'asc' | 'desc' = 'asc'
   ): Observable<{ items: Employee[]; total: number }> {
     let params = new HttpParams()
-      .set('departmentId', String(departmentId))
       .set('page', String(page))
       .set('pageSize', String(pageSize));
+
+    if (departmentId) {
+      params = params.set('departmentId', departmentId);
+    }
 
     if (search && search.trim()) {
       params = params.set('search', search.trim());
     }
 
-    if (positionId !== null && positionId !== undefined && positionId > 0) {
-      params = params.set('positionId', String(positionId));
+    if (positionId) {
+      params = params.set('positionId', positionId);
     }
 
     if (sortBy) {
@@ -75,7 +80,7 @@ export class EmployeeService {
     );
   }
 
-  getEmployee(id: number): Observable<Employee> {
+  getEmployee(id: string): Observable<Employee> {
     return this.httpClient.get<Employee>(this.apiUrl + id).pipe(
       catchError((error) => {
         console.error('Error in getEmployee:', error);

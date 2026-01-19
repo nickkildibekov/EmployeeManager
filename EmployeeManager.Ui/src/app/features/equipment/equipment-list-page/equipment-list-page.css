@@ -10,11 +10,43 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .header h2 {
   margin: 0;
   color: var(--text-primary);
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.header-buttons .btn {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.header-buttons .btn.btn-primary {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+.header-buttons .btn.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover) !important;
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-1px);
 }
 
 .alert {
@@ -335,6 +367,38 @@
 
 .equipment-table tbody tr:hover {
   background: var(--bg-secondary);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  transform: scale(1.1);
+}
+
+.btn-edit:hover {
+  background: var(--primary-light);
+}
+
+.btn-delete:hover {
+  background: var(--danger-light);
 }
 
 .equipment-table tbody tr:last-child {

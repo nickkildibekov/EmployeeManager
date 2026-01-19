@@ -94,12 +94,15 @@
 .form-input.readonly {
   background-color: var(--bg-secondary);
   color: var(--text-primary);
-  padding: 0.5rem;
+  padding: 8px 12px;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  min-height: 2.5rem;
+  font-size: 1rem;
+  min-height: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
+  box-sizing: border-box;
 }
 
 .form-input {
@@ -110,6 +113,19 @@
   color: var(--text-primary);
   background-color: var(--bg-primary);
   transition: var(--transition);
+  min-height: 38px;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.form-input[type="date"] {
+  min-height: 38px;
+  height: 38px;
+}
+
+select.form-input {
+  min-height: 38px;
+  height: 38px;
 }
 
 .form-input[readonly],

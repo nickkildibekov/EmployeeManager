@@ -5,31 +5,35 @@
 export interface NewEmployeeData {
   firstName: string;
   lastName: string;
+  callSign?: string | null;
   phoneNumber: string;
-  positionId: number | null;
-  departmentId: number | null;
-  specializationId: number;
+  birthDate?: string | null;
+  positionId: string | null;
+  departmentId: string | null;
+  specializationId: string;
 }
 
 export interface EmployeeUpdateData {
-  id: number;
+  id: string;
   firstName: string;
   lastName: string;
+  callSign?: string | null;
   phoneNumber: string;
-  positionId: number | null;
-  departmentId: number | null;
-  specializationId: number;
+  birthDate?: string | null;
+  positionId: string | null;
+  departmentId: string | null;
+  specializationId: string;
 }
 
 export interface PositionCreationPayload {
   title: string;
-  departmentIds: number[];
+  departmentIds: string[];
 }
 
 export interface PositionUpdatePayload {
-  id: number;
+  id: string;
   title: string;
-  departmentIds: number[];
+  departmentIds: string[];
 }
 
 export interface EquipmentCreationPayload {
@@ -40,13 +44,14 @@ export interface EquipmentCreationPayload {
   measurement: 'Unit' | 'Meter' | 'Liter';
   amount: number;
   description: string;
-  categoryId: number;
-  departmentId: number | null;
+  categoryId: string;
+  departmentId: string | null;
   imageData?: string; // Base64-encoded image (optional)
+  responsibleEmployeeId?: string | null;
 }
 
 export interface EquipmentUpdatePayload {
-  id: number;
+  id: string;
   name: string;
   serialNumber?: string;
   purchaseDate: string;
@@ -54,12 +59,13 @@ export interface EquipmentUpdatePayload {
   measurement: 'Unit' | 'Meter' | 'Liter';
   amount: number;
   description: string;
-  categoryId: number;
-  departmentId: number | null;
+  categoryId: string;
+  departmentId: string | null;
   imageData?: string; // Base64-encoded image (optional)
+  responsibleEmployeeId?: string | null;
 }
 
 export interface DepartmentUpdateDTO {
-  id: number;
+  id: string;
   name: string;
 }

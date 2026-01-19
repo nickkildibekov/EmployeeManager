@@ -1,10 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace EmployeeManager.API.DTO
 {
     public class DepartmentDTO
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required(ErrorMessage = "Department name is required")]
         [StringLength(100, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 100 characters")]

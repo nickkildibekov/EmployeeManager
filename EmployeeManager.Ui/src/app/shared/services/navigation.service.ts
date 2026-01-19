@@ -36,7 +36,7 @@ export class NavigationService {
   // Navigate after create
   afterCreate(
     entityType: 'department' | 'employee' | 'position' | 'equipment',
-    id: number,
+    id: string,
     options: { showToast?: boolean; navigateToList?: boolean } = {}
   ) {
     const { showToast = true, navigateToList = false } = options;
@@ -95,7 +95,7 @@ export class NavigationService {
   }
 
   // Navigate to entity detail
-  toDetail(entityType: string, id: number) {
+  toDetail(entityType: string, id: string) {
     const listPath = this.getListPath(entityType as any);
     this.router.navigate([listPath, id]);
   }
@@ -109,15 +109,15 @@ export class NavigationService {
   }
 
   // Navigate to department's sub-entities
-  toDepartmentEmployees(departmentId: number) {
+  toDepartmentEmployees(departmentId: string) {
     this.router.navigate(['/departments', departmentId, 'employees']);
   }
 
-  toDepartmentPositions(departmentId: number) {
+  toDepartmentPositions(departmentId: string) {
     this.router.navigate(['/departments', departmentId, 'positions']);
   }
 
-  toDepartmentEquipment(departmentId: number) {
+  toDepartmentEquipment(departmentId: string) {
     this.router.navigate(['/departments', departmentId, 'equipment']);
   }
 

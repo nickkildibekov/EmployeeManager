@@ -25,6 +25,7 @@
         </button>
         }
 
+        @if (!isUnemployedPosition()) {
         <button
           class="btn btn-danger"
           (click)="deletePosition()"
@@ -32,6 +33,7 @@
         >
           🗑️ Видалити посаду
         </button>
+        }
       </div>
     </div>
 

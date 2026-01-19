@@ -47,6 +47,7 @@
           >
             ✏️
           </button>
+          @if (!isReserveDepartment()) {
           <button
             class="icon-button btn-danger"
             (click)="deleteDepartment()"
@@ -55,6 +56,7 @@
           >
             🗑️
           </button>
+          }
         </div>
         }
       </div>
@@ -118,9 +120,14 @@
         <h3>Обладнання</h3>
         <div class="info-list">
           @if (equipmentList().length > 0) { @for (eq of equipmentList(); track eq.id) {
-          <div class="info-item" (click)="navigateToEquipment(eq.id)" style="cursor: pointer">
+          <div 
+            class="info-item" 
+            [class.equipment-broken]="eq.hasBroken"
+            (click)="navigateToEquipment(eq.id)" 
+            style="cursor: pointer"
+          >
             <span class="info-label">{{ eq.name }}</span>
-            <span class="info-value"> {{ eq.count }} {{ getEquipmentCountText(eq.count) }} - {{ eq.statusText }} </span>
+            <span class="info-value">{{ eq.count }} {{ getEquipmentCountText(eq.count) }}</span>
           </div>
           } } @else {
           <p class="no-data">Обладнання немає</p>

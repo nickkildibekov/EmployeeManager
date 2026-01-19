@@ -12,25 +12,14 @@
     <div class="edit-section">
       <div class="button-group">
         <button class="btn btn-primary" (click)="toggleEditMode()" [disabled]="isSaving()">
-          {{ isEditMode() ? '✕ Скасувати редагування' : '✏️ Редагувати співробітника' }}
+          ✏️ Редагувати співробітника
         </button>
 
-        @if (isEditMode()) {
-        <button
-          class="btn btn-success"
-          (click)="saveEmployee()"
-          [disabled]="
-            isSaving() || !editedEmployee().firstName.trim() || !editedEmployee().lastName.trim()
-          "
-        >
-          @if (isSaving()) { Збереження... } @else { 💾 Зберегти зміни }
-        </button>
-        }
 
         <button
           class="btn btn-danger"
           (click)="deleteEmployee()"
-          [disabled]="isEditMode() || isSaving()"
+          [disabled]="isSaving()"
         >
           🗑️ Видалити співробітника
         </button>
@@ -44,98 +33,68 @@
     }
 
     <div class="employee-form">
+      <!-- Row 1: Ім'я, Прізвище, Позивний -->
       <div class="form-row">
         <div class="form-group">
           <label>Ім'я</label>
-          <input
-            type="text"
-            [(ngModel)]="editedEmployee().firstName"
-            [readonly]="!isEditMode()"
-            class="form-input"
-          />
+          <div class="form-input readonly">
+            {{ employee()?.firstName }}
+          </div>
         </div>
 
         <div class="form-group">
           <label>Прізвище</label>
-          <input
-            type="text"
-            [(ngModel)]="editedEmployee().lastName"
-            [readonly]="!isEditMode()"
-            class="form-input"
-          />
+          <div class="form-input readonly">
+            {{ employee()?.lastName }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Позивний</label>
+          <div class="form-input readonly">
+            {{ employee()?.callSign || 'Не вказано' }}
+          </div>
         </div>
       </div>
 
+      <!-- Row 2: Номер телефону, День народження -->
       <div class="form-row">
         <div class="form-group">
           <label>Номер телефону</label>
-          <input
-            type="text"
-            [(ngModel)]="editedEmployee().phoneNumber"
-            [readonly]="!isEditMode()"
-            class="form-input"
-          />
+          <div class="form-input readonly">
+            {{ employee()?.phoneNumber }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>День народження</label>
+          <div class="form-input readonly">
+            {{ formatDateForDisplay(employee()?.birthDate) }}
+          </div>
         </div>
       </div>
 
+      <!-- Row 3: Відділ, Посада, Спеціальність -->
       <div class="form-row">
         <div class="form-group">
           <label>Відділ</label>
-          @if (isEditMode()) {
-          <select
-            [(ngModel)]="editedEmployee().departmentId"
-            class="form-input"
-          >
-            <option [ngValue]="null">Резерв</option>
-            <option *ngFor="let dep of departments()" [ngValue]="dep.id">
-              {{ dep.name }}
-            </option>
-          </select>
-          } @else {
           <div class="form-input readonly">
-            {{ getDepartmentDisplayName(employee()?.departmentId ?? null) }}
+            {{ getDepartmentDisplayNameFromEmployee() }}
           </div>
-          }
         </div>
 
         <div class="form-group">
           <label>Посада</label>
-          @if (isEditMode()) {
-          <select
-            [(ngModel)]="editedEmployee().positionId"
-            class="form-input"
-          >
-            <option [ngValue]="null">Не вказано</option>
-            <option *ngFor="let pos of positions()" [ngValue]="pos.id">
-              {{ pos.title }}
-            </option>
-          </select>
-          } @else {
           <div class="form-input readonly">
-            {{ getPositionDisplayName(employee()?.positionId ?? null) }}
+            {{ getPositionDisplayNameFromEmployee() }}
           </div>
-          }
         </div>
-      </div>
 
-      <div class="form-row">
         <div class="form-group">
-          <label>Спеціалізація <span style="color: red">*</span></label>
-          @if (isEditMode()) {
-          <select
-            [(ngModel)]="editedEmployee().specializationId"
-            class="form-input"
-            required
-          >
-            <option *ngFor="let spec of specializations()" [value]="spec.id">
-              {{ spec.name }}
-            </option>
-          </select>
-          } @else {
+          <label>Спеціальність</label>
           <div class="form-input readonly">
-            {{ employee()?.specializationName ?? 'Не вказано' }}
+            {{ getSpecializationDisplayName(employee()?.specializationName) }}
           </div>
-          }
         </div>
       </div>
     </div>
@@ -147,4 +106,17 @@
     </p>
   </div>
   }
+
+  <!-- Employee Modal -->
+  <app-employee-modal
+    [isOpen]="isModalOpen"
+    [employee]="selectedEmployeeForModal()"
+    [departments]="departments()"
+    [positions]="positions()"
+    [specializations]="specializations()"
+    [formPositions]="formPositions()"
+    (save)="onEmployeeSave($event)"
+    (close)="closeModal()"
+    (departmentChange)="onModalDepartmentChange($event)"
+  />
 </div>

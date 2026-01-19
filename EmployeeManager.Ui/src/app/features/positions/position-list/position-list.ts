@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Department } from '../../../shared/models/department.model';
 import { Position } from '../../../shared/models/position.model';
+import { getPositionDisplayName } from '../../../shared/utils/display.utils';
 
 @Component({
   selector: 'app-position-list',
@@ -17,7 +18,7 @@ export class PositionListComponent {
   isEditMode = input<boolean>(false);
 
   onPositionAdded = output<string>();
-  onPositionDeleted = output<number>();
+  onPositionDeleted = output<string>();
 
   showAddForm = signal(false);
   newPositionTitle = signal('');
@@ -36,11 +37,20 @@ export class PositionListComponent {
     this.newPositionTitle.set('');
   }
 
-  deletePosition(positionId: number) {
+  deletePosition(positionId: string) {
     this.onPositionDeleted.emit(positionId);
   }
 
   getDisplayPositions() {
     return this.positions() || this.department()?.positions || [];
+  }
+
+  // Check if position is Unemployed (cannot be deleted)
+  isUnemployedPosition(title: string): boolean {
+    return title === 'Unemployed' || title === 'Без Посади';
+  }
+
+  getPositionDisplayName(title: string): string {
+    return getPositionDisplayName(title);
   }
 }

@@ -20,12 +20,14 @@ export class PositionService {
     );
   }
 
-  getPositionsByDepartmentId(depId: number): Observable<Position[]> {
+  getPositionsByDepartmentId(depId: string | null): Observable<Position[]> {
     // Backend filters positions via query params on the main endpoint
+    let url = `${this.apiUrl}?page=1&pageSize=100`;
+    if (depId) {
+      url += `&departmentId=${depId}`;
+    }
     return this.httpClient
-      .get<{ items: Position[]; total: number }>(
-        `${this.apiUrl}?departmentId=${depId}&page=1&pageSize=100`
-      )
+      .get<{ items: Position[]; total: number }>(url)
       .pipe(
         map((res) => res.items || []),
         catchError((error) => {
@@ -36,15 +38,18 @@ export class PositionService {
   }
 
   getPositionsByDepartmentIdWithPagination(
-    departmentId: number,
+    departmentId: string | null,
     page: number = 1,
     pageSize: number = 10,
     search: string = ''
   ): Observable<{ items: Position[]; total: number }> {
     let params = new HttpParams()
-      .set('departmentId', String(departmentId))
       .set('page', String(page))
       .set('pageSize', String(pageSize));
+
+    if (departmentId) {
+      params = params.set('departmentId', departmentId);
+    }
 
     if (search && search.trim()) {
       params = params.set('search', search.trim());
@@ -71,16 +76,17 @@ export class PositionService {
     );
   }
 
-  deletePosition(positionId: number): Observable<any> {
+  deletePosition(positionId: string): Observable<any> {
     return this.httpClient.delete(`${this.apiUrl}${positionId}`).pipe(
       catchError((error) => {
         console.error('Error in deletePosition:', error);
-        return throwError(() => new Error('Error deleting position: ' + positionId));
+        const errorMessage = error.error?.message || 'Помилка при видаленні посади';
+        return throwError(() => new Error(errorMessage));
       })
     );
   }
 
-  getPosition(id: number): Observable<Position> {
+  getPosition(id: string): Observable<Position> {
     return this.httpClient.get<Position>(this.apiUrl + id).pipe(
       catchError((error) => {
         console.error('Error in getPosition:', error);

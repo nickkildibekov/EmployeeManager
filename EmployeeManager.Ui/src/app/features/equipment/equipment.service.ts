@@ -22,20 +22,23 @@ export class EquipmentService {
   }
 
   getEquipmentByDepartment(
-    departmentId: number,
+    departmentId: string | null,
     page: number = 1,
     pageSize: number = 10,
     search: string = '',
     status: string | null = null,
     measurement: string | null = null,
-    categoryId: number | null = null,
+    categoryId: string | null = null,
     sortBy: string = 'name',
     sortOrder: 'asc' | 'desc' = 'asc'
   ): Observable<{ items: Equipment[]; total: number }> {
     let params = new HttpParams()
-      .set('departmentId', String(departmentId))
       .set('page', String(page))
       .set('pageSize', String(pageSize));
+
+    if (departmentId) {
+      params = params.set('departmentId', departmentId);
+    }
 
     if (search && search.trim()) {
       params = params.set('search', search.trim());
@@ -49,8 +52,8 @@ export class EquipmentService {
       params = params.set('measurement', measurement);
     }
 
-    if (categoryId !== null && categoryId !== undefined && categoryId > 0) {
-      params = params.set('categoryId', String(categoryId));
+    if (categoryId) {
+      params = params.set('categoryId', categoryId);
     }
 
     if (sortBy) {
@@ -75,19 +78,33 @@ export class EquipmentService {
       categoryId: equipmentData.categoryId,
       departmentId: equipmentData.departmentId,
       imageData: equipmentData.imageData,
+      responsibleEmployeeId: equipmentData.responsibleEmployeeId,
     };
     return this.httpClient
       .post<Equipment>(this.apiUrl, payload)
       .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
   }
 
-  deleteEquipment(equipmentId: number): Observable<any> {
+  deleteEquipment(equipmentId: string): Observable<any> {
     return this.httpClient
-      .delete(`${this.apiUrl}${equipmentId}`)
-      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
+      .delete<any>(`${this.apiUrl}${equipmentId}`, { observe: 'response' })
+      .pipe(
+        map((response) => {
+          // If status is 204 (NoContent), equipment was deleted
+          if (response.status === 204) {
+            return null;
+          }
+          // If status is 200 (OK), equipment was moved to Reserve
+          if (response.status === 200 && response.body) {
+            return response.body;
+          }
+          return response.body;
+        }),
+        catchError(this.errorHandler.handleError.bind(this.errorHandler))
+      );
   }
 
-  getEquipmentById(equipmentId: number): Observable<Equipment> {
+  getEquipmentById(equipmentId: string): Observable<Equipment> {
     return this.httpClient
       .get<Equipment>(`${this.apiUrl}${equipmentId}`)
       .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
@@ -109,6 +126,18 @@ export class EquipmentService {
   createCategory(name: string, description: string = ''): Observable<EquipmentCategory> {
     return this.httpClient
       .post<EquipmentCategory>(this.categoryUrl, { name, description })
+      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
+  }
+
+  deleteCategory(categoryId: string): Observable<any> {
+    return this.httpClient
+      .delete(`${this.categoryUrl}${categoryId}`)
+      .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
+  }
+
+  updateCategory(categoryId: string, name: string, description: string = ''): Observable<EquipmentCategory> {
+    return this.httpClient
+      .put<EquipmentCategory>(`${this.categoryUrl}${categoryId}`, { id: categoryId, name, description })
       .pipe(catchError(this.errorHandler.handleError.bind(this.errorHandler)));
   }
 }

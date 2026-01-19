@@ -4,10 +4,10 @@ namespace EmployeeManager.API.DTO
 {
     public class ScheduleEntryDTO
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
 
         [Required]
-        public int EmployeeId { get; set; }
+        public Guid EmployeeId { get; set; }
 
         [Required]
         public DateTime Date { get; set; }
@@ -20,7 +20,7 @@ namespace EmployeeManager.API.DTO
         public string State { get; set; } = "Rest";
 
         [Required]
-        public int DepartmentId { get; set; }
+        public Guid DepartmentId { get; set; }
 
         // Optional navigation props for read
         public string? EmployeeName { get; set; }

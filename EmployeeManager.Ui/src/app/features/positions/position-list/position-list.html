@@ -27,8 +27,8 @@
     <tbody>
       @for(position of getDisplayPositions(); track position.id) {
       <tr>
-        <td>{{ position.title }}</td>
-        @if(isEditMode()){
+        <td>{{ getPositionDisplayName(position.title) }}</td>
+        @if(isEditMode() && !isUnemployedPosition(position.title)){
         <td>
           <button
             class="btn-delete"

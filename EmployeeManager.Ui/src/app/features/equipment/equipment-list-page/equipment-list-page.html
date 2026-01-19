@@ -1,206 +1,18 @@
 <div class="container">
   <div class="header">
     <h2>Обладнання</h2>
-    <button class="btn btn-primary" (click)="toggleAddForm()" *ngIf="!isAddFormVisible()">
-      + Додати обладнання
-    </button>
+    <div class="header-buttons">
+      <button class="btn btn-primary" (click)="openCategoriesManageModal()">
+        ✏️ РЕДАГУВАТИ КАТЕГОРІЇ
+      </button>
+      <button class="btn btn-primary" (click)="openEquipmentModal()">
+        + ДОДАТИ ОБЛАДНАННЯ
+      </button>
+    </div>
   </div>
 
   <div *ngIf="error()" class="alert alert-danger">
     {{ error() }}
-  </div>
-
-  <!-- Add Form -->
-  <div *ngIf="isAddFormVisible()" class="add-form">
-    <!-- Row 1: Name | Serial | Description -->
-    <div class="form-row row-1">
-      <input class="form-control" placeholder="Назва обладнання" [(ngModel)]="newEquipment().name" />
-      <input
-        class="form-control"
-        placeholder="Серійний номер (необов'язково)"
-        [(ngModel)]="newEquipment().serialNumber"
-      />
-      <input
-        class="form-control"
-        placeholder="Опис"
-        [(ngModel)]="newEquipment().description"
-      />
-    </div>
-
-    <!-- Row 2: Purchase Date | Department | Category/+NewCategoryButton -->
-    <div class="form-row row-2">
-      <input
-        class="form-control"
-        type="date"
-        placeholder="Дата покупки"
-        [(ngModel)]="newEquipment().purchaseDate"
-      />
-      <select class="form-control" [(ngModel)]="newEquipment().departmentId">
-        <option [ngValue]="null">Склад</option>
-        <option *ngFor="let dep of departments()" [ngValue]="dep.id">
-          {{ dep.name }}
-        </option>
-      </select>
-
-      @if (!isAddingNewCategory()) {
-      <div class="select-with-button">
-        <select class="form-control" [(ngModel)]="newEquipment().categoryId">
-          <option [ngValue]="null" disabled>Оберіть категорію</option>
-          <option *ngFor="let cat of categories()" [ngValue]="cat.id">
-            {{ cat.name }}
-          </option>
-        </select>
-        <button class="btn btn-secondary" type="button" (click)="toggleAddNewCategory()">
-          + Нова категорія
-        </button>
-      </div>
-      } @else {
-      <div class="inline-form-vertical">
-        <input class="form-control" placeholder="Назва категорії" [(ngModel)]="newCategoryName" />
-        <input
-          class="form-control"
-          placeholder="Опис (необов'язково)"
-          [(ngModel)]="newCategoryDescription"
-        />
-        <div class="button-stack">
-          <button class="btn btn-success" type="button" (click)="createAndSelectCategory()">
-            Створити
-          </button>
-          <button class="btn btn-secondary" type="button" (click)="toggleAddNewCategory()">
-            Скасувати
-          </button>
-        </div>
-      </div>
-      }
-    </div>
-
-    <!-- Row 3: Status Radios | Measurement Radios | Amount -->
-    <div class="form-row row-3">
-      <div class="status-group">
-        <label>Статус</label>
-        <div class="status-options">
-          <label class="status-option">
-            <input
-              type="radio"
-              name="new-status"
-              [value]="'Used'"
-              [(ngModel)]="newEquipment().status"
-            />
-            Використовується
-          </label>
-          <label class="status-option">
-            <input
-              type="radio"
-              name="new-status"
-              [value]="'NotUsed'"
-              [(ngModel)]="newEquipment().status"
-            />
-            Не використовується
-          </label>
-          <label class="status-option">
-            <input
-              type="radio"
-              name="new-status"
-              [value]="'Broken'"
-              [(ngModel)]="newEquipment().status"
-            />
-            Пошкоджено
-          </label>
-        </div>
-      </div>
-
-      <div class="measurement-group">
-        <label>Одиниця виміру</label>
-        <div class="measurement-options">
-          <label class="measurement-option">
-            <input
-              type="radio"
-              name="new-measurement"
-              [value]="'Unit'"
-              [(ngModel)]="newEquipment().measurement"
-              (change)="onMeasurementChange('Unit')"
-            />
-            Штука
-          </label>
-          <label class="measurement-option">
-            <input
-              type="radio"
-              name="new-measurement"
-              [value]="'Meter'"
-              [(ngModel)]="newEquipment().measurement"
-              (change)="onMeasurementChange('Meter')"
-            />
-            Метр
-          </label>
-          <label class="measurement-option">
-            <input
-              type="radio"
-              name="new-measurement"
-              [value]="'Liter'"
-              [(ngModel)]="newEquipment().measurement"
-              (change)="onMeasurementChange('Liter')"
-            />
-            Літр
-          </label>
-        </div>
-      </div>
-
-      <div class="amount-group">
-        <label>
-          Кількість
-          <span class="unit-hint">
-            (
-            {{
-              newEquipment().measurement === 'Unit'
-                ? 'Штука'
-                : newEquipment().measurement === 'Meter'
-                ? 'м'
-                : 'л'
-            }}
-            )
-          </span>
-        </label>
-        <input
-          class="form-control"
-          type="number"
-          [step]="newEquipment().measurement === 'Unit' ? 1 : 0.01"
-          [min]="newEquipment().measurement === 'Unit' ? 1 : 0.01"
-          inputmode="numeric"
-          (input)="onAmountInput($event)"
-          [(ngModel)]="newEquipment().amount"
-          placeholder="Кількість"
-        />
-      </div>
-    </div>
-
-    <!-- Row 4: Image Upload -->
-    <div class="form-row row-4">
-      <div class="image-group">
-        <label>Зображення обладнання (необов'язково)</label>
-        <input
-          type="file"
-          accept="image/*"
-          class="form-control"
-          (change)="onImageSelected($event)"
-        />
-        @if (newEquipment().imageData) {
-        <div class="image-preview">
-          <img [src]="newEquipment().imageData" alt="Попередній перегляд" class="preview-img" />
-          <button type="button" class="btn btn-sm btn-secondary" (click)="clearImage()">
-            Видалити зображення
-          </button>
-        </div>
-        }
-      </div>
-    </div>
-
-    <!-- Row 5: Create/Cancel buttons -->
-    <div class="button-row">
-      <button class="btn btn-success" (click)="addEquipment()" [disabled]="!isFormValid()">
-        Створити
-      </button>
-      <button class="btn btn-secondary" (click)="cancelAdd()">Скасувати</button>
-    </div>
   </div>
 
   <!-- Filters -->
@@ -286,6 +98,7 @@
             </span>
           </th>
           <th>Зображення</th>
+          <th>Дії</th>
         </tr>
       </thead>
       <tbody>
@@ -321,6 +134,26 @@
             } @else {
             <div class="table-image-placeholder">Зображення немає</div>
             }
+          </td>
+          <td>
+            <div class="action-buttons" (click)="$event.stopPropagation()">
+              <button
+                class="btn-icon btn-edit"
+                (click)="editEquipment(item)"
+                title="Редагувати обладнання"
+                aria-label="Редагувати обладнання"
+              >
+                ✏️
+              </button>
+              <button
+                class="btn-icon btn-delete"
+                (click)="deleteEquipment(item.id)"
+                title="Видалити обладнання"
+                aria-label="Видалити обладнання"
+              >
+                🗑️
+              </button>
+            </div>
           </td>
         </tr>
       </tbody>
@@ -361,4 +194,25 @@
     </div>
   </div>
   }
+
+  <!-- Equipment Modal -->
+  <app-equipment-modal
+    [isOpen]="isEquipmentModalOpen"
+    [equipment]="selectedEquipment()"
+    [departments]="departments()"
+    [categories]="categories()"
+    [employees]="employees()"
+    (save)="onEquipmentSave($event)"
+    (close)="closeEquipmentModal()"
+    (categoryAdded)="onCategoryAdded($event)"
+  />
+
+  <!-- Categories Manage Modal -->
+  <app-equipment-categories-manage-modal
+    [isOpen]="isCategoriesManageModalOpen"
+    [categories]="categories()"
+    (close)="closeCategoriesManageModal()"
+    (categoryDeleted)="onCategoryDelete($event)"
+    (categoryUpdated)="onCategoryUpdated($event)"
+  />
 </div>

@@ -43,7 +43,7 @@ export class EmployeesByDepartmentComponent implements OnInit {
   Math = Math;
 
   ngOnInit(): void {
-    const idParam = Number(this.route.snapshot.paramMap.get('id'));
+    const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam) {
       this.error.set('Invalid department id');
       return;
@@ -55,14 +55,14 @@ export class EmployeesByDepartmentComponent implements OnInit {
     this.loadEmployees(idParam);
   }
 
-  private loadDepartment(depId: number) {
+  private loadDepartment(depId: string) {
     this.departmentService.getDepartmentById(depId).subscribe({
       next: (d) => this.department.set(d),
       error: (err: Error) => this.error.set(err.message),
     });
   }
 
-  private loadPositions(depId: number) {
+  private loadPositions(depId: string) {
     this.positionService.getPositionsByDepartmentId(depId).subscribe({
       next: (p) => this.positions.set(p),
       error: (err: Error) => this.positions.set([]),
@@ -76,7 +76,7 @@ export class EmployeesByDepartmentComponent implements OnInit {
     });
   }
 
-  loadEmployees(depId: number) {
+  loadEmployees(depId: string) {
     this.isLoading.set(true);
     this.employeeService
       .getEmployeesByDepartment(depId, this.page(), this.pageSize(), this.search())
@@ -115,9 +115,8 @@ export class EmployeesByDepartmentComponent implements OnInit {
     if (depId) this.loadEmployees(depId);
   }
 
-  private getDepId(): number | null {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    return isNaN(id) ? null : id;
+  private getDepId(): string | null {
+    return this.route.snapshot.paramMap.get('id');
   }
 
   handleAdd(payload: Omit<NewEmployeeData, 'departmentId'>) {
@@ -130,7 +129,7 @@ export class EmployeesByDepartmentComponent implements OnInit {
     });
   }
 
-  handleDelete(employeeId: number) {
+  handleDelete(employeeId: string) {
     const depId = this.getDepId();
     if (!depId) return;
     this.employeeService.deleteEmployee(employeeId).subscribe({

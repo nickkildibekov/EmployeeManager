@@ -1,0 +1,84 @@
+@if (isOpen()) {
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="stopPropagation($event)">
+    <div class="modal-header">
+      <h2>Редагувати категорії обладнання</h2>
+      <button class="modal-close" (click)="onClose()" type="button">×</button>
+    </div>
+
+    <div class="modal-body">
+      @if (displayedCategories().length === 0) {
+      <p class="empty-message">Немає категорій</p>
+      } @else {
+      <div class="categories-list">
+        @for (category of displayedCategories(); track category.id) {
+        <div class="category-item">
+          @if (editingCategoryId() === category.id) {
+          <!-- Edit mode -->
+          <div class="category-edit-form">
+            <div class="form-group">
+              <label>Назва категорії <span class="required">*</span></label>
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="editedCategoryName"
+                placeholder="Назва категорії"
+              />
+            </div>
+            <div class="form-group">
+              <label>Опис</label>
+              <input
+                type="text"
+                class="form-input"
+                [(ngModel)]="editedCategoryDescription"
+                placeholder="Опис (необов'язково)"
+              />
+            </div>
+            <div class="category-actions">
+              <button class="btn btn-success btn-sm" (click)="saveEdit(category.id)" type="button">
+                💾 Зберегти
+              </button>
+              <button class="btn btn-secondary btn-sm" (click)="cancelEdit()" type="button">
+                ✕ Скасувати
+              </button>
+            </div>
+          </div>
+          } @else {
+          <!-- View mode -->
+          <div class="category-info">
+            <div class="category-name">{{ category.name }}</div>
+            @if (category.description) {
+            <div class="category-description">{{ category.description }}</div>
+            }
+          </div>
+          <div class="category-actions">
+            <button
+              class="btn btn-primary btn-sm"
+              (click)="startEdit(category)"
+              type="button"
+              title="Редагувати категорію"
+            >
+              ✏️ Редагувати
+            </button>
+            <button
+              class="btn btn-danger btn-sm"
+              (click)="onDelete(category.id)"
+              type="button"
+              title="Видалити категорію"
+            >
+              🗑️ Видалити
+            </button>
+          </div>
+          }
+        </div>
+        }
+      </div>
+      }
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onClose()" type="button">Закрити</button>
+    </div>
+  </div>
+</div>
+}

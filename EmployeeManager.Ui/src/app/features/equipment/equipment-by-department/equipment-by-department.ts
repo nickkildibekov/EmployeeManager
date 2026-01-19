@@ -36,8 +36,8 @@ export class EquipmentByDepartmentComponent implements OnInit {
   Math = Math;
 
   ngOnInit(): void {
-    const depId = Number(this.route.snapshot.paramMap.get('id'));
-    if (!depId || isNaN(depId)) {
+    const depId = this.route.snapshot.paramMap.get('id');
+    if (!depId) {
       this.error.set('Invalid department id');
       return;
     }
@@ -52,7 +52,7 @@ export class EquipmentByDepartmentComponent implements OnInit {
     });
   }
 
-  private loadEquipment(depId: number) {
+  private loadEquipment(depId: string) {
     this.isLoading.set(true);
     const statusParam =
       this.statusFilter() === 'all'
@@ -90,29 +90,34 @@ export class EquipmentByDepartmentComponent implements OnInit {
 
   changePage(page: number) {
     this.page.set(page);
-    const depId = Number(this.route.snapshot.paramMap.get('id'));
+    const depId = this.route.snapshot.paramMap.get('id');
     if (depId) this.loadEquipment(depId);
   }
 
   onStatusChange(value: string) {
     this.statusFilter.set(value as 'all' | 'used' | 'not_used' | 'broken');
     this.page.set(1);
-    const depId = Number(this.route.snapshot.paramMap.get('id'));
+    const depId = this.route.snapshot.paramMap.get('id');
     if (depId) this.loadEquipment(depId);
   }
 
-  onDelete(eqId: number) {
+  onDelete(eqId: string) {
     this.equipmentService.deleteEquipment(eqId).subscribe({
-      next: () => {
-        const depId = Number(this.route.snapshot.paramMap.get('id'));
+      next: (response: any) => {
+        const depId = this.route.snapshot.paramMap.get('id');
         if (depId) this.loadEquipment(depId);
+        // Show appropriate message
+        if (response && response.message && response.message.includes('moved to Reserve')) {
+          // Equipment was moved to Reserve - message can be shown via toast if needed
+        }
       },
       error: (err: Error) => this.error.set(err.message),
     });
   }
 
   onAdd(payload: Omit<EquipmentCreationPayload, 'departmentId'>) {
-    const depId = Number(this.route.snapshot.paramMap.get('id'));
+    const depId = this.route.snapshot.paramMap.get('id');
+    if (!depId) return;
     const createPayload: EquipmentCreationPayload = { ...payload, departmentId: depId };
     this.equipmentService.addEquipment(createPayload).subscribe({
       next: () => this.loadEquipment(depId),
@@ -120,7 +125,7 @@ export class EquipmentByDepartmentComponent implements OnInit {
     });
   }
 
-  onEquipmentSelected(eqId: number) {
+  onEquipmentSelected(eqId: string) {
     this.router.navigate(['/equipment', eqId]);
   }
 }

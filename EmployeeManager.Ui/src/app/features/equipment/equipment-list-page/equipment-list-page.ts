@@ -17,22 +17,27 @@ import { DialogService } from '../../../shared/services/dialog.service';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { EquipmentService } from '../equipment.service';
 import { DepartmentService } from '../../departments/department.service';
+import { EmployeeService } from '../../employees/employee.service';
+import { EquipmentModalComponent } from '../equipment-modal/equipment-modal.component';
+import { EquipmentCategoriesManageModalComponent } from '../equipment-categories-manage-modal/equipment-categories-manage-modal.component';
 import { Equipment } from '../../../shared/models/equipment.model';
 import { Department } from '../../../shared/models/department.model';
 import { EquipmentCategory } from '../../../shared/models/equipmentCategory.model';
-import { EquipmentCreationPayload } from '../../../shared/models/payloads';
+import { Employee } from '../../../shared/models/employee.model';
+import { EquipmentCreationPayload, EquipmentUpdatePayload } from '../../../shared/models/payloads';
 import { SkeletonLoaderComponent } from '../../../shared/components/skeleton-loader/skeleton-loader';
 
 @Component({
   selector: 'app-equipment-list-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLoaderComponent],
+  imports: [CommonModule, FormsModule, SkeletonLoaderComponent, EquipmentModalComponent, EquipmentCategoriesManageModalComponent],
   templateUrl: './equipment-list-page.html',
   styleUrls: ['./equipment-list-page.css'],
 })
 export class EquipmentListPageComponent implements OnInit {
   private equipmentService = inject(EquipmentService);
   private departmentService = inject(DepartmentService);
+  private employeeService = inject(EmployeeService);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
   private navigationService = inject(NavigationService);
@@ -44,9 +49,10 @@ export class EquipmentListPageComponent implements OnInit {
   equipment = signal<Equipment[]>([]);
   departments = signal<Department[]>([]);
   categories = signal<EquipmentCategory[]>([]);
+  employees = signal<Employee[]>([]);
 
-  selectedDepartmentId = signal<number | null>(null);
-  selectedCategoryId = signal<number | null>(null);
+  selectedDepartmentId = signal<string | null>(null);
+  selectedCategoryId = signal<string | null>(null);
   statusFilter = signal<'all' | 'used' | 'not_used' | 'broken'>('all');
   searchTerm = signal('');
   page = signal(1);
@@ -59,27 +65,14 @@ export class EquipmentListPageComponent implements OnInit {
 
   isLoading = signal(false);
   error = signal('');
-  isAddFormVisible = signal(false);
-  isAddingNewCategory = signal(false);
-  newCategoryName = signal('');
-  newCategoryDescription = signal('');
-
-  newEquipment = signal<EquipmentCreationPayload>({
-    name: '',
-    serialNumber: '',
-    purchaseDate: '',
-    status: 'Used',
-    measurement: 'Unit',
-    amount: 1,
-    description: '',
-    categoryId: null,
-    departmentId: null,
-  });
+  isEquipmentModalOpen = signal(false);
+  selectedEquipment = signal<Equipment | null>(null);
+  isCategoriesManageModalOpen = signal(false);
 
   Math = Math;
 
   // Image modal state
-  imageItems = signal<{ src: string; name: string; id: number }[]>([]);
+  imageItems = signal<{ src: string; name: string; id: string }[]>([]);
   selectedImageIndex = signal<number>(0);
   selectedImage = computed(() => {
     const items = this.imageItems();
@@ -90,6 +83,7 @@ export class EquipmentListPageComponent implements OnInit {
   ngOnInit(): void {
     this.loadDepartments();
     this.loadCategories();
+    this.loadEmployees();
     this.loadEquipment();
 
     // Setup debounced search
@@ -126,6 +120,17 @@ export class EquipmentListPageComponent implements OnInit {
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
+  private loadEmployees() {
+    const sub = this.employeeService.getEmployeesByDepartment('', 1, 1000, '', null, '', 'asc').subscribe({
+      next: (res) => this.employees.set(res.items),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
   loadEquipment() {
     this.isLoading.set(true);
     const statusParam =
@@ -138,7 +143,7 @@ export class EquipmentListPageComponent implements OnInit {
         : 'Broken';
     const sub = this.equipmentService
       .getEquipmentByDepartment(
-        this.selectedDepartmentId() || 0,
+        this.selectedDepartmentId(),
         this.page(),
         this.pageSize(),
         this.searchTerm(),
@@ -167,14 +172,14 @@ export class EquipmentListPageComponent implements OnInit {
   }
 
   onDepartmentChange(depId: string) {
-    const id = depId ? parseInt(depId, 10) : null;
+    const id = depId || null;
     this.selectedDepartmentId.set(id);
     this.page.set(1);
     this.loadEquipment();
   }
 
   onCategoryChange(catId: string) {
-    const id = catId ? parseInt(catId, 10) : null;
+    const id = catId || null;
     this.selectedCategoryId.set(id);
     this.page.set(1);
     this.loadEquipment();
@@ -206,148 +211,56 @@ export class EquipmentListPageComponent implements OnInit {
     this.loadEquipment();
   }
 
-  toggleAddForm() {
-    this.isAddFormVisible.update((v) => !v);
+  openEquipmentModal() {
+    this.selectedEquipment.set(null);
+    this.isEquipmentModalOpen.set(true);
   }
 
-  toggleAddNewCategory() {
-    this.isAddingNewCategory.update((val) => !val);
-    if (this.isAddingNewCategory()) {
-      this.newEquipment().categoryId = null;
-    }
-    this.newCategoryName.set('');
-    this.newCategoryDescription.set('');
+  editEquipment(equipment: Equipment) {
+    this.selectedEquipment.set(equipment);
+    this.isEquipmentModalOpen.set(true);
   }
 
-  async createAndSelectCategory() {
-    const name = this.newCategoryName().trim();
-    if (!name) {
-      this.toastService.error('Назва категорії обов\'язкова');
-      return;
-    }
-
-    try {
-      const newCategory = await this.equipmentService
-        .createCategory(name, this.newCategoryDescription())
-        .toPromise();
-
-      if (newCategory) {
-        this.categories.update((cats) => [...cats, newCategory]);
-        this.newEquipment().categoryId = newCategory.id;
-        this.isAddingNewCategory.set(false);
-        this.newCategoryName.set('');
-        this.newCategoryDescription.set('');
-        this.toastService.success('Категорію успішно створено');
-      }
-    } catch (err: any) {
-      this.error.set(err.message);
-      this.toastService.error(err.message);
-    }
+  closeEquipmentModal() {
+    this.isEquipmentModalOpen.set(false);
+    this.selectedEquipment.set(null);
   }
 
-  cancelAdd() {
-    this.resetForm();
-    this.isAddFormVisible.set(false);
+  onCategoryAdded(newCategory: EquipmentCategory) {
+    this.categories.update((cats) => [...cats, newCategory]);
   }
 
-  resetForm() {
-    this.newEquipment.set({
-      name: '',
-      serialNumber: '',
-      purchaseDate: '',
-      status: 'Used',
-      measurement: 'Unit',
-      amount: 1,
-      description: '',
-      categoryId: null,
-      departmentId: null,
-      imageData: undefined,
-    });
-  }
-
-  onImageSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      this.toastService.error('Розмір зображення не повинен перевищувати 2 МБ');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      this.newEquipment().imageData = result; // Base64-encoded image
-      this.toastService.success('Зображення вибрано');
-    };
-    reader.onerror = () => {
-      this.toastService.error('Не вдалося прочитати файл зображення');
-    };
-    reader.readAsDataURL(file);
-  }
-
-  clearImage() {
-    this.newEquipment().imageData = undefined;
-  }
-
-  onMeasurementChange(measurement: 'Unit' | 'Meter' | 'Liter') {
-    // Set default amount based on measurement type
-    if (measurement === 'Unit') {
-      // Coerce to integer >= 1
-      const current = Number(this.newEquipment().amount || 1);
-      this.newEquipment().amount = Math.max(1, Math.floor(current));
-    } else if (measurement === 'Meter') {
-      // Round to 2 decimals, min 0.01
-      const current = Number(this.newEquipment().amount || 1);
-      this.newEquipment().amount = Math.max(0.01, Math.round(current * 100) / 100);
-    } else if (measurement === 'Liter') {
-      const current = Number(this.newEquipment().amount || 1);
-      this.newEquipment().amount = Math.max(0.01, Math.round(current * 100) / 100);
-    }
-  }
-
-  onAmountInput(event: Event) {
-    const input = event.target as HTMLInputElement;
-    let val = Number(input.value);
-    if (!isFinite(val)) {
-      val = this.newEquipment().measurement === 'Unit' ? 1 : 0.01;
-    }
-    if (this.newEquipment().measurement === 'Unit') {
-      // Integers only, min 1
-      val = Math.max(1, Math.floor(val));
-    } else {
-      // Two decimals, min 0.01
-      val = Math.max(0.01, Math.round(val * 100) / 100);
-    }
-    this.newEquipment().amount = val;
-  }
-
-  isFormValid(): boolean {
-    const eq = this.newEquipment();
-    return !!(
-      eq.name.trim() &&
-      eq.departmentId !== null &&
-      eq.categoryId !== null &&
-      eq.purchaseDate &&
-      !!eq.status
+  onCategoryUpdated(updatedCategory: EquipmentCategory) {
+    this.categories.update((cats) =>
+      cats.map((c) => (c.id === updatedCategory.id ? updatedCategory : c))
     );
+    // Reload equipment to refresh filters
+    this.loadEquipment();
   }
 
-  addEquipment() {
-    if (!this.isFormValid()) return;
+  openCategoriesManageModal() {
+    this.isCategoriesManageModalOpen.set(true);
+  }
 
-    const eq = this.newEquipment();
-    this.equipmentService.addEquipment(eq).subscribe({
+  closeCategoriesManageModal() {
+    this.isCategoriesManageModalOpen.set(false);
+  }
+
+  async onCategoryDelete(categoryId: string): Promise<void> {
+    const category = this.categories().find((c) => c.id === categoryId);
+    if (!category) return;
+
+    const confirmed = await this.dialogService.confirm(
+      `Ви впевнені, що хочете видалити категорію "${category.name}"?`
+    );
+    if (!confirmed) return;
+
+    this.equipmentService.deleteCategory(categoryId).subscribe({
       next: () => {
-        this.resetForm();
-        this.isAddFormVisible.set(false);
-        this.page.set(1);
-        this.selectedDepartmentId.set(null);
-        this.selectedCategoryId.set(null);
+        this.categories.update((cats) => cats.filter((c) => c.id !== categoryId));
+        this.toastService.success('Категорію успішно видалено');
+        // Reload equipment to refresh filters
         this.loadEquipment();
-        this.toastService.success('Обладнання успішно створено');
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -356,16 +269,66 @@ export class EquipmentListPageComponent implements OnInit {
     });
   }
 
-  async deleteEquipment(id: number): Promise<void> {
+  onEquipmentSave(equipmentData: EquipmentCreationPayload | EquipmentUpdatePayload) {
+    if ('id' in equipmentData) {
+      // Update
+      this.equipmentService.updateEquipment(equipmentData as EquipmentUpdatePayload).subscribe({
+        next: () => {
+          this.closeEquipmentModal();
+          this.loadEquipment();
+          this.toastService.success('Обладнання успішно оновлено');
+        },
+        error: (err: Error) => {
+          this.error.set(err.message);
+          this.toastService.error(err.message);
+        },
+      });
+    } else {
+      // Create
+      this.equipmentService.addEquipment(equipmentData).subscribe({
+        next: () => {
+          this.closeEquipmentModal();
+          this.page.set(1);
+          this.selectedDepartmentId.set(null);
+          this.selectedCategoryId.set(null);
+          this.loadEquipment();
+          this.toastService.success('Обладнання успішно створено');
+        },
+        error: (err: Error) => {
+          this.error.set(err.message);
+          this.toastService.error(err.message);
+        },
+      });
+    }
+  }
+
+  async deleteEquipment(id: string): Promise<void> {
     const confirmed = await this.dialogService.confirm(
       'Ви впевнені, що хочете видалити це обладнання?'
     );
     if (!confirmed) return;
 
     this.equipmentService.deleteEquipment(id).subscribe({
-      next: () => {
+      next: (response: any) => {
+        // Reset filters to show all equipment after deletion
+        this.selectedDepartmentId.set(null);
+        this.selectedCategoryId.set(null);
+        this.statusFilter.set('all');
+        this.searchTerm.set('');
+        this.page.set(1);
+        
         this.loadEquipment();
-        this.toastService.success('Обладнання успішно видалено');
+        // Check if equipment was moved to Reserve or deleted
+        // If response is null, equipment was deleted (204 NoContent)
+        // If response has message, equipment was moved to Reserve (200 OK)
+        if (response && response.message && response.message.includes('moved to Reserve')) {
+          this.toastService.success('Обладнання переміщено до відділу Резерв');
+        } else if (response === null) {
+          this.toastService.success('Обладнання успішно видалено');
+        } else {
+          // Fallback message
+          this.toastService.success('Операція виконана успішно');
+        }
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -373,11 +336,11 @@ export class EquipmentListPageComponent implements OnInit {
       },
     });
   }
-  openEquipment(id: number) {
+  openEquipment(id: string) {
     this.router.navigate(['/equipment', id]);
   }
 
-  getDepartmentName(depId: number | null): string {
+  getDepartmentName(depId: string | null): string {
     if (!depId) return 'Склад';
     const dep = this.departments().find((d) => d.id === depId);
     return dep ? dep.name : 'Невідомо';

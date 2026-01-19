@@ -3,7 +3,7 @@ import { Equipment } from './equipment.model';
 import { Position } from './position.model';
 
 export interface Department {
-  id: number;
+  id: string;
   name: string;
   positions: Position[];
   employees: Employee[];

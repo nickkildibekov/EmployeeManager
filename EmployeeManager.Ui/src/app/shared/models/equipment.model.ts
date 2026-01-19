@@ -1,5 +1,5 @@
 export interface Equipment {
-  id: number;
+  id: string;
   name: string;
   serialNumber?: string;
   purchaseDate: string;
@@ -7,9 +7,11 @@ export interface Equipment {
   measurement: 'Unit' | 'Meter' | 'Liter';
   amount: number;
   description: string;
-  categoryId: number;
+  categoryId: string;
   categoryName: string;
-  departmentId: number | null;
+  departmentId: string | null;
   departmentName: string | null;
   imageData?: string; // Base64-encoded image
+  responsibleEmployeeId?: string | null;
+  responsibleEmployeeName?: string | null;
 }

@@ -1,0 +1,241 @@
+@if (isOpen()) {
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="stopPropagation($event)">
+    <div class="modal-header">
+      <h2>{{ isEditMode() ? 'Редагувати обладнання' : 'Додати обладнання' }}</h2>
+      <button class="modal-close" (click)="onClose()" aria-label="Close">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Row 1: Name | Serial | Description -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Назва обладнання <span class="required">*</span></label>
+          <input
+            type="text"
+            [ngModel]="editedEquipment().name"
+            (ngModelChange)="onNameChange($event)"
+            class="form-input"
+            placeholder="Введіть назву обладнання"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Серійний номер</label>
+          <input
+            type="text"
+            [ngModel]="editedEquipment().serialNumber"
+            (ngModelChange)="onSerialNumberChange($event)"
+            class="form-input"
+            placeholder="Серійний номер (необов'язково)"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Опис</label>
+          <input
+            type="text"
+            [ngModel]="editedEquipment().description"
+            (ngModelChange)="onDescriptionChange($event)"
+            class="form-input"
+            placeholder="Введіть опис"
+          />
+        </div>
+      </div>
+
+      <!-- Row 2: Purchase Date | Department | Category -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Дата покупки <span class="required">*</span></label>
+          <input
+            type="date"
+            [value]="editedEquipment().purchaseDate"
+            (input)="onPurchaseDateChange($event)"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-group">
+          <label>Відділ</label>
+          <select
+            [ngModel]="editedEquipment().departmentId"
+            (ngModelChange)="onDepartmentChange($event)"
+            class="form-input"
+          >
+            <option [ngValue]="null">Резерв</option>
+            @for (dep of departments; track dep.id) {
+            <option [ngValue]="dep.id">{{ getDepartmentDisplayName(dep.name) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Категорія <span class="required">*</span></label>
+          <select
+            [ngModel]="editedEquipment().categoryId"
+            (ngModelChange)="onCategoryChange($event)"
+            class="form-input"
+          >
+            <option [ngValue]="" disabled>Оберіть категорію</option>
+            @for (cat of categories; track cat.id) {
+            <option [ngValue]="cat.id">{{ cat.name }}</option>
+            }
+            <option [ngValue]="'-1'" class="add-category-option">+ Додати</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 3: Status | Measurement | Amount -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Статус</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="status"
+                [value]="'Used'"
+                [ngModel]="editedEquipment().status"
+                (ngModelChange)="onStatusChange('Used')"
+              />
+              Використовується
+            </label>
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="status"
+                [value]="'NotUsed'"
+                [ngModel]="editedEquipment().status"
+                (ngModelChange)="onStatusChange('NotUsed')"
+              />
+              Не використовується
+            </label>
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="status"
+                [value]="'Broken'"
+                [ngModel]="editedEquipment().status"
+                (ngModelChange)="onStatusChange('Broken')"
+              />
+              Пошкоджено
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Одиниця виміру</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="measurement"
+                [value]="'Unit'"
+                [ngModel]="editedEquipment().measurement"
+                (ngModelChange)="onMeasurementChange('Unit')"
+              />
+              Штука
+            </label>
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="measurement"
+                [value]="'Meter'"
+                [ngModel]="editedEquipment().measurement"
+                (ngModelChange)="onMeasurementChange('Meter')"
+              />
+              Метр
+            </label>
+            <label class="radio-option">
+              <input
+                type="radio"
+                name="measurement"
+                [value]="'Liter'"
+                [ngModel]="editedEquipment().measurement"
+                (ngModelChange)="onMeasurementChange('Liter')"
+              />
+              Літр
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>
+            Кількість <span class="required">*</span>
+            <span class="unit-hint">
+              ({{
+                editedEquipment().measurement === 'Unit'
+                  ? 'Штука'
+                  : editedEquipment().measurement === 'Meter'
+                  ? 'м'
+                  : 'л'
+              }})
+            </span>
+          </label>
+          <input
+            type="number"
+            [ngModel]="editedEquipment().amount"
+            (ngModelChange)="onAmountChange($event)"
+            [step]="editedEquipment().measurement === 'Unit' ? 1 : 0.01"
+            [min]="editedEquipment().measurement === 'Unit' ? 1 : 0.01"
+            class="form-input"
+            placeholder="Кількість"
+          />
+        </div>
+      </div>
+
+      <!-- Row 4: Responsible Employee -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Відповідальний співробітник</label>
+          <select
+            [ngModel]="editedEquipment().responsibleEmployeeId"
+            (ngModelChange)="onResponsibleEmployeeChange($event)"
+            class="form-input"
+          >
+            <option [ngValue]="null">Не призначено</option>
+            @for (emp of employees; track emp.id) {
+            <option [ngValue]="emp.id">{{ emp.callSign || 'Не вказано' }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Row 5: Image Upload -->
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label>Зображення обладнання (необов'язково)</label>
+          <input
+            type="file"
+            accept="image/*"
+            class="form-input"
+            (change)="onImageSelected($event)"
+          />
+          @if (imagePreview()) {
+          <div class="image-preview">
+            <img [src]="imagePreview()" alt="Попередній перегляд" class="preview-img" />
+            <button type="button" class="btn btn-sm btn-secondary" (click)="clearImage()">
+              Видалити зображення
+            </button>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onClose()">Скасувати</button>
+      <button class="btn btn-primary" (click)="onSave()" [disabled]="!isFormValid()">
+        {{ isEditMode() ? 'Зберегти' : 'Додати' }}
+      </button>
+    </div>
+  </div>
+</div>
+}
+
+<!-- Equipment Category Modal -->
+<app-equipment-category-modal
+  [isOpen]="isCategoryModalOpen"
+  (save)="onCategorySave($event)"
+  (close)="closeCategoryModal()"
+/>

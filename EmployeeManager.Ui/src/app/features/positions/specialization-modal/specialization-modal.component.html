@@ -1,0 +1,30 @@
+@if (isOpen()) {
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-content" (click)="stopPropagation($event)">
+    <div class="modal-header">
+      <h3>Додати спеціальність</h3>
+      <button class="close-btn" (click)="onClose()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Назва спеціальності <span class="required">*</span></label>
+        <input
+          type="text"
+          [ngModel]="name()"
+          (ngModelChange)="name.set($event)"
+          class="form-input"
+          placeholder="Введіть назву спеціальності"
+        />
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onClose()">Скасувати</button>
+      <button class="btn btn-primary" (click)="onSave()" [disabled]="!isFormValid()">
+        Додати
+      </button>
+    </div>
+  </div>
+</div>
+}

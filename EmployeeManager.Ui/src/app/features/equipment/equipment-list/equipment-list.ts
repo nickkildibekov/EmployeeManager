@@ -8,8 +8,8 @@ interface NewEquipmentData {
   serialNumber: string;
   purchaseDate: string;
   status: 'Used' | 'NotUsed' | 'Broken';
-  categoryId: number | null;
-  departmentId: number | null;
+  categoryId: string | null;
+  departmentId: string | null;
 }
 
 @Component({
@@ -35,5 +35,5 @@ export class EquipmentListComponent {
   });
 
   onEquipmentAdded = output<NewEquipmentData>();
-  onEquipmentDeleted = output<number>();
+  onEquipmentDeleted = output<string>();
 }

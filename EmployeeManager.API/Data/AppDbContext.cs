@@ -9,6 +9,18 @@ namespace EmployeeManager.API.Data
         {
         }
 
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            if (!optionsBuilder.IsConfigured)
+            {
+                return;
+            }
+
+            // Suppress pending model changes warning - migrations are handled manually
+            optionsBuilder.ConfigureWarnings(warnings =>
+                warnings.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+        }
+
         public DbSet<Employee> Employees => Set<Employee>();
         public DbSet<Position> Positions => Set<Position>();
         public DbSet<Department> Departments => Set<Department>();
@@ -22,6 +34,35 @@ namespace EmployeeManager.API.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Configure GUID generation for all entities
+            modelBuilder.Entity<Department>()
+                .Property(d => d.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Employee>()
+                .Property(e => e.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Equipment>()
+                .Property(e => e.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Position>()
+                .Property(p => p.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<Specialization>()
+                .Property(s => s.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<EquipmentCategory>()
+                .Property(c => c.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<ScheduleEntry>()
+                .Property(s => s.Id)
+                .ValueGeneratedOnAdd();
 
             modelBuilder.Entity<DepartmentPosition>()
                 .HasKey(dp => new { dp.DepartmentId, dp.PositionId });
@@ -67,6 +108,22 @@ namespace EmployeeManager.API.Data
                 .HasForeignKey(e => e.CategoryId)
                 .IsRequired() 
                 .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Equipment>()
+                .HasOne(e => e.ResponsibleEmployee)
+                .WithMany()
+                .HasForeignKey(e => e.ResponsibleEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configure decimal precision for Equipment.Amount
+            modelBuilder.Entity<Equipment>()
+                .Property(e => e.Amount)
+                .HasPrecision(18, 2);
+
+            // Configure decimal precision for ScheduleEntry.Hours
+            modelBuilder.Entity<ScheduleEntry>()
+                .Property(s => s.Hours)
+                .HasPrecision(18, 2);
 
         }
     }

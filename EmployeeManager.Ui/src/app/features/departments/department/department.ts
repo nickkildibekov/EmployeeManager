@@ -9,6 +9,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { DialogService } from '../../../shared/services/dialog.service';
 import { Department } from '../../../shared/models/department.model';
 import { DepartmentUpdateDTO } from '../../../shared/models/payloads';
+import { getPositionDisplayName } from '../../../shared/utils/display.utils';
 
 import { DepartmentService } from '../department.service';
 
@@ -29,16 +30,17 @@ export class DepartmentComponent implements OnInit {
   private dialogService = inject(DialogService);
 
   department = signal<Department | undefined>(undefined);
-  editedDepartment = signal<DepartmentUpdateDTO>({ id: 0, name: '' });
+  editedDepartment = signal<DepartmentUpdateDTO>({ id: '', name: '' });
 
   isFetching = signal(false);
   isSaving = signal(false);
   isEditMode = signal(false);
   isDeleting = signal(false);
   error = signal('');
-  selectedPositionId = signal<number | null>(null);
+  selectedPositionId = signal<string | null>(null);
 
-  departmentId: number | undefined;
+  departmentId: string | undefined;
+
 
   // Computed properties for display
   positionsList = computed(() => {
@@ -49,7 +51,7 @@ export class DepartmentComponent implements OnInit {
       const empCount = dept.employees?.filter((e) => e.positionId === pos.id).length || 0;
       return {
         id: pos.id,
-        name: pos.title,
+        name: getPositionDisplayName(pos.title),
         count: empCount,
       };
     });
@@ -62,8 +64,8 @@ export class DepartmentComponent implements OnInit {
     let employees = dept.employees.map((emp) => {
       return {
         id: emp.id,
-        fullName: `${emp.firstName} ${emp.lastName}`,
-        position: emp.positionName || 'Не вказано',
+        fullName: emp.callSign || 'Не вказано',
+        position: getPositionDisplayName(emp.positionName),
         positionId: emp.positionId,
       };
     });
@@ -81,24 +83,21 @@ export class DepartmentComponent implements OnInit {
     const dept = this.department();
     if (!dept || !dept.equipments) return [];
 
-    // Group equipment by name and count operational/non-operational status
+    // Group equipment by name and count total quantity, check for broken status
     const groupedMap = new Map<
       string,
-      { count: number; firstId: number; operational: number; nonOperational: number }
+      { count: number; firstId: string; hasBroken: boolean }
     >();
     dept.equipments.forEach((eq) => {
-      const isOperational = eq.status === 'Used';
       const existing = groupedMap.get(eq.name) || {
         count: 0,
         firstId: eq.id,
-        operational: 0,
-        nonOperational: 0,
+        hasBroken: false,
       };
       groupedMap.set(eq.name, {
         count: existing.count + 1,
         firstId: existing.firstId,
-        operational: existing.operational + (isOperational ? 1 : 0),
-        nonOperational: existing.nonOperational + (isOperational ? 0 : 1),
+        hasBroken: existing.hasBroken || eq.status === 'Broken',
       });
     });
 
@@ -106,9 +105,7 @@ export class DepartmentComponent implements OnInit {
       id: data.firstId,
       name,
       count: data.count,
-      operational: data.operational,
-      nonOperational: data.nonOperational,
-      statusText: `${data.operational} ${this.getOperationalText(data.operational)}, ${data.nonOperational} ${this.getNonOperationalText(data.nonOperational)}`,
+      hasBroken: data.hasBroken,
     }));
   });
 
@@ -116,10 +113,9 @@ export class DepartmentComponent implements OnInit {
     const subscription = this.route.paramMap
       .pipe(
         switchMap((params) => {
-          const idParam = params.get('id');
-          const id = idParam ? +idParam : undefined;
+          const id = params.get('id');
 
-          if (!id || isNaN(id)) {
+          if (!id) {
             const errorMsg = 'ID відділу відсутній або недійсний!';
             this.error.set(errorMsg);
             this.toastService.error(errorMsg);
@@ -152,6 +148,7 @@ export class DepartmentComponent implements OnInit {
       subscription.unsubscribe();
     });
   }
+
 
   toggleEditMode(): void {
     this.isEditMode.update((val) => !val);
@@ -201,7 +198,7 @@ export class DepartmentComponent implements OnInit {
     this.navigationService.goBack('/departments');
   }
 
-  togglePositionFilter(positionId: number, event: Event): void {
+  togglePositionFilter(positionId: string, event: Event): void {
     event.stopPropagation();
     const currentSelected = this.selectedPositionId();
     if (currentSelected === positionId) {
@@ -213,16 +210,24 @@ export class DepartmentComponent implements OnInit {
     }
   }
 
-  navigateToPosition(positionId: number): void {
+  navigateToPosition(positionId: string): void {
     this.router.navigate(['/positions', positionId]);
   }
 
-  navigateToEmployee(employeeId: number): void {
+  navigateToEmployee(employeeId: string): void {
     this.router.navigate(['/employees', employeeId]);
   }
 
-  navigateToEquipment(equipmentId: number): void {
+
+  navigateToEquipment(equipmentId: string): void {
     this.router.navigate(['/equipment', equipmentId]);
+  }
+
+  // Check if current department is Reserve (cannot be deleted)
+  isReserveDepartment(): boolean {
+    const dept = this.department();
+    if (!dept) return false;
+    return dept.name === 'Reserve' || dept.name === 'Резерв' || dept.name === 'Global Reserve';
   }
 
   async deleteDepartment(): Promise<void> {
@@ -237,7 +242,7 @@ export class DepartmentComponent implements OnInit {
     if (employeeCount > 0 || equipmentCount > 0) {
       const parts: string[] = [];
       if (employeeCount > 0) {
-        parts.push(`${employeeCount} ${this.getEmployeeCountText(employeeCount)} буде переміщено до Резерву (DepartmentId буде встановлено як null)`);
+        parts.push(`${employeeCount} ${this.getEmployeeCountText(employeeCount)} буде переміщено до Резерву`);
       }
       if (equipmentCount > 0) {
         parts.push(`${equipmentCount} ${this.getEquipmentCountText(equipmentCount)} обладнання буде переміщено до Складу (DepartmentId буде встановлено як null)`);
@@ -293,23 +298,4 @@ export class DepartmentComponent implements OnInit {
     }
   }
 
-  getOperationalText(count: number): string {
-    if (count % 10 === 1 && count % 100 !== 11) {
-      return 'працює';
-    } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
-      return 'працюють';
-    } else {
-      return 'працюють';
-    }
-  }
-
-  getNonOperationalText(count: number): string {
-    if (count % 10 === 1 && count % 100 !== 11) {
-      return 'не працює';
-    } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
-      return 'не працюють';
-    } else {
-      return 'не працюють';
-    }
-  }
 }

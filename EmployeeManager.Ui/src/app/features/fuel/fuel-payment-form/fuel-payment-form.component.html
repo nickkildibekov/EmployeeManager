@@ -1,0 +1,158 @@
+<div class="fuel-payment-form">
+  <h3>Внесення даних про паливо</h3>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Department, Responsible Employee, Equipment in one row -->
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>Підрозділ <span class="required">*</span></label>
+        <select formControlName="departmentId" class="form-input">
+          <option value="">Оберіть підрозділ</option>
+          @for (dept of departments(); track dept.id) {
+          <option [value]="dept.id">{{ dept.name }}</option>
+          }
+        </select>
+        @if (form.get('departmentId')?.invalid && form.get('departmentId')?.touched) {
+        <span class="error">Підрозділ обов'язковий</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Відповідальна особа</label>
+        <select formControlName="responsibleEmployeeId" class="form-input">
+          <option [value]="null">Не призначено</option>
+          @for (emp of employees(); track emp.id) {
+          <option [value]="emp.id">{{ emp.callSign || (emp.firstName + ' ' + emp.lastName) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Обладнання <span class="required">*</span></label>
+        <select formControlName="equipmentId" class="form-input" [disabled]="!form.get('departmentId')?.value || isLoadingEquipment()">
+          <option value="">Оберіть обладнання</option>
+          @if (isLoadingEquipment()) {
+          <option disabled>Завантаження...</option>
+          } @else {
+          @for (equipment of equipmentList(); track equipment.id) {
+          <option [value]="equipment.id">{{ equipment.name }}</option>
+          }
+          }
+        </select>
+        @if (form.get('equipmentId')?.invalid && form.get('equipmentId')?.touched) {
+        <span class="error">Обладнання обов'язкове</span>
+        }
+      </div>
+    </div>
+
+    <!-- Entry Date -->
+    <div class="form-group">
+      <label>Дата внесення <span class="required">*</span></label>
+      <input
+        type="date"
+        formControlName="entryDate"
+        class="form-input"
+      />
+      @if (form.get('entryDate')?.invalid && form.get('entryDate')?.touched) {
+      <span class="error">Дата внесення обов'язкова</span>
+      }
+    </div>
+
+    <!-- Mileage: Previous, Current, Price, Fuel Type, Total in one row -->
+    <div class="form-row-5">
+      <div class="form-group">
+        <label>Попередній пробіг <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="previousMileage"
+          step="0.01"
+          class="form-input"
+          placeholder="0.00"
+        />
+        @if (form.get('previousMileage')?.invalid && form.get('previousMileage')?.touched) {
+        <span class="error">Попередній пробіг обов'язковий</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Поточний пробіг <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="currentMileage"
+          step="0.01"
+          class="form-input"
+          placeholder="0.00"
+        />
+        @if (form.get('currentMileage')?.invalid && form.get('currentMileage')?.touched) {
+        <span class="error">Поточний пробіг обов'язковий</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Ціна за літр <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="pricePerLiter"
+          step="0.01"
+          min="0.01"
+          class="form-input"
+          placeholder="0.00"
+        />
+        @if (form.get('pricePerLiter')?.invalid && form.get('pricePerLiter')?.touched) {
+        <span class="error">Ціна за літр обов'язкова та має бути більше 0</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Тип палива <span class="required">*</span></label>
+        <select formControlName="fuelType" class="form-input">
+          <option [value]="1">Бензин</option>
+          <option [value]="2">Дізель</option>
+        </select>
+        @if (form.get('fuelType')?.invalid && form.get('fuelType')?.touched) {
+        <span class="error">Тип палива обов'язковий</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Загальна сума</label>
+        <input
+          type="number"
+          formControlName="totalAmount"
+          class="form-input"
+          readonly
+          [value]="totalAmount()"
+        />
+        <small class="hint">Розраховується автоматично ({{ getMileageDifference().toFixed(2) }} км × {{ form.get('pricePerLiter')?.value || 0 }} грн/л)</small>
+      </div>
+    </div>
+
+    <!-- Odometer Image Upload -->
+    <div class="form-group">
+      <label>Фото спідометра (необов'язково)</label>
+      <input
+        type="file"
+        accept="image/*"
+        (change)="onOdometerImageSelected($event)"
+        class="form-input"
+      />
+      @if (odometerImagePreview()) {
+      <div class="image-preview">
+        <img [src]="odometerImagePreview()!" alt="Odometer preview" />
+        <button type="button" (click)="clearOdometerImage()" class="btn-remove-image">×</button>
+      </div>
+      }
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-actions">
+      <button type="submit" [disabled]="isSubmitting() || form.invalid" class="btn btn-primary">
+        @if (isSubmitting()) {
+        Збереження...
+        } @else {
+        Зберегти
+        }
+      </button>
+    </div>
+  </form>
+</div>

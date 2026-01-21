@@ -4,6 +4,7 @@ using EmployeeManager.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace EmployeeManager.API.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260119165606_AddPricePerUnitNightToUtilityPayment")]
+    partial class AddPricePerUnitNightToUtilityPayment
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -175,60 +178,6 @@ namespace EmployeeManager.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("EquipmentCategories");
-                });
-
-            modelBuilder.Entity("EmployeeManager.API.Models.FuelPayment", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("CurrentMileage")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<Guid>("DepartmentId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("EntryDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("EquipmentId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("FuelType")
-                        .HasColumnType("int");
-
-                    b.Property<string>("OdometerImageUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("PreviousMileage")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("PricePerLiter")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<Guid?>("ResponsibleEmployeeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("TotalAmount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DepartmentId");
-
-                    b.HasIndex("EquipmentId");
-
-                    b.HasIndex("ResponsibleEmployeeId");
-
-                    b.ToTable("FuelPayments");
                 });
 
             modelBuilder.Entity("EmployeeManager.API.Models.Position", b =>
@@ -418,32 +367,6 @@ namespace EmployeeManager.API.Migrations
                     b.Navigation("Category");
 
                     b.Navigation("Department");
-
-                    b.Navigation("ResponsibleEmployee");
-                });
-
-            modelBuilder.Entity("EmployeeManager.API.Models.FuelPayment", b =>
-                {
-                    b.HasOne("EmployeeManager.API.Models.Department", "Department")
-                        .WithMany()
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("EmployeeManager.API.Models.Equipment", "Equipment")
-                        .WithMany()
-                        .HasForeignKey("EquipmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("EmployeeManager.API.Models.Employee", "ResponsibleEmployee")
-                        .WithMany()
-                        .HasForeignKey("ResponsibleEmployeeId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("Department");
-
-                    b.Navigation("Equipment");
 
                     b.Navigation("ResponsibleEmployee");
                 });

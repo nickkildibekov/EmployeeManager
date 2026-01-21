@@ -75,5 +75,12 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/equipment/equipment/equipment').then((m) => m.Equipment),
   },
+  {
+    path: 'utilities',
+    loadComponent: () =>
+      import('./features/utilities/utilities-page/utilities-page.component').then(
+        (m) => m.UtilitiesPageComponent
+      ),
+  },
   { path: '**', redirectTo: 'home' },
 ];

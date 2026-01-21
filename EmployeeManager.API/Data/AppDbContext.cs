@@ -28,6 +28,8 @@ namespace EmployeeManager.API.Data
         public DbSet<EquipmentCategory> EquipmentCategories => Set<EquipmentCategory>();
         public DbSet<ScheduleEntry> ScheduleEntries => Set<ScheduleEntry>();
         public DbSet<Specialization> Specializations => Set<Specialization>();
+        public DbSet<UtilityPayment> UtilityPayments => Set<UtilityPayment>();
+        public DbSet<FuelPayment> FuelPayments => Set<FuelPayment>();
 
         public DbSet<DepartmentPosition> DepartmentPositions => Set<DepartmentPosition>();
 
@@ -123,6 +125,84 @@ namespace EmployeeManager.API.Data
             // Configure decimal precision for ScheduleEntry.Hours
             modelBuilder.Entity<ScheduleEntry>()
                 .Property(s => s.Hours)
+                .HasPrecision(18, 2);
+
+            // Configure UtilityPayment
+            modelBuilder.Entity<UtilityPayment>()
+                .Property(u => u.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<UtilityPayment>()
+                .HasOne(u => u.Department)
+                .WithMany()
+                .HasForeignKey(u => u.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UtilityPayment>()
+                .HasOne(u => u.ResponsibleEmployee)
+                .WithMany()
+                .HasForeignKey(u => u.ResponsibleEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Configure decimal precision for UtilityPayment
+            modelBuilder.Entity<UtilityPayment>()
+                .Property(u => u.PreviousValue)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<UtilityPayment>()
+                .Property(u => u.CurrentValue)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<UtilityPayment>()
+                .Property(u => u.PreviousValueNight)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<UtilityPayment>()
+                .Property(u => u.CurrentValueNight)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<UtilityPayment>()
+                .Property(u => u.PricePerUnit)
+                .HasPrecision(18, 2);
+
+            // Configure FuelPayment
+            modelBuilder.Entity<FuelPayment>()
+                .Property(f => f.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<FuelPayment>()
+                .HasOne(f => f.Department)
+                .WithMany()
+                .HasForeignKey(f => f.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FuelPayment>()
+                .HasOne(f => f.ResponsibleEmployee)
+                .WithMany()
+                .HasForeignKey(f => f.ResponsibleEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<FuelPayment>()
+                .HasOne(f => f.Equipment)
+                .WithMany()
+                .HasForeignKey(f => f.EquipmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configure decimal precision for FuelPayment
+            modelBuilder.Entity<FuelPayment>()
+                .Property(f => f.PreviousMileage)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<FuelPayment>()
+                .Property(f => f.CurrentMileage)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<FuelPayment>()
+                .Property(f => f.PricePerLiter)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<FuelPayment>()
+                .Property(f => f.TotalAmount)
                 .HasPrecision(18, 2);
 
         }

@@ -31,6 +31,10 @@ builder.Services.AddCors(options =>
 
 
 builder.Services.AddControllers();
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 10485760; // 10MB
+});
 
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -52,6 +56,8 @@ builder.Services.AddScoped<IEquipmentCategoryRepository, EquipmentCategoryReposi
 builder.Services.AddScoped<IRepository<ScheduleEntry>, ScheduleEntryRepository>();
 builder.Services.AddScoped<IScheduleEntryRepository, ScheduleEntryRepository>();
 builder.Services.AddScoped<IDepartmentPositionRepository, DepartmentPositionRepository>();
+builder.Services.AddScoped<IRepository<UtilityPayment>, UtilityPaymentRepository>();
+builder.Services.AddScoped<IUtilityPaymentRepository, UtilityPaymentRepository>();
 
 // Register Services
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
@@ -64,23 +70,27 @@ builder.Services.AddScoped<DataSeedHelper>();
 var app = builder.Build();
 
 
-using (var scope = app.Services.CreateScope())
+// Skip migrations and seeding in Testing environment (for integration tests)
+if (!app.Environment.EnvironmentName.Equals("Testing", StringComparison.OrdinalIgnoreCase))
 {
-    var services = scope.ServiceProvider;
-    try
+    using (var scope = app.Services.CreateScope())
     {
-        var context = services.GetRequiredService<AppDbContext>();
+        var services = scope.ServiceProvider;
+        try
+        {
+            var context = services.GetRequiredService<AppDbContext>();
 
-        // Suppress pending model changes warning - migrations are handled manually
-        await context.Database.MigrateAsync();
-        var seeder = services.GetRequiredService<DataSeedHelper>();
-        
-        await Task.Run(() => seeder.InsertData());
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "An error occurred during database migration or seeding.");
+            // Suppress pending model changes warning - migrations are handled manually
+            await context.Database.MigrateAsync();
+            var seeder = services.GetRequiredService<DataSeedHelper>();
+            
+            await Task.Run(() => seeder.InsertData());
+        }
+        catch (Exception ex)
+        {
+            var logger = services.GetRequiredService<ILogger<Program>>();
+            logger.LogError(ex, "An error occurred during database migration or seeding.");
+        }
     }
 }
 
@@ -99,6 +109,9 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseCors(MyAllowSpecificOrigins);
+
+// Serve static files for uploaded images
+app.UseStaticFiles();
 
 app.UseAuthorization();
 

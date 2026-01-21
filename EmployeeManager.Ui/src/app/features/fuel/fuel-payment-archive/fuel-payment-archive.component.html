@@ -1,0 +1,111 @@
+<div class="fuel-payment-archive">
+  <h3>Архів платежів за паливо</h3>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Відділ:</label>
+      <select
+        [value]="selectedDepartmentId() || ''"
+        (change)="onDepartmentChange($event)"
+        class="form-input"
+      >
+        <option value="">Всі відділи</option>
+        @for (dept of departments(); track dept.id) {
+        <option [value]="dept.id">{{ dept.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Тип палива:</label>
+      <select
+        [value]="selectedFuelType()?.toString() || ''"
+        (change)="onFuelTypeChange($event)"
+        class="form-input"
+      >
+        <option value="">Всі типи</option>
+        @for (type of fuelTypes; track type.value) {
+        <option [value]="type.value">{{ type.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+  <div class="loading">
+    <p>Завантаження платежів...</p>
+  </div>
+  }
+
+  <!-- Payments Table -->
+  @if (!isLoading() && payments().length > 0) {
+  <div class="table-container">
+    <table class="payments-table">
+      <thead>
+        <tr>
+          <th>Відділ</th>
+          <th>Обладнання</th>
+          <th>Тип палива</th>
+          <th>Дата внесення</th>
+          <th>Попередній пробіг</th>
+          <th>Поточний пробіг</th>
+          <th>Пробіг (км)</th>
+          <th>Ціна за літр</th>
+          <th>Сума</th>
+          <th>Відповідальна особа</th>
+          <th>Дата створення</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (payment of payments(); track payment.id) {
+        <tr>
+          <td>{{ payment.departmentName || 'Невідомо' }}</td>
+          <td>{{ payment.equipmentName || 'Невідомо' }}</td>
+          <td>{{ getFuelTypeName(payment.fuelType) }}</td>
+          <td>{{ formatDate(payment.entryDate) }}</td>
+          <td>{{ payment.previousMileage.toFixed(2) }} км</td>
+          <td>{{ payment.currentMileage.toFixed(2) }} км</td>
+          <td><strong>{{ getMileageDifference(payment.previousMileage, payment.currentMileage).toFixed(2) }} км</strong></td>
+          <td>{{ payment.pricePerLiter.toFixed(2) }} грн/л</td>
+          <td><strong>{{ formatCurrency(payment.totalAmount) }}</strong></td>
+          <td>{{ payment.responsibleEmployeeName || '-' }}</td>
+          <td>{{ formatDate(payment.createdAt) }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if (getTotalPages() > 1) {
+    <div class="pagination">
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage() === 1"
+        (click)="onPageChange(currentPage() - 1)"
+      >
+        Попередня
+      </button>
+      <span class="pagination-info">
+        Сторінка {{ currentPage() }} з {{ getTotalPages() }} (всього: {{ totalCount() }})
+      </span>
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage() === getTotalPages()"
+        (click)="onPageChange(currentPage() + 1)"
+      >
+        Наступна
+      </button>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- No Data -->
+  @if (!isLoading() && payments().length === 0) {
+  <div class="no-data">
+    <p>Платежів не знайдено</p>
+  </div>
+  }
+</div>

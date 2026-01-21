@@ -1,0 +1,271 @@
+<div class="utility-payment-form">
+  <h3>Внесення даних: {{ getPaymentTypeName() }}</h3>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Department, Responsible Employee, Payment Month in one row -->
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>Відділ <span class="required">*</span></label>
+        <select formControlName="departmentId" class="form-input">
+          <option value="">Оберіть відділ</option>
+          @for (dept of departments(); track dept.id) {
+          <option [value]="dept.id">{{ dept.name }}</option>
+          }
+        </select>
+        @if (form.get('departmentId')?.invalid && form.get('departmentId')?.touched) {
+        <span class="error">Відділ обов'язковий</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Відповідальна особа</label>
+        <select formControlName="responsibleEmployeeId" class="form-input">
+          <option [value]="null">Не призначено</option>
+          @for (emp of employees(); track emp.id) {
+          <option [value]="emp.id">{{ emp.callSign || (emp.firstName + ' ' + emp.lastName) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Місяць оплати <span class="required">*</span></label>
+        <input
+          type="month"
+          formControlName="paymentMonth"
+          class="form-input"
+        />
+        @if (form.get('paymentMonth')?.invalid && form.get('paymentMonth')?.touched) {
+        <span class="error">Місяць оплати обов'язковий</span>
+        }
+      </div>
+    </div>
+
+    <!-- Previous Month Payment Selection -->
+    @if (previousMonthPayments().length > 0) {
+    <div class="form-group">
+      <label>Попередні (з попереднього місяця)</label>
+      <select
+        [value]="selectedPreviousPaymentId() || ''"
+        (change)="onPreviousPaymentChange($event)"
+        class="form-input"
+      >
+        <option value="">Оберіть запис</option>
+        @for (payment of previousMonthPayments(); track payment.id) {
+        <option [value]="payment.id">{{ payment.displayText }}</option>
+        }
+      </select>
+      <small class="hint">Якщо за попередній місяць було кілька записів, оберіть потрібний</small>
+    </div>
+    }
+
+    <!-- Two-zone meter checkbox (only for Electricity) -->
+    @if (paymentType() === 1) {
+    <div class="form-group">
+      <label class="checkbox-label">
+        <input
+          type="checkbox"
+          [checked]="isTwoZoneMeter()"
+          (change)="onTwoZoneMeterChange($event)"
+        />
+        Двозонний лічильник
+      </label>
+    </div>
+    }
+
+    <!-- Single-zone meter: Previous, Current, Price, Total in one row -->
+    @if (!isTwoZoneMeter() || paymentType() !== 1) {
+    <div [class]="paymentType() === 4 ? 'form-row-3' : 'form-row-4'">
+      <div class="form-group">
+        <label>Попередні <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="previousValue"
+          step="0.001"
+          class="form-input"
+          placeholder="0.000"
+        />
+        @if (form.get('previousValue')?.invalid && form.get('previousValue')?.touched) {
+        <span class="error">Попередні обов'язкові</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Поточні <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="currentValue"
+          step="0.001"
+          class="form-input"
+          placeholder="0.000"
+        />
+        @if (form.get('currentValue')?.invalid && form.get('currentValue')?.touched) {
+        <span class="error">Поточні обов'язкові</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>{{ getPriceUnitName() }} <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="pricePerUnit"
+          step="0.01"
+          min="0.01"
+          class="form-input"
+          placeholder="0.00"
+        />
+        @if (form.get('pricePerUnit')?.invalid && form.get('pricePerUnit')?.touched) {
+        <span class="error">{{ getPriceUnitName() }} обов'язкова та має бути більше 0</span>
+        }
+      </div>
+
+      @if (paymentType() !== 4) {
+      <div class="form-group">
+        <label>Загальна сума</label>
+        <input
+          type="number"
+          formControlName="totalAmount"
+          class="form-input"
+          readonly
+          [value]="totalAmount()"
+        />
+        <small class="hint">Розраховується автоматично</small>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Two-zone meter: Day values in one row -->
+    @if (isTwoZoneMeter() && paymentType() === 1) {
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>Попередні (день) <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="previousValue"
+          step="0.001"
+          class="form-input"
+          placeholder="0.000"
+        />
+        @if (form.get('previousValue')?.invalid && form.get('previousValue')?.touched) {
+        <span class="error">Попередні (день) обов'язкові</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Поточні (день) <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="currentValue"
+          step="0.001"
+          class="form-input"
+          placeholder="0.000"
+        />
+        @if (form.get('currentValue')?.invalid && form.get('currentValue')?.touched) {
+        <span class="error">Поточні (день) обов'язкові</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>{{ getPriceUnitName() }} (день) <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="pricePerUnit"
+          step="0.01"
+          min="0.01"
+          class="form-input"
+          placeholder="0.00"
+        />
+        @if (form.get('pricePerUnit')?.invalid && form.get('pricePerUnit')?.touched) {
+        <span class="error">{{ getPriceUnitName() }} (день) обов'язкова та має бути більше 0</span>
+        }
+      </div>
+    </div>
+
+    <!-- Two-zone meter: Night values in one row -->
+    <div class="form-row-4">
+      <div class="form-group">
+        <label>Попередні (ніч) <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="previousValueNight"
+          step="0.001"
+          class="form-input"
+          placeholder="0.000"
+        />
+        @if (form.get('previousValueNight')?.invalid && form.get('previousValueNight')?.touched) {
+        <span class="error">Попередні (ніч) обов'язкові</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Поточні (ніч) <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="currentValueNight"
+          step="0.001"
+          class="form-input"
+          placeholder="0.000"
+        />
+        @if (form.get('currentValueNight')?.invalid && form.get('currentValueNight')?.touched) {
+        <span class="error">Поточні (ніч) обов'язкові</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>{{ getPriceUnitName() }} (ніч) <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="pricePerUnitNight"
+          step="0.01"
+          min="0.01"
+          class="form-input"
+          placeholder="0.00"
+        />
+        @if (form.get('pricePerUnitNight')?.invalid && form.get('pricePerUnitNight')?.touched) {
+        <span class="error">{{ getPriceUnitName() }} (ніч) обов'язкова та має бути більше 0</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Загальна сума</label>
+        <input
+          type="number"
+          formControlName="totalAmount"
+          class="form-input"
+          readonly
+          [value]="totalAmount()"
+        />
+        <small class="hint">Розраховується автоматично</small>
+      </div>
+    </div>
+    }
+
+    <!-- Bill Image Upload -->
+    <div class="form-group">
+      <label>Зображення рахунку (необов'язково)</label>
+      <input
+        type="file"
+        accept="image/*"
+        (change)="onBillImageSelected($event)"
+        class="form-input"
+      />
+      @if (billImagePreview()) {
+      <div class="image-preview">
+        <img [src]="billImagePreview()!" alt="Bill preview" />
+        <button type="button" (click)="clearBillImage()" class="btn-remove-image">×</button>
+      </div>
+      }
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-actions">
+      <button type="submit" [disabled]="isSubmitting() || form.invalid" class="btn btn-primary">
+        @if (isSubmitting()) {
+        Збереження...
+        } @else {
+        Зберегти
+        }
+      </button>
+    </div>
+  </form>
+</div>

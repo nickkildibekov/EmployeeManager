@@ -1,0 +1,167 @@
+<div class="utilities-page">
+  <div class="container">
+    <header class="page-header">
+      <h1>Комуналка/Паливо</h1>
+      <p class="subtitle">Облік комунальних послуг та витрат на паливо</p>
+    </header>
+
+    <!-- Main Tabs -->
+    <div class="tabs">
+      <button
+        class="tab-button"
+        [class.active]="activeMainTab() === 'utilities'"
+        (click)="setMainTab('utilities')"
+      >
+        Комуналка
+      </button>
+      <button
+        class="tab-button"
+        [class.active]="activeMainTab() === 'fuel'"
+        (click)="setMainTab('fuel')"
+      >
+        Паливо
+      </button>
+    </div>
+
+    <!-- Utilities Tab Content -->
+    @if (activeMainTab() === 'utilities') {
+    <div class="tab-content">
+      <!-- Utilities Sub-tabs -->
+      <div class="sub-tabs">
+        <button
+          class="sub-tab-button"
+          [class.active]="activeUtilitiesSubTab() === 'entry'"
+          (click)="setUtilitiesSubTab('entry')"
+        >
+          Внесення даних
+        </button>
+        <button
+          class="sub-tab-button"
+          [class.active]="activeUtilitiesSubTab() === 'statistics'"
+          (click)="setUtilitiesSubTab('statistics')"
+        >
+          Статистика
+        </button>
+        <button
+          class="sub-tab-button"
+          [class.active]="activeUtilitiesSubTab() === 'archive'"
+          (click)="setUtilitiesSubTab('archive')"
+        >
+          Архів платежів
+        </button>
+      </div>
+
+      <!-- Entry Sub-tab -->
+      @if (activeUtilitiesSubTab() === 'entry') {
+      <div class="sub-tab-content">
+        <!-- Payment Type Selection -->
+        <div class="payment-type-selector">
+          <label>Тип послуги:</label>
+          <select
+            [value]="selectedPaymentType()"
+            (change)="selectedPaymentType.set(+($any($event.target).value))"
+            class="form-input"
+          >
+            @for (type of paymentTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Payment Form -->
+        <app-utility-payment-form
+          [departments]="departments()"
+          [employees]="employees()"
+          [paymentType]="selectedPaymentType()"
+          (paymentSaved)="onPaymentSaved()"
+        />
+      </div>
+      }
+
+      <!-- Statistics Sub-tab -->
+      @if (activeUtilitiesSubTab() === 'statistics') {
+      <div class="sub-tab-content">
+        <!-- Payment Type Selection -->
+        <div class="payment-type-selector">
+          <label>Тип послуги:</label>
+          <select
+            [value]="selectedPaymentType()"
+            (change)="selectedPaymentType.set(+($any($event.target).value))"
+            class="form-input"
+          >
+            @for (type of paymentTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Statistics Component -->
+        <app-utility-statistics [paymentType]="selectedPaymentType()" />
+      </div>
+      }
+
+      <!-- Archive Sub-tab -->
+      @if (activeUtilitiesSubTab() === 'archive') {
+      <div class="sub-tab-content">
+        <app-utility-payment-archive />
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Fuel Tab Content -->
+    @if (activeMainTab() === 'fuel') {
+    <div class="tab-content">
+      <!-- Fuel Sub-tabs -->
+      <div class="sub-tabs">
+        <button
+          class="sub-tab-button"
+          [class.active]="activeFuelSubTab() === 'entry'"
+          (click)="setFuelSubTab('entry')"
+        >
+          Внесення даних
+        </button>
+        <button
+          class="sub-tab-button"
+          [class.active]="activeFuelSubTab() === 'statistics'"
+          (click)="setFuelSubTab('statistics')"
+        >
+          Статистика
+        </button>
+        <button
+          class="sub-tab-button"
+          [class.active]="activeFuelSubTab() === 'archive'"
+          (click)="setFuelSubTab('archive')"
+        >
+          Архів платежів
+        </button>
+      </div>
+
+      <!-- Entry Sub-tab -->
+      @if (activeFuelSubTab() === 'entry') {
+      <div class="sub-tab-content">
+        <app-fuel-payment-form
+          [departments]="departments()"
+          [employees]="employees()"
+          (paymentSaved)="onPaymentSaved()"
+        />
+      </div>
+      }
+
+      <!-- Statistics Sub-tab -->
+      @if (activeFuelSubTab() === 'statistics') {
+      <div class="sub-tab-content">
+        <app-fuel-statistics />
+      </div>
+      }
+
+      <!-- Archive Sub-tab -->
+      @if (activeFuelSubTab() === 'archive') {
+      <div class="sub-tab-content">
+        <app-fuel-payment-archive />
+      </div>
+      }
+    </div>
+    }
+  </div>
+</div>

@@ -51,7 +51,7 @@ export class HomeComponent {
       title: 'Комуналка/Паливо',
       description: 'Облік комунальних послуг та витрат на паливо',
       icon: '⚡',
-      route: '#',
+      route: '/utilities',
       color: '#ff6b6b',
     },
     {

@@ -130,6 +130,88 @@
   font-size: 0.9rem;
 }
 
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--primary, #3b82f6);
+  cursor: pointer;
+  text-decoration: underline;
+  font: inherit;
+}
+
+.link-button:hover {
+  color: var(--primary-hover, #60a5fa);
+}
+
+/* Modal styles */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--bg-secondary, #1e1e1e);
+  padding: 1.5rem;
+  border-radius: 8px;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: var(--shadow-lg, 0 10px 30px rgba(0, 0, 0, 0.4));
+}
+
+.modal h4 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: var(--text-primary, #fff);
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.modal-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.95rem;
+}
+
+.modal-row .label {
+  color: var(--text-secondary, #aaa);
+}
+
+.modal-row .value {
+  color: var(--text-primary, #fff);
+  text-align: right;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.modal-actions .btn {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color, #444);
+  background: var(--bg-primary, #2a2a2a);
+  color: var(--text-primary, #fff);
+  cursor: pointer;
+}
+
+.modal-actions .btn:hover {
+  background: var(--primary, #3b82f6);
+  border-color: var(--primary, #3b82f6);
+}
+
 @media (max-width: 768px) {
   .filters {
     flex-direction: column;

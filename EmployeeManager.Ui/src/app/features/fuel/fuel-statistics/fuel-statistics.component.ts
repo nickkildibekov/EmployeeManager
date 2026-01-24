@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Department } from '../../../shared/models/department.model';
-import { FuelPaymentStatistics } from '../../../shared/models/fuel-payment.model';
+import { FuelPaymentStatistics, FuelType } from '../../../shared/models/fuel-payment.model';
 import { FuelPaymentService } from '../fuel-payment.service';
 import { DepartmentService } from '../../departments/department.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { formatDateDDMMYYYY } from '../../../shared/utils/display.utils';
 import {
   Chart,
   ChartConfiguration,
@@ -37,10 +38,16 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
   statistics = signal<FuelPaymentStatistics | null>(null);
 
   expensesChart: Chart | null = null;
-  mileageChart: Chart | null = null;
+  dieselChart: Chart | null = null;
 
   private isInitialized = false;
   private isDestroyed = false;
+
+  fuelTypes = [
+    { value: FuelType.Gasoline, label: 'Бензин' },
+    { value: FuelType.Diesel, label: 'Дізель' },
+  ];
+  selectedFuelType = signal<FuelType | null>(null);
 
   constructor() {
     // Set default dates (last 12 months)
@@ -59,6 +66,7 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
       const start = this.startDate();
       const end = this.endDate();
       const departmentId = this.selectedDepartmentId();
+      const fuelType = this.selectedFuelType();
       
       if (start && end) {
         // Use untracked to prevent infinite loops when calling loadStatistics
@@ -108,6 +116,7 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
     this.fuelPaymentService
       .getStatistics(
         this.selectedDepartmentId(),
+        this.selectedFuelType(),
         start,
         end
       )
@@ -142,24 +151,42 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
     // Destroy existing charts
     if (this.expensesChart) {
       this.expensesChart.destroy();
+      this.expensesChart = null;
     }
-    if (this.mileageChart) {
-      this.mileageChart.destroy();
+    if (this.dieselChart) {
+      this.dieselChart.destroy();
+      this.dieselChart = null;
     }
 
-    // Create expenses chart
-    this.createExpensesChart(stats);
-
-    // Create mileage chart
-    this.createMileageChart(stats);
+    // Завжди два графіки: один для бензину, один для дизеля
+    this.createExpensesChart(stats, FuelType.Gasoline, 'fuelExpensesChart', stats.monthlyExpenses);
+    this.createExpensesChart(stats, FuelType.Diesel, 'fuelDieselChart', stats.monthlyConsumption);
   }
 
-  private createExpensesChart(stats: FuelPaymentStatistics): void {
-    const canvas = document.getElementById('fuelExpensesChart') as HTMLCanvasElement;
+  private createExpensesChart(
+    stats: FuelPaymentStatistics,
+    fuelType: FuelType,
+    canvasId: string,
+    dataPoints: { month: string; value: number }[]
+  ): void {
+    const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
     if (!canvas) return;
 
-    const labels = stats.monthlyExpenses.map((d) => this.formatMonth(d.month));
-    const data = stats.monthlyExpenses.map((d) => d.value);
+    // Створюємо унікальні місяці з обох наборів даних для правильних labels
+    const allMonths = new Set<string>();
+    stats.monthlyExpenses.forEach((d) => allMonths.add(d.month));
+    stats.monthlyConsumption.forEach((d) => allMonths.add(d.month));
+    const sortedMonths = Array.from(allMonths).sort();
+    const labels = sortedMonths.map((m) => this.formatMonth(m));
+
+    // Створюємо масив даних для всіх місяців
+    const dataMap = new Map(dataPoints.map((d) => [d.month, d.value]));
+    const data = sortedMonths.map((month) => dataMap.get(month) || 0);
+
+    const fuelTypeName = fuelType === FuelType.Gasoline ? 'Бензин' : 'Дізель';
+    const chartColor = fuelType === FuelType.Gasoline 
+      ? { border: 'rgb(75, 192, 192)', background: 'rgba(75, 192, 192, 0.2)' }
+      : { border: 'rgb(255, 99, 132)', background: 'rgba(255, 99, 132, 0.2)' };
 
     const config: ChartConfiguration<'line'> = {
       type: 'line',
@@ -167,10 +194,10 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
         labels,
         datasets: [
           {
-            label: 'Витрати (грн)',
+            label: `Витрати палива (л) — ${fuelTypeName}`,
             data,
-            borderColor: 'rgb(75, 192, 192)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: chartColor.border,
+            backgroundColor: chartColor.background,
             tension: 0.1,
             fill: true,
           },
@@ -182,7 +209,7 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
         plugins: {
           title: {
             display: true,
-            text: 'Динаміка витрат на паливо',
+            text: `Витрати палива (л) — ${fuelTypeName}`,
             color: 'var(--text-primary, #fff)',
           },
           legend: {
@@ -197,7 +224,7 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
             ticks: {
               color: 'var(--text-secondary, #aaa)',
               callback: function (value) {
-                return value + ' грн';
+                return value + ' л';
               },
             },
             grid: {
@@ -216,72 +243,11 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
       },
     };
 
-    this.expensesChart = new Chart(canvas, config);
-  }
-
-  private createMileageChart(stats: FuelPaymentStatistics): void {
-    const canvas = document.getElementById('fuelMileageChart') as HTMLCanvasElement;
-    if (!canvas) return;
-
-    const labels = stats.monthlyConsumption.map((d) => this.formatMonth(d.month));
-    const data = stats.monthlyConsumption.map((d) => d.value);
-
-    const config: ChartConfiguration<'line'> = {
-      type: 'line',
-      data: {
-        labels,
-        datasets: [
-          {
-            label: 'Пробіг (км)',
-            data,
-            borderColor: 'rgb(255, 99, 132)',
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            tension: 0.1,
-            fill: true,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          title: {
-            display: true,
-            text: 'Динаміка пробігу',
-            color: 'var(--text-primary, #fff)',
-          },
-          legend: {
-            labels: {
-              color: 'var(--text-primary, #fff)',
-            },
-          },
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              color: 'var(--text-secondary, #aaa)',
-              callback: function (value) {
-                return value + ' км';
-              },
-            },
-            grid: {
-              color: 'var(--border-color, #444)',
-            },
-          },
-          x: {
-            ticks: {
-              color: 'var(--text-secondary, #aaa)',
-            },
-            grid: {
-              color: 'var(--border-color, #444)',
-            },
-          },
-        },
-      },
-    };
-
-    this.mileageChart = new Chart(canvas, config);
+    if (fuelType === FuelType.Gasoline) {
+      this.expensesChart = new Chart(canvas, config);
+    } else {
+      this.dieselChart = new Chart(canvas, config);
+    }
   }
 
   private formatMonth(monthString: string): string {
@@ -303,9 +269,34 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
     return `${monthNames[parseInt(month) - 1]} ${year}`;
   }
 
+  formatDateForDisplay(dateString: string | null | undefined): string {
+    const formatted = formatDateDDMMYYYY(dateString);
+    if (!formatted || formatted === 'Не вказано') {
+      return '';
+    }
+    return formatted.replace(/\./g, '/');
+  }
+
+  onDateWrapperMouseDown(event: MouseEvent, input: HTMLInputElement | null): void {
+    event.preventDefault();
+    this.openDatePicker(input);
+  }
+
+  // Open native date picker when clicking anywhere on the wrapper
+  openDatePicker(input: HTMLInputElement | null): void {
+    if (!input) return;
+    input.focus();
+    (input as any).showPicker?.();
+  }
+
   onDepartmentChange(event: Event): void {
     const value = (event.target as HTMLSelectElement).value;
     this.selectedDepartmentId.set(value || null);
+  }
+
+  onFuelTypeChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.selectedFuelType.set(value ? +value : null);
   }
 
   onStartDateChange(event: Event): void {
@@ -340,9 +331,9 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
       this.expensesChart.destroy();
       this.expensesChart = null;
     }
-    if (this.mileageChart) {
-      this.mileageChart.destroy();
-      this.mileageChart = null;
+    if (this.dieselChart) {
+      this.dieselChart.destroy();
+      this.dieselChart = null;
     }
   }
 }

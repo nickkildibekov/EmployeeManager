@@ -16,21 +16,14 @@
         }
       </select>
     </div>
-
-    <div class="filter-group">
-      <label>Тип послуги:</label>
-      <select
-        [value]="selectedPaymentType()?.toString() || ''"
-        (change)="onPaymentTypeChange($event)"
-        class="form-input"
-      >
-        <option value="">Всі типи</option>
-        @for (type of paymentTypes; track type.value) {
-        <option [value]="type.value">{{ type.label }}</option>
-        }
-      </select>
-    </div>
   </div>
+
+  <!-- Service type info -->
+  @if (paymentType() !== null && paymentType() !== undefined) {
+  <div class="service-info">
+    <span>Тип послуги: {{ getCurrentPaymentTypeLabel() }}</span>
+  </div>
+  }
 
   <!-- Loading State -->
   @if (isLoading()) {
@@ -42,11 +35,38 @@
   <!-- Payments Table -->
   @if (!isLoading() && payments().length > 0) {
   <div class="table-container">
+    @if (paymentType() === 4) {
+    <!-- Оренда: без показників лічильника -->
     <table class="payments-table">
       <thead>
         <tr>
           <th>Відділ</th>
-          <th>Тип послуги</th>
+          <th>Місяць оплати</th>
+          <th>Ціна</th>
+          <th>Сума</th>
+          <th>Відповідальна особа</th>
+          <th>Дата створення</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (payment of payments(); track payment.id) {
+        <tr>
+          <td>{{ payment.departmentName || 'Невідомо' }}</td>
+          <td>{{ formatMonth(payment.paymentMonth) }}</td>
+          <td>{{ payment.pricePerUnit.toFixed(2) }} грн</td>
+          <td><strong>{{ formatCurrency(payment.totalAmount) }}</strong></td>
+          <td>{{ payment.responsibleEmployeeName || '-' }}</td>
+          <td>{{ formatDate(payment.createdAt) }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    } @else {
+    <!-- Електроенергія / Газ / Вода -->
+    <table class="payments-table">
+      <thead>
+        <tr>
+          <th>Відділ</th>
           <th>Місяць оплати</th>
           <th>Попередні (день)</th>
           <th>Поточні (день)</th>
@@ -63,7 +83,6 @@
         @for (payment of payments(); track payment.id) {
         <tr>
           <td>{{ payment.departmentName || 'Невідомо' }}</td>
-          <td>{{ getPaymentTypeName(payment.paymentType) }}</td>
           <td>{{ formatMonth(payment.paymentMonth) }}</td>
           <td>{{ payment.previousValue?.toFixed(3) || '-' }}</td>
           <td>{{ payment.currentValue?.toFixed(3) || '-' }}</td>
@@ -84,6 +103,7 @@
         }
       </tbody>
     </table>
+    }
 
     <!-- Pagination -->
     @if (getTotalPages() > 1) {

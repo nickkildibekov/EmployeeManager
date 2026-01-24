@@ -1,7 +1,6 @@
 using EmployeeManager.API.Data;
 using EmployeeManager.API.DTO;
 using EmployeeManager.API.Models;
-using EmployeeManager.API.Repositories;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
@@ -12,18 +11,15 @@ namespace EmployeeManager.API.Controllers
     [Route("api/[controller]")]
     public class UtilityPaymentsController : ControllerBase
     {
-        private readonly IUtilityPaymentRepository _repository;
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _environment;
         private readonly ILogger<UtilityPaymentsController> _logger;
 
         public UtilityPaymentsController(
-            IUtilityPaymentRepository repository,
             AppDbContext context,
             IWebHostEnvironment environment,
             ILogger<UtilityPaymentsController> logger)
         {
-            _repository = repository;
             _context = context;
             _environment = environment;
             _logger = logger;
@@ -50,45 +46,119 @@ namespace EmployeeManager.API.Controllers
             // Get previous month (month before the target month)
             var previousMonth = targetMonth.AddMonths(-1);
             var previousMonthStart = new DateTime(previousMonth.Year, previousMonth.Month, 1);
-            var previousMonthEnd = previousMonthStart.AddMonths(1).AddDays(-1);
 
-            _logger.LogInformation("GetLatest called: departmentId={DepartmentId}, paymentType={PaymentType}, paymentMonth={PaymentMonth}, targetMonth={TargetMonth}, previousMonthStart={PreviousMonthStart}",
+            _logger.LogInformation(
+                "GetLatest called: departmentId={DepartmentId}, paymentType={PaymentType}, paymentMonth={PaymentMonth}, targetMonth={TargetMonth}, previousMonthStart={PreviousMonthStart}",
                 departmentId, paymentType, paymentMonth, targetMonth, previousMonthStart);
 
-            // Get all payments for the previous month
-            // Normalize PaymentMonth to first day of month for comparison (handles cases where PaymentMonth might be set to any day in the month)
-            var previousPayments = await _context.UtilityPayments
-                .Where(p => p.DepartmentId == departmentId &&
-                           p.PaymentType == paymentType &&
-                           // Check if PaymentMonth falls within the previous month range
-                           // This handles both normalized (1st of month) and non-normalized dates
-                           p.PaymentMonth >= previousMonthStart &&
-                           p.PaymentMonth < previousMonthStart.AddMonths(1))
-                .OrderByDescending(p => p.CreatedAt)
-                .Select(p => new PreviousMonthPaymentDTO
-                {
-                    Id = p.Id,
-                    PreviousValue = p.PreviousValue,
-                    CurrentValue = p.CurrentValue,
-                    PreviousValueNight = p.PreviousValueNight,
-                    CurrentValueNight = p.CurrentValueNight,
-                    PricePerUnit = p.PricePerUnit,
-                    PricePerUnitNight = p.PricePerUnitNight,
-                    PaymentMonth = p.PaymentMonth,
-                    CreatedAt = p.CreatedAt,
-                    DisplayText = $"{p.PaymentMonth:yyyy-MM-dd} ({p.CreatedAt:yyyy-MM-dd HH:mm})"
-                })
-                .ToListAsync(cancellationToken);
+            List<PreviousMonthPaymentDTO> previousPayments;
+
+            switch (paymentType)
+            {
+                case PaymentType.Electricity:
+                    previousPayments = await _context.ElectricityPayments
+                        .Where(p => p.DepartmentId == departmentId &&
+                                    p.PaymentMonth >= previousMonthStart &&
+                                    p.PaymentMonth < previousMonthStart.AddMonths(1))
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Select(p => new PreviousMonthPaymentDTO
+                        {
+                            Id = p.Id,
+                            PreviousValue = p.PreviousValue,
+                            CurrentValue = p.CurrentValue,
+                            PreviousValueNight = p.PreviousValueNight,
+                            CurrentValueNight = p.CurrentValueNight,
+                            PricePerUnit = p.PricePerUnit,
+                            PricePerUnitNight = p.PricePerUnitNight,
+                            PaymentMonth = p.PaymentMonth,
+                            CreatedAt = p.CreatedAt,
+                            DisplayText = $"{p.PaymentMonth:yyyy-MM-dd} ({p.CreatedAt:yyyy-MM-dd HH:mm})"
+                        })
+                        .ToListAsync(cancellationToken);
+                    break;
+
+                case PaymentType.Gas:
+                    previousPayments = await _context.GasPayments
+                        .Where(p => p.DepartmentId == departmentId &&
+                                    p.PaymentMonth >= previousMonthStart &&
+                                    p.PaymentMonth < previousMonthStart.AddMonths(1))
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Select(p => new PreviousMonthPaymentDTO
+                        {
+                            Id = p.Id,
+                            PreviousValue = p.PreviousValue,
+                            CurrentValue = p.CurrentValue,
+                            PreviousValueNight = null,
+                            CurrentValueNight = null,
+                            PricePerUnit = p.PricePerUnit,
+                            PricePerUnitNight = null,
+                            PaymentMonth = p.PaymentMonth,
+                            CreatedAt = p.CreatedAt,
+                            DisplayText = $"{p.PaymentMonth:yyyy-MM-dd} ({p.CreatedAt:yyyy-MM-dd HH:mm})"
+                        })
+                        .ToListAsync(cancellationToken);
+                    break;
+
+                case PaymentType.Water:
+                    previousPayments = await _context.WaterPayments
+                        .Where(p => p.DepartmentId == departmentId &&
+                                    p.PaymentMonth >= previousMonthStart &&
+                                    p.PaymentMonth < previousMonthStart.AddMonths(1))
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Select(p => new PreviousMonthPaymentDTO
+                        {
+                            Id = p.Id,
+                            PreviousValue = p.PreviousValue,
+                            CurrentValue = p.CurrentValue,
+                            PreviousValueNight = null,
+                            CurrentValueNight = null,
+                            PricePerUnit = p.PricePerUnit,
+                            PricePerUnitNight = null,
+                            PaymentMonth = p.PaymentMonth,
+                            CreatedAt = p.CreatedAt,
+                            DisplayText = $"{p.PaymentMonth:yyyy-MM-dd} ({p.CreatedAt:yyyy-MM-dd HH:mm})"
+                        })
+                        .ToListAsync(cancellationToken);
+                    break;
+
+                case PaymentType.Rent:
+                    previousPayments = await _context.RentPayments
+                        .Where(p => p.DepartmentId == departmentId &&
+                                    p.PaymentMonth >= previousMonthStart &&
+                                    p.PaymentMonth < previousMonthStart.AddMonths(1))
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Select(p => new PreviousMonthPaymentDTO
+                        {
+                            Id = p.Id,
+                            PreviousValue = null,
+                            CurrentValue = null,
+                            PreviousValueNight = null,
+                            CurrentValueNight = null,
+                            PricePerUnit = p.PricePerUnit,
+                            PricePerUnitNight = null,
+                            PaymentMonth = p.PaymentMonth,
+                            CreatedAt = p.CreatedAt,
+                            DisplayText = $"{p.PaymentMonth:yyyy-MM-dd} ({p.CreatedAt:yyyy-MM-dd HH:mm})"
+                        })
+                        .ToListAsync(cancellationToken);
+                    break;
+
+                default:
+                    previousPayments = new List<PreviousMonthPaymentDTO>();
+                    break;
+            }
 
             // If no payments found, return empty list
             if (previousPayments.Count == 0)
             {
-                _logger.LogInformation("No previous payments found for departmentId={DepartmentId}, paymentType={PaymentType}, previousMonthStart={PreviousMonthStart}",
+                _logger.LogInformation(
+                    "No previous payments found for departmentId={DepartmentId}, paymentType={PaymentType}, previousMonthStart={PreviousMonthStart}",
                     departmentId, paymentType, previousMonthStart);
                 return Ok(new List<PreviousMonthPaymentDTO>());
             }
 
-            _logger.LogInformation("Found {Count} previous payments for departmentId={DepartmentId}, paymentType={PaymentType}",
+            _logger.LogInformation(
+                "Found {Count} previous payments for departmentId={DepartmentId}, paymentType={PaymentType}",
                 previousPayments.Count, departmentId, paymentType);
             return Ok(previousPayments);
         }
@@ -105,50 +175,188 @@ namespace EmployeeManager.API.Controllers
             if (pageSize < 1) pageSize = 10;
             if (pageSize > 100) pageSize = 100;
 
-            var query = _context.UtilityPayments
-                .Include(p => p.Department)
-                .Include(p => p.ResponsibleEmployee)
-                .AsQueryable();
-
-            if (departmentId.HasValue)
+            if (!paymentType.HasValue)
             {
-                query = query.Where(p => p.DepartmentId == departmentId.Value);
+                return BadRequest(new { message = "PaymentType is required to retrieve utility payments." });
             }
 
-            if (paymentType.HasValue)
+            switch (paymentType.Value)
             {
-                query = query.Where(p => p.PaymentType == paymentType.Value);
-            }
-
-            var totalCount = await query.CountAsync(cancellationToken);
-
-            var payments = await query
-                .OrderByDescending(p => p.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(p => new UtilityPaymentDTO
+                case PaymentType.Electricity:
                 {
-                    Id = p.Id,
-                    DepartmentId = p.DepartmentId,
-                    DepartmentName = p.Department.Name,
-                    ResponsibleEmployeeId = p.ResponsibleEmployeeId,
-                    ResponsibleEmployeeName = p.ResponsibleEmployee != null ? p.ResponsibleEmployee.CallSign : null,
-                    PaymentType = p.PaymentType,
-                    PaymentTypeName = p.PaymentType.ToString(),
-                    PreviousValue = p.PreviousValue,
-                    CurrentValue = p.CurrentValue,
-                    PreviousValueNight = p.PreviousValueNight,
-                    CurrentValueNight = p.CurrentValueNight,
-                    PricePerUnit = p.PricePerUnit,
-                    PricePerUnitNight = p.PricePerUnitNight,
-                    TotalAmount = p.TotalAmount,
-                    BillImageUrl = p.BillImageUrl,
-                    PaymentMonth = p.PaymentMonth,
-                    CreatedAt = p.CreatedAt
-                })
-                .ToListAsync(cancellationToken);
+                    var query = _context.ElectricityPayments
+                        .Include(p => p.Department)
+                        .Include(p => p.ResponsibleEmployee)
+                        .AsQueryable();
 
-            return Ok(new { items = payments, total = totalCount });
+                    if (departmentId.HasValue)
+                    {
+                        query = query.Where(p => p.DepartmentId == departmentId.Value);
+                    }
+
+                    var totalCount = await query.CountAsync(cancellationToken);
+
+                    var payments = await query
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .Select(p => new UtilityPaymentDTO
+                        {
+                            Id = p.Id,
+                            DepartmentId = p.DepartmentId,
+                            DepartmentName = p.Department.Name,
+                            ResponsibleEmployeeId = p.ResponsibleEmployeeId,
+                            ResponsibleEmployeeName = p.ResponsibleEmployee != null ? p.ResponsibleEmployee.CallSign : null,
+                            PaymentType = PaymentType.Electricity,
+                            PaymentTypeName = PaymentType.Electricity.ToString(),
+                            PreviousValue = p.PreviousValue,
+                            CurrentValue = p.CurrentValue,
+                            PreviousValueNight = p.PreviousValueNight,
+                            CurrentValueNight = p.CurrentValueNight,
+                            PricePerUnit = p.PricePerUnit,
+                            PricePerUnitNight = p.PricePerUnitNight,
+                            TotalAmount = p.TotalAmount,
+                            BillImageUrl = p.BillImageUrl,
+                            PaymentMonth = p.PaymentMonth,
+                            CreatedAt = p.CreatedAt
+                        })
+                        .ToListAsync(cancellationToken);
+
+                    return Ok(new { items = payments, total = totalCount });
+                }
+
+                case PaymentType.Gas:
+                {
+                    var query = _context.GasPayments
+                        .Include(p => p.Department)
+                        .Include(p => p.ResponsibleEmployee)
+                        .AsQueryable();
+
+                    if (departmentId.HasValue)
+                    {
+                        query = query.Where(p => p.DepartmentId == departmentId.Value);
+                    }
+
+                    var totalCount = await query.CountAsync(cancellationToken);
+
+                    var payments = await query
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .Select(p => new UtilityPaymentDTO
+                        {
+                            Id = p.Id,
+                            DepartmentId = p.DepartmentId,
+                            DepartmentName = p.Department.Name,
+                            ResponsibleEmployeeId = p.ResponsibleEmployeeId,
+                            ResponsibleEmployeeName = p.ResponsibleEmployee != null ? p.ResponsibleEmployee.CallSign : null,
+                            PaymentType = PaymentType.Gas,
+                            PaymentTypeName = PaymentType.Gas.ToString(),
+                            PreviousValue = p.PreviousValue,
+                            CurrentValue = p.CurrentValue,
+                            PreviousValueNight = null,
+                            CurrentValueNight = null,
+                            PricePerUnit = p.PricePerUnit,
+                            PricePerUnitNight = null,
+                            TotalAmount = p.TotalAmount,
+                            BillImageUrl = p.BillImageUrl,
+                            PaymentMonth = p.PaymentMonth,
+                            CreatedAt = p.CreatedAt
+                        })
+                        .ToListAsync(cancellationToken);
+
+                    return Ok(new { items = payments, total = totalCount });
+                }
+
+                case PaymentType.Water:
+                {
+                    var query = _context.WaterPayments
+                        .Include(p => p.Department)
+                        .Include(p => p.ResponsibleEmployee)
+                        .AsQueryable();
+
+                    if (departmentId.HasValue)
+                    {
+                        query = query.Where(p => p.DepartmentId == departmentId.Value);
+                    }
+
+                    var totalCount = await query.CountAsync(cancellationToken);
+
+                    var payments = await query
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .Select(p => new UtilityPaymentDTO
+                        {
+                            Id = p.Id,
+                            DepartmentId = p.DepartmentId,
+                            DepartmentName = p.Department.Name,
+                            ResponsibleEmployeeId = p.ResponsibleEmployeeId,
+                            ResponsibleEmployeeName = p.ResponsibleEmployee != null ? p.ResponsibleEmployee.CallSign : null,
+                            PaymentType = PaymentType.Water,
+                            PaymentTypeName = PaymentType.Water.ToString(),
+                            PreviousValue = p.PreviousValue,
+                            CurrentValue = p.CurrentValue,
+                            PreviousValueNight = null,
+                            CurrentValueNight = null,
+                            PricePerUnit = p.PricePerUnit,
+                            PricePerUnitNight = null,
+                            TotalAmount = p.TotalAmount,
+                            BillImageUrl = p.BillImageUrl,
+                            PaymentMonth = p.PaymentMonth,
+                            CreatedAt = p.CreatedAt
+                        })
+                        .ToListAsync(cancellationToken);
+
+                    return Ok(new { items = payments, total = totalCount });
+                }
+
+                case PaymentType.Rent:
+                {
+                    var query = _context.RentPayments
+                        .Include(p => p.Department)
+                        .Include(p => p.ResponsibleEmployee)
+                        .AsQueryable();
+
+                    if (departmentId.HasValue)
+                    {
+                        query = query.Where(p => p.DepartmentId == departmentId.Value);
+                    }
+
+                    var totalCount = await query.CountAsync(cancellationToken);
+
+                    var payments = await query
+                        .OrderByDescending(p => p.CreatedAt)
+                        .Skip((page - 1) * pageSize)
+                        .Take(pageSize)
+                        .Select(p => new UtilityPaymentDTO
+                        {
+                            Id = p.Id,
+                            DepartmentId = p.DepartmentId,
+                            DepartmentName = p.Department.Name,
+                            ResponsibleEmployeeId = p.ResponsibleEmployeeId,
+                            ResponsibleEmployeeName = p.ResponsibleEmployee != null ? p.ResponsibleEmployee.CallSign : null,
+                            PaymentType = PaymentType.Rent,
+                            PaymentTypeName = PaymentType.Rent.ToString(),
+                            PreviousValue = null,
+                            CurrentValue = null,
+                            PreviousValueNight = null,
+                            CurrentValueNight = null,
+                            PricePerUnit = p.PricePerUnit,
+                            PricePerUnitNight = null,
+                            TotalAmount = p.TotalAmount,
+                            BillImageUrl = p.BillImageUrl,
+                            PaymentMonth = p.PaymentMonth,
+                            CreatedAt = p.CreatedAt
+                        })
+                        .ToListAsync(cancellationToken);
+
+                    return Ok(new { items = payments, total = totalCount });
+                }
+
+                default:
+                    return BadRequest(new { message = "Unsupported payment type." });
+            }
         }
 
         [HttpGet("statistics")]
@@ -159,124 +367,332 @@ namespace EmployeeManager.API.Controllers
             [FromQuery] DateTime? endDate = null,
             CancellationToken cancellationToken = default)
         {
-            // If dates are not provided, use default range (last 12 months from latest payment)
-            if (!startDate.HasValue || !endDate.HasValue)
+            // Helper local function for single-zone utilities (Gas, Water, Rent)
+            async Task<UtilityPaymentStatisticsDTO> BuildSingleZoneStatisticsAsync<TPayment>(
+                IQueryable<TPayment> baseQuery)
+                where TPayment : class
             {
-                var latestPaymentMonth = await _context.UtilityPayments
-                    .Where(p => p.PaymentType == paymentType)
-                    .OrderByDescending(p => p.PaymentMonth)
-                    .Select(p => p.PaymentMonth)
-                    .FirstOrDefaultAsync(cancellationToken);
-
-                if (latestPaymentMonth == default(DateTime))
+                if (!startDate.HasValue || !endDate.HasValue)
                 {
+                    var latestPaymentMonth = await baseQuery
+                        .Select(p => EF.Property<DateTime>(p, nameof(WaterPayment.PaymentMonth)))
+                        .OrderByDescending(d => d)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    if (latestPaymentMonth == default)
+                    {
+                        return new UtilityPaymentStatisticsDTO
+                        {
+                            MonthlyExpenses = new List<UtilityPaymentStatisticsDTO.MonthlyDataPoint>(),
+                            MonthlyConsumption = new List<UtilityPaymentStatisticsDTO.MonthlyDataPoint>()
+                        };
+                    }
+
+                    var endMonth = new DateTime(latestPaymentMonth.Year, latestPaymentMonth.Month, 1);
+                    startDate = endMonth.AddMonths(-11);
+                    endDate = endMonth.AddMonths(1);
+                }
+
+                var startDateNormalized = new DateTime(startDate!.Value.Year, startDate.Value.Month, 1);
+                var endDateExclusive = new DateTime(endDate!.Value.Year, endDate.Value.Month, 1).AddMonths(1);
+
+                _logger.LogInformation(
+                    "GetStatistics (single zone): paymentType={PaymentType}, startDate={StartDate}, endDate={EndDate}, endDateExclusive={EndDateExclusive}",
+                    paymentType, startDateNormalized, endDate, endDateExclusive);
+
+                var query = baseQuery.Where(p =>
+                    EF.Property<DateTime>(p, nameof(WaterPayment.PaymentMonth)) >= startDateNormalized &&
+                    EF.Property<DateTime>(p, nameof(WaterPayment.PaymentMonth)) < endDateExclusive);
+
+                if (departmentId.HasValue)
+                {
+                    query = query.Where(p =>
+                        EF.Property<Guid>(p, nameof(WaterPayment.DepartmentId)) == departmentId.Value);
+                }
+
+                var payments = await query
+                    .OrderBy(p => EF.Property<DateTime>(p, nameof(WaterPayment.PaymentMonth)))
+                    .Select(p => new
+                    {
+                        PaymentMonth = EF.Property<DateTime>(p, nameof(WaterPayment.PaymentMonth)),
+                        TotalAmount = EF.Property<decimal>(p, nameof(WaterPayment.TotalAmount)),
+                        PreviousValue = EF.Property<decimal?>(p, nameof(WaterPayment.PreviousValue)),
+                        CurrentValue = EF.Property<decimal?>(p, nameof(WaterPayment.CurrentValue))
+                    })
+                    .ToListAsync(cancellationToken);
+
+                var monthlyExpenses = payments
+                    .GroupBy(p => new { Year = p.PaymentMonth.Year, Month = p.PaymentMonth.Month })
+                    .Select(g => new UtilityPaymentStatisticsDTO.MonthlyDataPoint
+                    {
+                        Month = $"{g.Key.Year}-{g.Key.Month:D2}",
+                        Value = g.Sum(p => p.TotalAmount)
+                    })
+                    .OrderBy(x => x.Month)
+                    .ToList();
+
+                var monthlyConsumption = payments
+                    .GroupBy(p => new { Year = p.PaymentMonth.Year, Month = p.PaymentMonth.Month })
+                    .Select(g => new UtilityPaymentStatisticsDTO.MonthlyDataPoint
+                    {
+                        Month = $"{g.Key.Year}-{g.Key.Month:D2}",
+                        Value = g.Sum(p =>
+                            (p.CurrentValue ?? 0) - (p.PreviousValue ?? 0))
+                    })
+                    .OrderBy(x => x.Month)
+                    .ToList();
+
+                return new UtilityPaymentStatisticsDTO
+                {
+                    MonthlyExpenses = monthlyExpenses,
+                    MonthlyConsumption = monthlyConsumption
+                };
+            }
+
+            switch (paymentType)
+            {
+                case PaymentType.Electricity:
+                {
+                    // If dates are not provided, use default range (last 12 months from latest payment)
+                    if (!startDate.HasValue || !endDate.HasValue)
+                    {
+                        var latestPaymentMonth = await _context.ElectricityPayments
+                            .OrderByDescending(p => p.PaymentMonth)
+                            .Select(p => p.PaymentMonth)
+                            .FirstOrDefaultAsync(cancellationToken);
+
+                        if (latestPaymentMonth == default)
+                        {
+                            return Ok(new UtilityPaymentStatisticsDTO
+                            {
+                                MonthlyExpenses = new List<UtilityPaymentStatisticsDTO.MonthlyDataPoint>(),
+                                MonthlyConsumption = new List<UtilityPaymentStatisticsDTO.MonthlyDataPoint>()
+                            });
+                        }
+
+                        var endMonth = new DateTime(latestPaymentMonth.Year, latestPaymentMonth.Month, 1);
+                        startDate = endMonth.AddMonths(-11);
+                        endDate = endMonth.AddMonths(1);
+                    }
+
+                    // Normalize dates to first day of month for comparison
+                    var startDateNormalized = new DateTime(startDate!.Value.Year, startDate.Value.Month, 1);
+                    var endDateExclusive = new DateTime(endDate!.Value.Year, endDate.Value.Month, 1).AddMonths(1);
+
+                    _logger.LogInformation(
+                        "GetStatistics (Electricity): paymentType={PaymentType}, startDate={StartDate}, endDate={EndDate}, endDateExclusive={EndDateExclusive}",
+                        paymentType, startDateNormalized, endDate, endDateExclusive);
+
+                    var query = _context.ElectricityPayments
+                        .Where(p => p.PaymentMonth >= startDateNormalized &&
+                                    p.PaymentMonth < endDateExclusive);
+
+                    if (departmentId.HasValue)
+                    {
+                        query = query.Where(p => p.DepartmentId == departmentId.Value);
+                    }
+
+                    var payments = await query
+                        .OrderBy(p => p.PaymentMonth)
+                        .Select(p => new
+                        {
+                            p.PaymentMonth,
+                            p.TotalAmount,
+                            p.PreviousValue,
+                            p.CurrentValue,
+                            p.PreviousValueNight,
+                            p.CurrentValueNight
+                        })
+                        .ToListAsync(cancellationToken);
+
+                    // Group by month and calculate totals
+                    var monthlyExpenses = payments
+                        .GroupBy(p => new { Year = p.PaymentMonth.Year, Month = p.PaymentMonth.Month })
+                        .Select(g => new UtilityPaymentStatisticsDTO.MonthlyDataPoint
+                        {
+                            Month = $"{g.Key.Year}-{g.Key.Month:D2}",
+                            Value = g.Sum(p => p.TotalAmount)
+                        })
+                        .OrderBy(x => x.Month)
+                        .ToList();
+
+                    var monthlyConsumption = payments
+                        .GroupBy(p => new { Year = p.PaymentMonth.Year, Month = p.PaymentMonth.Month })
+                        .Select(g => new UtilityPaymentStatisticsDTO.MonthlyDataPoint
+                        {
+                            Month = $"{g.Key.Year}-{g.Key.Month:D2}",
+                            Value = g.Sum(p =>
+                                (p.CurrentValue ?? 0) - (p.PreviousValue ?? 0) +
+                                ((p.CurrentValueNight ?? 0) - (p.PreviousValueNight ?? 0)))
+                        })
+                        .OrderBy(x => x.Month)
+                        .ToList();
+
+                    return Ok(new UtilityPaymentStatisticsDTO
+                    {
+                        MonthlyExpenses = monthlyExpenses,
+                        MonthlyConsumption = monthlyConsumption
+                    });
+                }
+
+                case PaymentType.Gas:
+                {
+                    var stats = await BuildSingleZoneStatisticsAsync(_context.GasPayments.AsQueryable());
+                    return Ok(stats);
+                }
+
+                case PaymentType.Water:
+                {
+                    var stats = await BuildSingleZoneStatisticsAsync(_context.WaterPayments.AsQueryable());
+                    return Ok(stats);
+                }
+
+                case PaymentType.Rent:
+                    // Для оренди статистика не рахується
                     return Ok(new UtilityPaymentStatisticsDTO
                     {
                         MonthlyExpenses = new List<UtilityPaymentStatisticsDTO.MonthlyDataPoint>(),
                         MonthlyConsumption = new List<UtilityPaymentStatisticsDTO.MonthlyDataPoint>()
                     });
-                }
 
-                var endMonth = new DateTime(latestPaymentMonth.Year, latestPaymentMonth.Month, 1);
-                startDate = endMonth.AddMonths(-11); // Last 12 months including the latest month
-                endDate = endMonth.AddMonths(1); // Exclusive end date (first day of next month)
+                default:
+                    return BadRequest(new { message = "Unsupported payment type for statistics." });
             }
-
-            // Normalize dates to first day of month for comparison
-            var startDateNormalized = new DateTime(startDate.Value.Year, startDate.Value.Month, 1);
-            var endDateExclusive = new DateTime(endDate.Value.Year, endDate.Value.Month, 1).AddMonths(1);
-
-            _logger.LogInformation("GetStatistics: paymentType={PaymentType}, startDate={StartDate}, endDate={EndDate}, endDateExclusive={EndDateExclusive}",
-                paymentType, startDateNormalized, endDate, endDateExclusive);
-
-            var query = _context.UtilityPayments
-                .Where(p => p.PaymentType == paymentType && 
-                           p.PaymentMonth >= startDateNormalized && 
-                           p.PaymentMonth < endDateExclusive);
-
-            if (departmentId.HasValue)
-            {
-                query = query.Where(p => p.DepartmentId == departmentId.Value);
-            }
-
-            var payments = await query
-                .OrderBy(p => p.PaymentMonth)
-                .Select(p => new
-                {
-                    p.PaymentMonth,
-                    p.TotalAmount,
-                    p.PreviousValue,
-                    p.CurrentValue,
-                    p.PreviousValueNight,
-                    p.CurrentValueNight
-                })
-                .ToListAsync(cancellationToken);
-
-            // Group by month and calculate totals
-            var monthlyExpenses = payments
-                .GroupBy(p => new { Year = p.PaymentMonth.Year, Month = p.PaymentMonth.Month })
-                .Select(g => new UtilityPaymentStatisticsDTO.MonthlyDataPoint
-                {
-                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
-                    Value = g.Sum(p => p.TotalAmount)
-                })
-                .OrderBy(x => x.Month)
-                .ToList();
-
-            var monthlyConsumption = payments
-                .GroupBy(p => new { Year = p.PaymentMonth.Year, Month = p.PaymentMonth.Month })
-                .Select(g => new UtilityPaymentStatisticsDTO.MonthlyDataPoint
-                {
-                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
-                    Value = g.Sum(p => 
-                        (p.CurrentValue ?? 0) - (p.PreviousValue ?? 0) +
-                        ((p.CurrentValueNight ?? 0) - (p.PreviousValueNight ?? 0))
-                    )
-                })
-                .OrderBy(x => x.Month)
-                .ToList();
-
-            return Ok(new UtilityPaymentStatisticsDTO
-            {
-                MonthlyExpenses = monthlyExpenses,
-                MonthlyConsumption = monthlyConsumption
-            });
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken = default)
         {
-            var payment = await _context.UtilityPayments
+            // Try to find payment in each specialized table
+            var electricity = await _context.ElectricityPayments
                 .Include(p => p.Department)
                 .Include(p => p.ResponsibleEmployee)
                 .AsNoTracking()
-                .Where(p => p.Id == id)
-                .Select(p => new UtilityPaymentDTO
+                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+            if (electricity != null)
+            {
+                var dto = new UtilityPaymentDTO
                 {
-                    Id = p.Id,
-                    DepartmentId = p.DepartmentId,
-                    DepartmentName = p.Department.Name,
-                    ResponsibleEmployeeId = p.ResponsibleEmployeeId,
-                    ResponsibleEmployeeName = p.ResponsibleEmployee != null ? p.ResponsibleEmployee.CallSign : null,
-                    PaymentType = p.PaymentType,
-                    PaymentTypeName = p.PaymentType.ToString(),
-                    PreviousValue = p.PreviousValue,
-                    CurrentValue = p.CurrentValue,
-                    PreviousValueNight = p.PreviousValueNight,
-                    CurrentValueNight = p.CurrentValueNight,
-                    PricePerUnit = p.PricePerUnit,
-                    PricePerUnitNight = p.PricePerUnitNight,
-                    TotalAmount = p.TotalAmount,
-                    BillImageUrl = p.BillImageUrl,
-                    PaymentMonth = p.PaymentMonth,
-                    CreatedAt = p.CreatedAt
-                })
-                .FirstOrDefaultAsync(cancellationToken);
+                    Id = electricity.Id,
+                    DepartmentId = electricity.DepartmentId,
+                    DepartmentName = electricity.Department.Name,
+                    ResponsibleEmployeeId = electricity.ResponsibleEmployeeId,
+                    ResponsibleEmployeeName = electricity.ResponsibleEmployee != null ? electricity.ResponsibleEmployee.CallSign : null,
+                    PaymentType = PaymentType.Electricity,
+                    PaymentTypeName = PaymentType.Electricity.ToString(),
+                    PreviousValue = electricity.PreviousValue,
+                    CurrentValue = electricity.CurrentValue,
+                    PreviousValueNight = electricity.PreviousValueNight,
+                    CurrentValueNight = electricity.CurrentValueNight,
+                    PricePerUnit = electricity.PricePerUnit,
+                    PricePerUnitNight = electricity.PricePerUnitNight,
+                    TotalAmount = electricity.TotalAmount,
+                    BillImageUrl = electricity.BillImageUrl,
+                    PaymentMonth = electricity.PaymentMonth,
+                    CreatedAt = electricity.CreatedAt
+                };
 
-            if (payment == null)
-                return NotFound(new { message = $"Payment with ID {id} not found." });
+                return Ok(dto);
+            }
 
-            return Ok(payment);
+            var gas = await _context.GasPayments
+                .Include(p => p.Department)
+                .Include(p => p.ResponsibleEmployee)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+            if (gas != null)
+            {
+                var dto = new UtilityPaymentDTO
+                {
+                    Id = gas.Id,
+                    DepartmentId = gas.DepartmentId,
+                    DepartmentName = gas.Department.Name,
+                    ResponsibleEmployeeId = gas.ResponsibleEmployeeId,
+                    ResponsibleEmployeeName = gas.ResponsibleEmployee != null ? gas.ResponsibleEmployee.CallSign : null,
+                    PaymentType = PaymentType.Gas,
+                    PaymentTypeName = PaymentType.Gas.ToString(),
+                    PreviousValue = gas.PreviousValue,
+                    CurrentValue = gas.CurrentValue,
+                    PreviousValueNight = null,
+                    CurrentValueNight = null,
+                    PricePerUnit = gas.PricePerUnit,
+                    PricePerUnitNight = null,
+                    TotalAmount = gas.TotalAmount,
+                    BillImageUrl = gas.BillImageUrl,
+                    PaymentMonth = gas.PaymentMonth,
+                    CreatedAt = gas.CreatedAt
+                };
+
+                return Ok(dto);
+            }
+
+            var water = await _context.WaterPayments
+                .Include(p => p.Department)
+                .Include(p => p.ResponsibleEmployee)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+            if (water != null)
+            {
+                var dto = new UtilityPaymentDTO
+                {
+                    Id = water.Id,
+                    DepartmentId = water.DepartmentId,
+                    DepartmentName = water.Department.Name,
+                    ResponsibleEmployeeId = water.ResponsibleEmployeeId,
+                    ResponsibleEmployeeName = water.ResponsibleEmployee != null ? water.ResponsibleEmployee.CallSign : null,
+                    PaymentType = PaymentType.Water,
+                    PaymentTypeName = PaymentType.Water.ToString(),
+                    PreviousValue = water.PreviousValue,
+                    CurrentValue = water.CurrentValue,
+                    PreviousValueNight = null,
+                    CurrentValueNight = null,
+                    PricePerUnit = water.PricePerUnit,
+                    PricePerUnitNight = null,
+                    TotalAmount = water.TotalAmount,
+                    BillImageUrl = water.BillImageUrl,
+                    PaymentMonth = water.PaymentMonth,
+                    CreatedAt = water.CreatedAt
+                };
+
+                return Ok(dto);
+            }
+
+            var rent = await _context.RentPayments
+                .Include(p => p.Department)
+                .Include(p => p.ResponsibleEmployee)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+
+            if (rent != null)
+            {
+                var dto = new UtilityPaymentDTO
+                {
+                    Id = rent.Id,
+                    DepartmentId = rent.DepartmentId,
+                    DepartmentName = rent.Department.Name,
+                    ResponsibleEmployeeId = rent.ResponsibleEmployeeId,
+                    ResponsibleEmployeeName = rent.ResponsibleEmployee != null ? rent.ResponsibleEmployee.CallSign : null,
+                    PaymentType = PaymentType.Rent,
+                    PaymentTypeName = PaymentType.Rent.ToString(),
+                    PreviousValue = null,
+                    CurrentValue = null,
+                    PreviousValueNight = null,
+                    CurrentValueNight = null,
+                    PricePerUnit = rent.PricePerUnit,
+                    PricePerUnitNight = null,
+                    TotalAmount = rent.TotalAmount,
+                    BillImageUrl = rent.BillImageUrl,
+                    PaymentMonth = rent.PaymentMonth,
+                    CreatedAt = rent.CreatedAt
+                };
+
+                return Ok(dto);
+            }
+
+            return NotFound(new { message = $"Payment with ID {id} not found." });
         }
 
         [HttpPost]
@@ -479,69 +895,210 @@ namespace EmployeeManager.API.Controllers
                 paymentMonthDate = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
             }
 
-            var payment = new UtilityPayment
-            {
-                Id = Guid.NewGuid(),
-                DepartmentId = dto.DepartmentId,
-                ResponsibleEmployeeId = dto.ResponsibleEmployeeId,
-                PaymentType = dto.PaymentType,
-                PreviousValue = dto.PreviousValue,
-                CurrentValue = dto.CurrentValue,
-                PreviousValueNight = dto.PreviousValueNight,
-                CurrentValueNight = dto.CurrentValueNight,
-                PricePerUnit = dto.PricePerUnit,
-                PricePerUnitNight = dto.PricePerUnitNight,
-                TotalAmount = dto.TotalAmount,
-                BillImageUrl = imageUrl,
-                PaymentMonth = paymentMonthDate,
-                CreatedAt = DateTime.UtcNow
-            };
+            Guid createdId;
+            UtilityPaymentDTO resultDto;
 
             try
             {
-                // Repository.AddAsync already calls SaveChangesAsync internally
-                await _repository.AddAsync(payment, cancellationToken);
+                switch (dto.PaymentType)
+                {
+                    case PaymentType.Electricity:
+                    {
+                        var payment = new ElectricityPayment
+                        {
+                            Id = Guid.NewGuid(),
+                            DepartmentId = dto.DepartmentId,
+                            ResponsibleEmployeeId = dto.ResponsibleEmployeeId,
+                            PreviousValue = dto.PreviousValue,
+                            CurrentValue = dto.CurrentValue,
+                            PreviousValueNight = dto.PreviousValueNight,
+                            CurrentValueNight = dto.CurrentValueNight,
+                            PricePerUnit = dto.PricePerUnit,
+                            PricePerUnitNight = dto.PricePerUnitNight,
+                            TotalAmount = dto.TotalAmount,
+                            BillImageUrl = imageUrl,
+                            PaymentMonth = paymentMonthDate,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _context.ElectricityPayments.Add(payment);
+                        await _context.SaveChangesAsync(cancellationToken);
+
+                        createdId = payment.Id;
+                        resultDto = new UtilityPaymentDTO
+                        {
+                            Id = payment.Id,
+                            DepartmentId = payment.DepartmentId,
+                            DepartmentName = department.Name,
+                            ResponsibleEmployeeId = payment.ResponsibleEmployeeId,
+                            ResponsibleEmployeeName = dto.ResponsibleEmployeeId.HasValue
+                                ? (await _context.Employees.FindAsync(new object[] { dto.ResponsibleEmployeeId.Value }, cancellationToken))?.CallSign
+                                : null,
+                            PaymentType = PaymentType.Electricity,
+                            PaymentTypeName = PaymentType.Electricity.ToString(),
+                            PreviousValue = payment.PreviousValue,
+                            CurrentValue = payment.CurrentValue,
+                            PreviousValueNight = payment.PreviousValueNight,
+                            CurrentValueNight = payment.CurrentValueNight,
+                            PricePerUnit = payment.PricePerUnit,
+                            PricePerUnitNight = payment.PricePerUnitNight,
+                            TotalAmount = payment.TotalAmount,
+                            BillImageUrl = payment.BillImageUrl,
+                            PaymentMonth = payment.PaymentMonth,
+                            CreatedAt = payment.CreatedAt
+                        };
+                        break;
+                    }
+
+                    case PaymentType.Gas:
+                    {
+                        var payment = new GasPayment
+                        {
+                            Id = Guid.NewGuid(),
+                            DepartmentId = dto.DepartmentId,
+                            ResponsibleEmployeeId = dto.ResponsibleEmployeeId,
+                            PreviousValue = dto.PreviousValue,
+                            CurrentValue = dto.CurrentValue,
+                            PricePerUnit = dto.PricePerUnit,
+                            TotalAmount = dto.TotalAmount,
+                            BillImageUrl = imageUrl,
+                            PaymentMonth = paymentMonthDate,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _context.GasPayments.Add(payment);
+                        await _context.SaveChangesAsync(cancellationToken);
+
+                        createdId = payment.Id;
+                        resultDto = new UtilityPaymentDTO
+                        {
+                            Id = payment.Id,
+                            DepartmentId = payment.DepartmentId,
+                            DepartmentName = department.Name,
+                            ResponsibleEmployeeId = payment.ResponsibleEmployeeId,
+                            ResponsibleEmployeeName = dto.ResponsibleEmployeeId.HasValue
+                                ? (await _context.Employees.FindAsync(new object[] { dto.ResponsibleEmployeeId.Value }, cancellationToken))?.CallSign
+                                : null,
+                            PaymentType = PaymentType.Gas,
+                            PaymentTypeName = PaymentType.Gas.ToString(),
+                            PreviousValue = payment.PreviousValue,
+                            CurrentValue = payment.CurrentValue,
+                            PreviousValueNight = null,
+                            CurrentValueNight = null,
+                            PricePerUnit = payment.PricePerUnit,
+                            PricePerUnitNight = null,
+                            TotalAmount = payment.TotalAmount,
+                            BillImageUrl = payment.BillImageUrl,
+                            PaymentMonth = payment.PaymentMonth,
+                            CreatedAt = payment.CreatedAt
+                        };
+                        break;
+                    }
+
+                    case PaymentType.Water:
+                    {
+                        var payment = new WaterPayment
+                        {
+                            Id = Guid.NewGuid(),
+                            DepartmentId = dto.DepartmentId,
+                            ResponsibleEmployeeId = dto.ResponsibleEmployeeId,
+                            PreviousValue = dto.PreviousValue,
+                            CurrentValue = dto.CurrentValue,
+                            PricePerUnit = dto.PricePerUnit,
+                            TotalAmount = dto.TotalAmount,
+                            BillImageUrl = imageUrl,
+                            PaymentMonth = paymentMonthDate,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _context.WaterPayments.Add(payment);
+                        await _context.SaveChangesAsync(cancellationToken);
+
+                        createdId = payment.Id;
+                        resultDto = new UtilityPaymentDTO
+                        {
+                            Id = payment.Id,
+                            DepartmentId = payment.DepartmentId,
+                            DepartmentName = department.Name,
+                            ResponsibleEmployeeId = payment.ResponsibleEmployeeId,
+                            ResponsibleEmployeeName = dto.ResponsibleEmployeeId.HasValue
+                                ? (await _context.Employees.FindAsync(new object[] { dto.ResponsibleEmployeeId.Value }, cancellationToken))?.CallSign
+                                : null,
+                            PaymentType = PaymentType.Water,
+                            PaymentTypeName = PaymentType.Water.ToString(),
+                            PreviousValue = payment.PreviousValue,
+                            CurrentValue = payment.CurrentValue,
+                            PreviousValueNight = null,
+                            CurrentValueNight = null,
+                            PricePerUnit = payment.PricePerUnit,
+                            PricePerUnitNight = null,
+                            TotalAmount = payment.TotalAmount,
+                            BillImageUrl = payment.BillImageUrl,
+                            PaymentMonth = payment.PaymentMonth,
+                            CreatedAt = payment.CreatedAt
+                        };
+                        break;
+                    }
+
+                    case PaymentType.Rent:
+                    {
+                        var payment = new RentPayment
+                        {
+                            Id = Guid.NewGuid(),
+                            DepartmentId = dto.DepartmentId,
+                            ResponsibleEmployeeId = dto.ResponsibleEmployeeId,
+                            PricePerUnit = dto.PricePerUnit,
+                            TotalAmount = dto.TotalAmount,
+                            BillImageUrl = imageUrl,
+                            PaymentMonth = paymentMonthDate,
+                            CreatedAt = DateTime.UtcNow
+                        };
+
+                        _context.RentPayments.Add(payment);
+                        await _context.SaveChangesAsync(cancellationToken);
+
+                        createdId = payment.Id;
+                        resultDto = new UtilityPaymentDTO
+                        {
+                            Id = payment.Id,
+                            DepartmentId = payment.DepartmentId,
+                            DepartmentName = department.Name,
+                            ResponsibleEmployeeId = payment.ResponsibleEmployeeId,
+                            ResponsibleEmployeeName = dto.ResponsibleEmployeeId.HasValue
+                                ? (await _context.Employees.FindAsync(new object[] { dto.ResponsibleEmployeeId.Value }, cancellationToken))?.CallSign
+                                : null,
+                            PaymentType = PaymentType.Rent,
+                            PaymentTypeName = PaymentType.Rent.ToString(),
+                            PreviousValue = null,
+                            CurrentValue = null,
+                            PreviousValueNight = null,
+                            CurrentValueNight = null,
+                            PricePerUnit = payment.PricePerUnit,
+                            PricePerUnitNight = null,
+                            TotalAmount = payment.TotalAmount,
+                            BillImageUrl = payment.BillImageUrl,
+                            PaymentMonth = payment.PaymentMonth,
+                            CreatedAt = payment.CreatedAt
+                        };
+                        break;
+                    }
+
+                    default:
+                        throw new InvalidOperationException($"Unsupported payment type: {dto.PaymentType}");
+                }
             }
             catch (DbUpdateException dbEx)
             {
                 _logger.LogError(dbEx, "Database error while creating utility payment");
-                // Let GlobalExceptionMiddleware handle it - it will return 409 Conflict
                 throw;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error while creating utility payment");
-                // Let GlobalExceptionMiddleware handle it - it will return 500 Internal Server Error
                 throw;
             }
 
-            var result = await _context.UtilityPayments
-                .Include(p => p.Department)
-                .Include(p => p.ResponsibleEmployee)
-                .Where(p => p.Id == payment.Id)
-                .Select(p => new UtilityPaymentDTO
-                {
-                    Id = p.Id,
-                    DepartmentId = p.DepartmentId,
-                    DepartmentName = p.Department.Name,
-                    ResponsibleEmployeeId = p.ResponsibleEmployeeId,
-                    ResponsibleEmployeeName = p.ResponsibleEmployee != null ? p.ResponsibleEmployee.CallSign : null,
-                    PaymentType = p.PaymentType,
-                    PaymentTypeName = p.PaymentType.ToString(),
-                    PreviousValue = p.PreviousValue,
-                    CurrentValue = p.CurrentValue,
-                    PreviousValueNight = p.PreviousValueNight,
-                    CurrentValueNight = p.CurrentValueNight,
-                    PricePerUnit = p.PricePerUnit,
-                    PricePerUnitNight = p.PricePerUnitNight,
-                    TotalAmount = p.TotalAmount,
-                    BillImageUrl = p.BillImageUrl,
-                    PaymentMonth = p.PaymentMonth,
-                    CreatedAt = p.CreatedAt
-                })
-                .FirstOrDefaultAsync(cancellationToken);
-
-            return CreatedAtAction(nameof(GetById), new { id = payment.Id }, result);
+            return CreatedAtAction(nameof(GetById), new { id = createdId }, resultDto);
         }
     }
 }

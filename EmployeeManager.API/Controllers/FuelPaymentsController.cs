@@ -37,68 +37,61 @@ namespace EmployeeManager.API.Controllers
             if (pageSize < 1) pageSize = 10;
             if (pageSize > 100) pageSize = 100;
 
-            var query = _context.FuelPayments
-                .Include(p => p.Department)
-                .Include(p => p.ResponsibleEmployee)
-                .Include(p => p.Equipment)
+            var query = _context.FuelTransactions
+                .Include(t => t.Department)
                 .AsQueryable();
 
             if (departmentId.HasValue)
             {
-                query = query.Where(p => p.DepartmentId == departmentId.Value);
+                query = query.Where(t => t.DepartmentId == departmentId.Value);
             }
 
             if (fuelType.HasValue)
             {
-                query = query.Where(p => p.FuelType == fuelType.Value);
+                query = query.Where(t => t.Type == fuelType.Value);
             }
 
             var totalCount = await query.CountAsync(cancellationToken);
 
-            var payments = await query
-                .OrderByDescending(p => p.CreatedAt)
+            var transactions = await query
+                .OrderByDescending(t => t.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(p => new FuelPaymentDTO
+                .Select(t => new FuelTransactionDTO
                 {
-                    Id = p.Id,
-                    DepartmentId = p.DepartmentId,
-                    DepartmentName = p.Department.Name,
-                    ResponsibleEmployeeId = p.ResponsibleEmployeeId,
-                    ResponsibleEmployeeName = p.ResponsibleEmployee != null ? p.ResponsibleEmployee.CallSign : null,
-                    EquipmentId = p.EquipmentId,
-                    EquipmentName = p.Equipment.Name,
-                    EntryDate = p.EntryDate,
-                    PreviousMileage = p.PreviousMileage,
-                    CurrentMileage = p.CurrentMileage,
-                    PricePerLiter = p.PricePerLiter,
-                    FuelType = p.FuelType,
-                    FuelTypeName = p.FuelType == FuelType.Gasoline ? "Бензин" : "Дізель",
-                    TotalAmount = p.TotalAmount,
-                    OdometerImageUrl = p.OdometerImageUrl,
-                    CreatedAt = p.CreatedAt
+                    Id = t.Id,
+                    DepartmentId = t.DepartmentId,
+                    DepartmentName = t.Department != null ? t.Department.Name : null,
+                    Type = t.Type,
+                    FuelTypeName = t.Type == FuelType.Gasoline ? "Бензин" : "Дізель",
+                    Amount = t.Amount,
+                    RelatedId = t.RelatedId,
+                    CreatedAt = t.CreatedAt
                 })
                 .ToListAsync(cancellationToken);
 
-            return Ok(new { items = payments, total = totalCount });
+            return Ok(new { items = transactions, total = totalCount });
         }
 
         [HttpGet("statistics")]
         public async Task<IActionResult> GetStatistics(
             [FromQuery] Guid? departmentId,
+            [FromQuery] FuelType? fuelType,
             [FromQuery] DateTime? startDate = null,
             [FromQuery] DateTime? endDate = null,
             CancellationToken cancellationToken = default)
         {
-            // If dates are not provided, use default range (last 12 months from latest payment)
+            var txQuery = _context.FuelTransactions.AsQueryable();
+
+            // If dates are not provided, use default range (last 12 months from latest transaction)
             if (!startDate.HasValue || !endDate.HasValue)
             {
-                var latestPaymentDate = await _context.FuelPayments
-                    .OrderByDescending(p => p.EntryDate)
-                    .Select(p => p.EntryDate)
+                var latestTxDate = await txQuery
+                    .OrderByDescending(t => t.CreatedAt)
+                    .Select(t => t.CreatedAt)
                     .FirstOrDefaultAsync(cancellationToken);
 
-                if (latestPaymentDate == default(DateTime))
+                if (latestTxDate == default(DateTime))
                 {
                     return Ok(new FuelPaymentStatisticsDTO
                     {
@@ -107,7 +100,7 @@ namespace EmployeeManager.API.Controllers
                     });
                 }
 
-                var endMonth = new DateTime(latestPaymentDate.Year, latestPaymentDate.Month, 1);
+                var endMonth = new DateTime(latestTxDate.Year, latestTxDate.Month, 1);
                 startDate = endMonth.AddMonths(-11); // Last 12 months including the latest month
                 endDate = endMonth.AddMonths(1); // Exclusive end date (first day of next month)
             }
@@ -116,75 +109,123 @@ namespace EmployeeManager.API.Controllers
             var startDateNormalized = new DateTime(startDate.Value.Year, startDate.Value.Month, 1);
             var endDateExclusive = new DateTime(endDate.Value.Year, endDate.Value.Month, 1).AddMonths(1);
 
-            var query = _context.FuelPayments
-                .Where(p => p.EntryDate >= startDateNormalized && 
-                           p.EntryDate < endDateExclusive);
+            txQuery = txQuery.Where(t => t.CreatedAt >= startDateNormalized &&
+                                         t.CreatedAt < endDateExclusive);
 
             if (departmentId.HasValue)
             {
-                query = query.Where(p => p.DepartmentId == departmentId.Value);
+                txQuery = txQuery.Where(t => t.DepartmentId == departmentId.Value);
             }
 
-            var payments = await query
-                .OrderBy(p => p.EntryDate)
-                .Select(p => new
-                {
-                    EntryDate = p.EntryDate,
-                    TotalAmount = p.TotalAmount,
-                    Mileage = p.CurrentMileage - p.PreviousMileage
-                })
-                .ToListAsync(cancellationToken);
+            List<FuelPaymentStatisticsDTO.MonthlyDataPoint> monthlyGas;
+            List<FuelPaymentStatisticsDTO.MonthlyDataPoint> monthlyDiesel;
 
-            // Group by month and calculate totals
-            var monthlyExpenses = payments
-                .GroupBy(p => new { Year = p.EntryDate.Year, Month = p.EntryDate.Month })
-                .Select(g => new FuelPaymentStatisticsDTO.MonthlyDataPoint
-                {
-                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
-                    Value = g.Sum(p => p.TotalAmount)
-                })
-                .OrderBy(x => x.Month)
-                .ToList();
+            // Helper local function to aggregate liters (only negative amounts – витрати)
+            // Returns data with Year and Month, formatting happens in memory after query execution
+            static async Task<List<FuelPaymentStatisticsDTO.MonthlyDataPoint>> BuildLitersQueryAsync(
+                IQueryable<FuelTransaction> query,
+                FuelType type,
+                CancellationToken cancellationToken)
+            {
+                var rawData = await query
+                    .Where(t => t.Type == type && t.Amount < 0)
+                    .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month })
+                    .Select(g => new
+                    {
+                        g.Key.Year,
+                        g.Key.Month,
+                        Value = -g.Sum(t => t.Amount) // Amount negative -> liters positive
+                    })
+                    .OrderBy(x => x.Year)
+                    .ThenBy(x => x.Month)
+                    .ToListAsync(cancellationToken);
 
-            var monthlyConsumption = payments
-                .GroupBy(p => new { Year = p.EntryDate.Year, Month = p.EntryDate.Month })
-                .Select(g => new FuelPaymentStatisticsDTO.MonthlyDataPoint
+                // Format Month string in memory after query execution
+                return rawData.Select(x => new FuelPaymentStatisticsDTO.MonthlyDataPoint
                 {
-                    Month = $"{g.Key.Year}-{g.Key.Month:D2}",
-                    Value = g.Sum(p => p.Mileage)
-                })
-                .OrderBy(x => x.Month)
-                .ToList();
+                    Month = $"{x.Year}-{x.Month:D2}",
+                    Value = x.Value
+                }).ToList();
+            }
+
+            if (fuelType.HasValue)
+            {
+                // Один тип пального: один список з даними, інший порожній
+                if (fuelType.Value == FuelType.Gasoline)
+                {
+                    monthlyGas = await BuildLitersQueryAsync(txQuery, FuelType.Gasoline, cancellationToken);
+                    monthlyDiesel = new List<FuelPaymentStatisticsDTO.MonthlyDataPoint>();
+                }
+                else // Diesel
+                {
+                    monthlyGas = new List<FuelPaymentStatisticsDTO.MonthlyDataPoint>();
+                    monthlyDiesel = await BuildLitersQueryAsync(txQuery, FuelType.Diesel, cancellationToken);
+                }
+            }
+            else
+            {
+                // Всі типи: Бензин -> MonthlyExpenses, Дизель -> MonthlyConsumption
+                monthlyGas = await BuildLitersQueryAsync(txQuery, FuelType.Gasoline, cancellationToken);
+                monthlyDiesel = await BuildLitersQueryAsync(txQuery, FuelType.Diesel, cancellationToken);
+            }
 
             return Ok(new FuelPaymentStatisticsDTO
             {
-                MonthlyExpenses = monthlyExpenses,
-                MonthlyConsumption = monthlyConsumption
+                MonthlyExpenses = monthlyGas,
+                MonthlyConsumption = monthlyDiesel
             });
         }
 
         [HttpGet("latest/{equipmentId}")]
         public async Task<IActionResult> GetLatest(
             Guid equipmentId,
+            [FromQuery] FuelType fuelType,
             CancellationToken cancellationToken = default)
         {
-            var latestPayment = await _context.FuelPayments
+            // Визначаємо підрозділ по обладнанню
+            var equipment = await _context.Equipments
+                .Where(e => e.Id == equipmentId)
+                .Select(e => new { e.Id, e.DepartmentId })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (equipment == null || equipment.DepartmentId == null)
+            {
+                // Немає обладнання або не прив'язано до підрозділу
+                return Ok(new { previousMileage = (decimal?)null, fuelBalance = 0m });
+            }
+
+            // Остання витрата по цьому обладнанню (для попереднього пробігу)
+            var latestExpense = await _context.FuelExpenses
                 .Where(p => p.EquipmentId == equipmentId)
                 .OrderByDescending(p => p.EntryDate)
                 .ThenByDescending(p => p.CreatedAt)
-                .Select(p => new
-                {
-                    PreviousMileage = p.CurrentMileage,
-                    PricePerLiter = p.PricePerLiter
-                })
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (latestPayment == null)
-            {
-                return Ok(new { previousMileage = (decimal?)null, pricePerLiter = (decimal?)null });
-            }
+            decimal? previousMileage = latestExpense?.CurrentMileage;
 
-            return Ok(new { previousMileage = latestPayment.PreviousMileage, pricePerLiter = latestPayment.PricePerLiter });
+            // Баланс по підрозділу та вибраному типу палива
+            var fuelBalance = await _context.FuelTransactions
+                .Where(t => t.DepartmentId == equipment.DepartmentId && t.Type == fuelType)
+                .SumAsync(t => (decimal?)t.Amount, cancellationToken) ?? 0m;
+
+            return Ok(new { previousMileage, fuelBalance });
+        }
+
+        /// <summary>
+        /// Отримати залишок палива по підрозділу та типу палива.
+        /// Не залежить від обладнання.
+        /// </summary>
+        [HttpGet("balance")]
+        public async Task<IActionResult> GetBalance(
+            [FromQuery] Guid departmentId,
+            [FromQuery] FuelType fuelType,
+            CancellationToken cancellationToken = default)
+        {
+            var fuelBalance = await _context.FuelTransactions
+                .Where(t => t.DepartmentId == departmentId && t.Type == fuelType)
+                .SumAsync(t => (decimal?)t.Amount, cancellationToken) ?? 0m;
+
+            return Ok(new { fuelBalance });
         }
 
         [HttpPost]
@@ -268,22 +309,6 @@ namespace EmployeeManager.API.Controllers
                 ModelState.AddModelError("CurrentMileage", "CurrentMileage is required.");
             }
 
-            if (Request.Form.TryGetValue("PricePerLiter", out var pricePerLiterStr))
-            {
-                if (decimal.TryParse(pricePerLiterStr.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var pricePerLiter))
-                {
-                    dto.PricePerLiter = pricePerLiter;
-                }
-                else
-                {
-                    ModelState.AddModelError("PricePerLiter", $"The value '{pricePerLiterStr}' is not valid for PricePerLiter.");
-                }
-            }
-            else
-            {
-                ModelState.AddModelError("PricePerLiter", "PricePerLiter is required.");
-            }
-
             // Parse FuelType
             if (Request.Form.TryGetValue("FuelType", out var fuelTypeStr) && Enum.TryParse<FuelType>(fuelTypeStr.ToString(), out var fuelType))
             {
@@ -292,22 +317,6 @@ namespace EmployeeManager.API.Controllers
             else
             {
                 ModelState.AddModelError("FuelType", "FuelType is required and must be a valid FuelType.");
-            }
-
-            if (Request.Form.TryGetValue("TotalAmount", out var totalAmountStr))
-            {
-                if (decimal.TryParse(totalAmountStr.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var totalAmount))
-                {
-                    dto.TotalAmount = totalAmount;
-                }
-                else
-                {
-                    ModelState.AddModelError("TotalAmount", $"The value '{totalAmountStr}' is not valid for TotalAmount.");
-                }
-            }
-            else
-            {
-                ModelState.AddModelError("TotalAmount", "TotalAmount is required.");
             }
 
             // Validate: CurrentMileage should be greater than PreviousMileage
@@ -321,6 +330,15 @@ namespace EmployeeManager.API.Controllers
                 return BadRequest(ModelState);
             }
 
+            // Отримуємо витрачене паливо (літри) з форми. Воно зберігається лише у FuelTransactions.
+            decimal fuelUsed = 0;
+            if (Request.Form.TryGetValue("FuelUsed", out var fuelUsedStr) &&
+                decimal.TryParse(fuelUsedStr.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var fuelUsedParsed))
+            {
+                fuelUsed = fuelUsedParsed;
+            }
+
+            // Вартість та баланс більше не розраховуються тут.
             // Handle image upload
             string? imageUrl = null;
             if (odometerImage != null && odometerImage.Length > 0)
@@ -351,17 +369,30 @@ namespace EmployeeManager.API.Controllers
                 EntryDate = dto.EntryDate,
                 PreviousMileage = dto.PreviousMileage,
                 CurrentMileage = dto.CurrentMileage,
-                PricePerLiter = dto.PricePerLiter,
                 FuelType = dto.FuelType,
                 TotalAmount = dto.TotalAmount,
                 OdometerImageUrl = imageUrl,
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.FuelPayments.Add(payment);
+            _context.FuelExpenses.Add(payment);
             await _context.SaveChangesAsync(cancellationToken);
 
-            var result = await _context.FuelPayments
+            // Створюємо транзакцію руху палива (мінус – витрати)
+            var transaction = new FuelTransaction
+            {
+                Id = Guid.NewGuid(),
+                DepartmentId = payment.DepartmentId,
+                Type = payment.FuelType,
+                Amount = -fuelUsed,
+                RelatedId = payment.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.FuelTransactions.Add(transaction);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var result = await _context.FuelExpenses
                 .Include(p => p.Department)
                 .Include(p => p.ResponsibleEmployee)
                 .Include(p => p.Equipment)
@@ -370,15 +401,14 @@ namespace EmployeeManager.API.Controllers
                 {
                     Id = p.Id,
                     DepartmentId = p.DepartmentId,
-                    DepartmentName = p.Department.Name,
+                    DepartmentName = p.Department != null ? p.Department.Name : null,
                     ResponsibleEmployeeId = p.ResponsibleEmployeeId,
                     ResponsibleEmployeeName = p.ResponsibleEmployee != null ? p.ResponsibleEmployee.CallSign : null,
                     EquipmentId = p.EquipmentId,
-                    EquipmentName = p.Equipment.Name,
+                    EquipmentName = p.Equipment != null ? p.Equipment.Name : null,
                     EntryDate = p.EntryDate,
                     PreviousMileage = p.PreviousMileage,
                     CurrentMileage = p.CurrentMileage,
-                    PricePerLiter = p.PricePerLiter,
                     FuelType = p.FuelType,
                     FuelTypeName = p.FuelType == FuelType.Gasoline ? "Бензин" : "Дізель",
                     TotalAmount = p.TotalAmount,
@@ -388,6 +418,97 @@ namespace EmployeeManager.API.Controllers
                 .FirstOrDefaultAsync(cancellationToken);
 
             return CreatedAtAction(nameof(GetAll), new { id = payment.Id }, result);
+        }
+
+        [HttpGet("transaction/{relatedId}")]
+        public async Task<IActionResult> GetTransactionDetails(
+            Guid relatedId,
+            CancellationToken cancellationToken = default)
+        {
+            // Спочатку перевіряємо, чи це витрата (FuelExpense)
+            var expenseData = await _context.FuelExpenses
+                .Include(p => p.Department)
+                .Include(p => p.ResponsibleEmployee)
+                .Include(p => p.Equipment)
+                .Where(p => p.Id == relatedId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (expenseData != null)
+            {
+                // Отримуємо TransactionId та кількість витраченого палива з пов'язаної транзакції
+                var transaction = await _context.FuelTransactions
+                    .Where(t => t.RelatedId == relatedId && t.Amount < 0)
+                    .Select(t => new { t.Id, t.Amount })
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                // Створюємо DTO в пам'яті після отримання даних
+                var expense = new FuelPaymentDTO
+                {
+                    TransactionId = transaction != null && transaction.Id != Guid.Empty ? transaction.Id : Guid.Empty,
+                    TransactionType = "Expense",
+                    Id = expenseData.Id,
+                    DepartmentId = expenseData.DepartmentId,
+                    DepartmentName = expenseData.Department?.Name,
+                    ResponsibleEmployeeId = expenseData.ResponsibleEmployeeId,
+                    ResponsibleEmployeeName = expenseData.ResponsibleEmployee?.CallSign,
+                    EquipmentId = expenseData.EquipmentId,
+                    EquipmentName = expenseData.Equipment?.Name,
+                    EntryDate = expenseData.EntryDate,
+                    PreviousMileage = expenseData.PreviousMileage,
+                    CurrentMileage = expenseData.CurrentMileage,
+                    FuelType = expenseData.FuelType,
+                    FuelTypeName = expenseData.FuelType == FuelType.Gasoline ? "Бензин" : "Дізель",
+                    TotalAmount = expenseData.TotalAmount,
+                    FuelAmount = transaction != null ? -transaction.Amount : 0, // Модуль негативного значення
+                    OdometerImageUrl = expenseData.OdometerImageUrl,
+                    CreatedAt = expenseData.CreatedAt
+                };
+                
+                return Ok(expense);
+            }
+
+            // Якщо не знайдено в витратах, перевіряємо надходження (FuelIncome)
+            var incomeData = await _context.FuelIncomes
+                .Include(fi => fi.Department)
+                .Include(fi => fi.ReceiverEmployee)
+                .Where(fi => fi.Id == relatedId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (incomeData != null)
+            {
+                // Отримуємо TransactionId та кількість доданого палива з пов'язаної транзакції
+                var transaction = await _context.FuelTransactions
+                    .Where(t => t.RelatedId == relatedId && t.Amount > 0)
+                    .Select(t => new { t.Id, t.Amount })
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                // Створюємо FuelPaymentDTO з даними FuelIncome
+                var incomeDto = new FuelPaymentDTO
+                {
+                    TransactionId = transaction != null && transaction.Id != Guid.Empty ? transaction.Id : Guid.Empty,
+                    TransactionType = "Income",
+                    Id = incomeData.Id,
+                    DepartmentId = incomeData.DepartmentId,
+                    DepartmentName = incomeData.Department?.Name,
+                    ResponsibleEmployeeId = incomeData.ReceiverEmployeeId,
+                    ResponsibleEmployeeName = incomeData.ReceiverEmployee?.CallSign,
+                    EquipmentId = Guid.Empty, // FuelIncome не має обладнання
+                    EquipmentName = null,
+                    EntryDate = incomeData.TransactionDate,
+                    PreviousMileage = 0, // FuelIncome не має пробігу
+                    CurrentMileage = 0,
+                    FuelType = incomeData.FuelType,
+                    FuelTypeName = incomeData.FuelType == FuelType.Gasoline ? "Бензин" : "Дізель",
+                    TotalAmount = 0, // FuelIncome не має суми
+                    FuelAmount = transaction != null ? transaction.Amount : incomeData.Amount, // Кількість доданого палива
+                    OdometerImageUrl = null,
+                    CreatedAt = incomeData.CreatedAt
+                };
+
+                return Ok(incomeDto);
+            }
+
+            return NotFound(new { message = "Транзакцію не знайдено" });
         }
     }
 }

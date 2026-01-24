@@ -29,11 +29,14 @@
 
       <div class="form-group">
         <label>Місяць оплати <span class="required">*</span></label>
-        <input
-          type="month"
-          formControlName="paymentMonth"
-          class="form-input"
-        />
+        <div class="date-input-wrapper" (mousedown)="onMonthWrapperMouseDown($event, paymentMonthInput)">
+          <input
+            type="month"
+            formControlName="paymentMonth"
+            class="form-input"
+            #paymentMonthInput
+          />
+        </div>
         @if (form.get('paymentMonth')?.invalid && form.get('paymentMonth')?.touched) {
         <span class="error">Місяць оплати обов'язковий</span>
         }
@@ -72,9 +75,9 @@
     </div>
     }
 
-    <!-- Single-zone meter: Previous, Current, Price, Total in one row -->
-    @if (!isTwoZoneMeter() || paymentType() !== 1) {
-    <div [class]="paymentType() === 4 ? 'form-row-3' : 'form-row-4'">
+    <!-- Single-zone meter: Electricity/Gas/Water -->
+    @if ((!isTwoZoneMeter() || paymentType() !== 1) && paymentType() !== 4) {
+    <div class="form-row-4">
       <div class="form-group">
         <label>Попередні <span class="required">*</span></label>
         <input
@@ -118,7 +121,6 @@
         }
       </div>
 
-      @if (paymentType() !== 4) {
       <div class="form-group">
         <label>Загальна сума</label>
         <input
@@ -130,7 +132,26 @@
         />
         <small class="hint">Розраховується автоматично</small>
       </div>
-      }
+    </div>
+    }
+
+    <!-- Оренда: лише ціна -->
+    @if (paymentType() === 4) {
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>{{ getPriceUnitName() }} <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="pricePerUnit"
+          step="0.01"
+          min="0.01"
+          class="form-input"
+          placeholder="0.00"
+        />
+        @if (form.get('pricePerUnit')?.invalid && form.get('pricePerUnit')?.touched) {
+        <span class="error">{{ getPriceUnitName() }} обов'язкова та має бути більше 0</span>
+        }
+      </div>
     </div>
     }
 
@@ -269,3 +290,4 @@
     </div>
   </form>
 </div>
+

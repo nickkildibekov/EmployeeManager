@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Department } from '../../../shared/models/department.model';
-import { FuelType, FuelPayment, FuelPaymentListResponse } from '../../../shared/models/fuel-payment.model';
+import { FuelType, FuelTransaction, FuelTransactionListResponse, FuelPayment } from '../../../shared/models/fuel-payment.model';
 import { FuelPaymentService } from '../fuel-payment.service';
 import { DepartmentService } from '../../departments/department.service';
 import { ToastService } from '../../../shared/services/toast.service';
@@ -25,7 +25,7 @@ export class FuelPaymentArchiveComponent implements OnInit {
   selectedDepartmentId = signal<string | null>(null);
   selectedFuelType = signal<FuelType | null>(null);
   
-  payments = signal<FuelPayment[]>([]);
+  transactions = signal<FuelTransaction[]>([]);
   totalCount = signal<number>(0);
   currentPage = signal<number>(1);
   pageSize = signal<number>(20);
@@ -37,6 +37,11 @@ export class FuelPaymentArchiveComponent implements OnInit {
   ];
 
   private isInitialized = false;
+
+  // Modal state for viewing single transaction
+  showTransactionModal = signal<boolean>(false);
+  selectedTransaction = signal<FuelTransaction | null>(null);
+  transactionDetails = signal<FuelPayment | null>(null);
 
   constructor() {
     // Reload payments when filters change (after initialization)
@@ -86,14 +91,14 @@ export class FuelPaymentArchiveComponent implements OnInit {
       )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next: (response: FuelPaymentListResponse) => {
-          this.payments.set(response.items);
+        next: (response: FuelTransactionListResponse) => {
+          this.transactions.set(response.items);
           this.totalCount.set(response.total);
           this.isLoading.set(false);
         },
         error: (err) => {
-          console.error('Error loading payments:', err);
-          this.toastService.error('Помилка завантаження платежів');
+          console.error('Error loading transactions:', err);
+          this.toastService.error('Помилка завантаження транзакцій');
           this.isLoading.set(false);
         },
       });
@@ -120,12 +125,15 @@ export class FuelPaymentArchiveComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
+    if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('uk-UA', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
+    if (isNaN(date.getTime())) return '';
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
   }
 
   formatCurrency(amount: number): string {
@@ -141,7 +149,30 @@ export class FuelPaymentArchiveComponent implements OnInit {
     return type?.label || 'Невідомо';
   }
 
-  getMileageDifference(previous: number, current: number): number {
-    return current - previous;
+  openTransaction(transaction: FuelTransaction): void {
+    this.selectedTransaction.set(transaction);
+    this.isLoading.set(true);
+    
+    this.fuelPaymentService
+      .getTransactionDetails(transaction.relatedId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (details) => {
+          this.transactionDetails.set(details);
+          this.showTransactionModal.set(true);
+          this.isLoading.set(false);
+        },
+        error: (err) => {
+          console.error('Error loading transaction details:', err);
+          this.toastService.error('Помилка завантаження деталей транзакції');
+          this.isLoading.set(false);
+        },
+      });
+  }
+
+  closeTransactionModal(): void {
+    this.showTransactionModal.set(false);
+    this.selectedTransaction.set(null);
+    this.transactionDetails.set(null);
   }
 }

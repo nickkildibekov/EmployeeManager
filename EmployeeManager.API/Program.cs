@@ -56,8 +56,6 @@ builder.Services.AddScoped<IEquipmentCategoryRepository, EquipmentCategoryReposi
 builder.Services.AddScoped<IRepository<ScheduleEntry>, ScheduleEntryRepository>();
 builder.Services.AddScoped<IScheduleEntryRepository, ScheduleEntryRepository>();
 builder.Services.AddScoped<IDepartmentPositionRepository, DepartmentPositionRepository>();
-builder.Services.AddScoped<IRepository<UtilityPayment>, UtilityPaymentRepository>();
-builder.Services.AddScoped<IUtilityPaymentRepository, UtilityPaymentRepository>();
 
 // Register Services
 builder.Services.AddScoped<IDepartmentService, DepartmentService>();
@@ -76,19 +74,28 @@ if (!app.Environment.EnvironmentName.Equals("Testing", StringComparison.OrdinalI
     using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
+        var logger = services.GetRequiredService<ILogger<Program>>();
+
         try
         {
             var context = services.GetRequiredService<AppDbContext>();
 
-            // Suppress pending model changes warning - migrations are handled manually
-            await context.Database.MigrateAsync();
-            var seeder = services.GetRequiredService<DataSeedHelper>();
-            
-            await Task.Run(() => seeder.InsertData());
+            // Check database availability before applying migrations
+            if (await context.Database.CanConnectAsync())
+            {
+                // Suppress pending model changes warning - migrations are handled manually
+                await context.Database.MigrateAsync();
+
+                var seeder = services.GetRequiredService<DataSeedHelper>();
+                await Task.Run(() => seeder.InsertData());
+            }
+            else
+            {
+                logger.LogWarning("Database is not reachable. Skipping migrations and seeding.");
+            }
         }
         catch (Exception ex)
         {
-            var logger = services.GetRequiredService<ILogger<Program>>();
             logger.LogError(ex, "An error occurred during database migration or seeding.");
         }
     }

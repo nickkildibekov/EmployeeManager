@@ -53,6 +53,64 @@ namespace EmployeeManager.API.Migrations
                     b.ToTable("DepartmentPositions");
                 });
 
+            modelBuilder.Entity("EmployeeManager.API.Models.ElectricityPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BillImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("CurrentValue")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal?>("CurrentValueNight")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PaymentMonth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("PreviousValue")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal?>("PreviousValueNight")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("PricePerUnit")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("PricePerUnitNight")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("ResponsibleEmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("ResponsibleEmployeeId");
+
+                    b.ToTable("ElectricityPayments");
+                });
+
             modelBuilder.Entity("EmployeeManager.API.Models.Employee", b =>
                 {
                     b.Property<Guid>("Id")
@@ -177,11 +235,46 @@ namespace EmployeeManager.API.Migrations
                     b.ToTable("EquipmentCategories");
                 });
 
-            modelBuilder.Entity("EmployeeManager.API.Models.FuelPayment", b =>
+            modelBuilder.Entity("EmployeeManager.API.Models.FuelIncome", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("FuelType")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ReceiverEmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("TransactionDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("ReceiverEmployeeId");
+
+                    b.ToTable("FuelIncomes", (string)null);
+                });
+
+            modelBuilder.Entity("EmployeeManager.API.Models.FuelPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("Id");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -209,10 +302,6 @@ namespace EmployeeManager.API.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal>("PricePerLiter")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<Guid?>("ResponsibleEmployeeId")
                         .HasColumnType("uniqueidentifier");
 
@@ -228,7 +317,82 @@ namespace EmployeeManager.API.Migrations
 
                     b.HasIndex("ResponsibleEmployeeId");
 
-                    b.ToTable("FuelPayments");
+                    b.ToTable("FuelExpenses", (string)null);
+                });
+
+            modelBuilder.Entity("EmployeeManager.API.Models.FuelTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("RelatedId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.ToTable("FuelTransactions", (string)null);
+                });
+
+            modelBuilder.Entity("EmployeeManager.API.Models.GasPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BillImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("CurrentValue")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PaymentMonth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("PreviousValue")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("PricePerUnit")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("ResponsibleEmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("ResponsibleEmployeeId");
+
+                    b.ToTable("GasPayments");
                 });
 
             modelBuilder.Entity("EmployeeManager.API.Models.Position", b =>
@@ -244,6 +408,44 @@ namespace EmployeeManager.API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Positions");
+                });
+
+            modelBuilder.Entity("EmployeeManager.API.Models.RentPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("BillImageUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("DepartmentId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("PaymentMonth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PricePerUnit")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("ResponsibleEmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("ResponsibleEmployeeId");
+
+                    b.ToTable("RentPayments");
                 });
 
             modelBuilder.Entity("EmployeeManager.API.Models.ScheduleEntry", b =>
@@ -294,7 +496,7 @@ namespace EmployeeManager.API.Migrations
                     b.ToTable("Specializations");
                 });
 
-            modelBuilder.Entity("EmployeeManager.API.Models.UtilityPayment", b =>
+            modelBuilder.Entity("EmployeeManager.API.Models.WaterPayment", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -310,24 +512,13 @@ namespace EmployeeManager.API.Migrations
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
 
-                    b.Property<decimal?>("CurrentValueNight")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("decimal(18,3)");
-
                     b.Property<Guid>("DepartmentId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("PaymentMonth")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("PaymentType")
-                        .HasColumnType("int");
-
                     b.Property<decimal?>("PreviousValue")
-                        .HasPrecision(18, 3)
-                        .HasColumnType("decimal(18,3)");
-
-                    b.Property<decimal?>("PreviousValueNight")
                         .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
 
@@ -335,13 +526,11 @@ namespace EmployeeManager.API.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<decimal?>("PricePerUnitNight")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<Guid?>("ResponsibleEmployeeId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 3)
                         .HasColumnType("decimal(18,3)");
 
                     b.HasKey("Id");
@@ -350,7 +539,7 @@ namespace EmployeeManager.API.Migrations
 
                     b.HasIndex("ResponsibleEmployeeId");
 
-                    b.ToTable("UtilityPayments");
+                    b.ToTable("WaterPayments");
                 });
 
             modelBuilder.Entity("EmployeeManager.API.Models.DepartmentPosition", b =>
@@ -370,6 +559,24 @@ namespace EmployeeManager.API.Migrations
                     b.Navigation("Department");
 
                     b.Navigation("Position");
+                });
+
+            modelBuilder.Entity("EmployeeManager.API.Models.ElectricityPayment", b =>
+                {
+                    b.HasOne("EmployeeManager.API.Models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EmployeeManager.API.Models.Employee", "ResponsibleEmployee")
+                        .WithMany()
+                        .HasForeignKey("ResponsibleEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("ResponsibleEmployee");
                 });
 
             modelBuilder.Entity("EmployeeManager.API.Models.Employee", b =>
@@ -422,6 +629,24 @@ namespace EmployeeManager.API.Migrations
                     b.Navigation("ResponsibleEmployee");
                 });
 
+            modelBuilder.Entity("EmployeeManager.API.Models.FuelIncome", b =>
+                {
+                    b.HasOne("EmployeeManager.API.Models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EmployeeManager.API.Models.Employee", "ReceiverEmployee")
+                        .WithMany()
+                        .HasForeignKey("ReceiverEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("ReceiverEmployee");
+                });
+
             modelBuilder.Entity("EmployeeManager.API.Models.FuelPayment", b =>
                 {
                     b.HasOne("EmployeeManager.API.Models.Department", "Department")
@@ -448,6 +673,53 @@ namespace EmployeeManager.API.Migrations
                     b.Navigation("ResponsibleEmployee");
                 });
 
+            modelBuilder.Entity("EmployeeManager.API.Models.FuelTransaction", b =>
+                {
+                    b.HasOne("EmployeeManager.API.Models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+                });
+
+            modelBuilder.Entity("EmployeeManager.API.Models.GasPayment", b =>
+                {
+                    b.HasOne("EmployeeManager.API.Models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EmployeeManager.API.Models.Employee", "ResponsibleEmployee")
+                        .WithMany()
+                        .HasForeignKey("ResponsibleEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("ResponsibleEmployee");
+                });
+
+            modelBuilder.Entity("EmployeeManager.API.Models.RentPayment", b =>
+                {
+                    b.HasOne("EmployeeManager.API.Models.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EmployeeManager.API.Models.Employee", "ResponsibleEmployee")
+                        .WithMany()
+                        .HasForeignKey("ResponsibleEmployeeId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Department");
+
+                    b.Navigation("ResponsibleEmployee");
+                });
+
             modelBuilder.Entity("EmployeeManager.API.Models.ScheduleEntry", b =>
                 {
                     b.HasOne("EmployeeManager.API.Models.Department", "Department")
@@ -467,7 +739,7 @@ namespace EmployeeManager.API.Migrations
                     b.Navigation("Employee");
                 });
 
-            modelBuilder.Entity("EmployeeManager.API.Models.UtilityPayment", b =>
+            modelBuilder.Entity("EmployeeManager.API.Models.WaterPayment", b =>
                 {
                     b.HasOne("EmployeeManager.API.Models.Department", "Department")
                         .WithMany()

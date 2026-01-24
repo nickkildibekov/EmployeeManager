@@ -134,6 +134,72 @@ select:focus {
   box-shadow: 0 0 0 3px var(--primary-light);
 }
 
+/* Unified date input appearance for calendar fields */
+.date-input-wrapper {
+  position: relative;
+  width: 100%;
+  min-width: 220px; /* make date fields a bit wider */
+}
+
+.date-input-native {
+  position: relative;
+  z-index: 1;
+  color: transparent; /* hide native text */
+  caret-color: transparent;
+}
+
+/* Hide native date text/segments so they don't overlap our placeholder */
+.date-input-native::-webkit-datetime-edit,
+.date-input-native::-webkit-datetime-edit-year-field,
+.date-input-native::-webkit-datetime-edit-month-field,
+.date-input-native::-webkit-datetime-edit-day-field {
+  color: transparent;
+}
+
+/* Prevent text selection highlight inside custom date field */
+.date-input-native::selection {
+  background: transparent;
+}
+
+.date-input-display {
+  user-select: none;
+}
+
+.date-input-display::selection {
+  background: transparent;
+}
+
+/* Custom text overlay showing placeholder and formatted date */
+.date-input-display {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 36px; /* leave space for native calendar icon */
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  pointer-events: none; /* click-through to the native input */
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  z-index: 2;
+}
+
+.date-input-display.placeholder {
+  color: var(--text-secondary);
+}
+
+/* Hint browser to use proper color scheme for the calendar popup */
+input[type='date'],
+input[type='month'] {
+  color-scheme: light;
+}
+
+[data-theme='dark'] input[type='date'],
+[data-theme='dark'] input[type='month'] {
+  color-scheme: dark;
+}
+
 /* Material Design Button Styles */
 button,
 .btn {

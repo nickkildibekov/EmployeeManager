@@ -19,22 +19,40 @@
 
     <div class="filter-group">
       <label>Від:</label>
-      <input
-        type="date"
-        [value]="startDate()"
-        (change)="onStartDateChange($event)"
-        class="form-input"
-      />
+      <div class="date-input-wrapper" (mousedown)="onDateWrapperMouseDown($event, startDateInput)">
+        <input
+          type="date"
+          [value]="startDate()"
+          (change)="onStartDateChange($event)"
+          class="form-input date-input-native"
+          #startDateInput
+        />
+        <span
+          class="date-input-display"
+          [class.placeholder]="!startDateInput.value"
+        >
+          {{ startDateInput.value ? formatDateForDisplay(startDateInput.value) : 'Оберіть дату' }}
+        </span>
+      </div>
     </div>
 
     <div class="filter-group">
       <label>По:</label>
-      <input
-        type="date"
-        [value]="endDate()"
-        (change)="onEndDateChange($event)"
-        class="form-input"
-      />
+      <div class="date-input-wrapper" (mousedown)="onDateWrapperMouseDown($event, endDateInput)">
+        <input
+          type="date"
+          [value]="endDate()"
+          (change)="onEndDateChange($event)"
+          class="form-input date-input-native"
+          #endDateInput
+        />
+        <span
+          class="date-input-display"
+          [class.placeholder]="!endDateInput.value"
+        >
+          {{ endDateInput.value ? formatDateForDisplay(endDateInput.value) : 'Оберіть дату' }}
+        </span>
+      </div>
     </div>
   </div>
 
@@ -45,8 +63,8 @@
   </div>
   }
 
-  <!-- Charts -->
-  @if (!isLoading() && statistics()) {
+  <!-- Charts (не показуємо нічого для оренди) -->
+  @if (!isLoading() && statistics() && paymentType() !== 4) {
   <div class="charts-container">
     <!-- Expenses Chart -->
     <div class="chart-wrapper">
@@ -61,7 +79,7 @@
   }
 
   <!-- No Data -->
-  @if (!isLoading() && statistics() && statistics()!.monthlyExpenses.length === 0) {
+  @if (!isLoading() && statistics() && statistics()!.monthlyExpenses.length === 0 && paymentType() !== 4) {
   <div class="no-data">
     <p>Немає даних для відображення статистики</p>
   </div>

@@ -57,13 +57,21 @@
       <div class="form-row">
         <div class="form-group">
           <label>Дата покупки</label>
-          <input
-            type="date"
-            placeholder="Дата покупки"
-            [(ngModel)]="editedEquipment().purchaseDate"
-            [readonly]="!isEditMode()"
-            class="form-input"
-          />
+          <div class="date-input-wrapper" (mousedown)="onDateWrapperMouseDown($event, purchaseDateInput)">
+            <input
+              type="date"
+              [(ngModel)]="editedEquipment().purchaseDate"
+              [readonly]="!isEditMode()"
+              class="form-input date-input-native"
+              #purchaseDateInput
+            />
+            <span
+              class="date-input-display"
+              [class.placeholder]="!purchaseDateInput.value"
+            >
+              {{ purchaseDateInput.value ? formatDateForDisplay(purchaseDateInput.value) : 'Оберіть дату' }}
+            </span>
+          </div>
         </div>
 
         <div class="form-group">

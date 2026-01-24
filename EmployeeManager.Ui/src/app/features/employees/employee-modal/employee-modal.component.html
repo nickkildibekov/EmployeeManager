@@ -53,12 +53,21 @@
 
         <div class="form-group">
           <label>День народження</label>
-          <input
-            type="date"
-            [value]="formatDateForInput(editedEmployee().birthDate)"
-            (input)="onBirthDateChange($event)"
-            class="form-input"
-          />
+          <div class="date-input-wrapper" (mousedown)="onDateWrapperMouseDown($event, birthDateInput)">
+            <input
+              type="date"
+              [value]="formatDateForInput(editedEmployee().birthDate)"
+              (input)="onBirthDateChange($event)"
+              class="form-input date-input-native"
+              #birthDateInput
+            />
+            <span
+              class="date-input-display"
+              [class.placeholder]="!birthDateInput.value"
+            >
+              {{ birthDateInput.value ? formatDateForDisplay(birthDateInput.value) : 'Оберіть дату' }}
+            </span>
+          </div>
         </div>
       </div>
 

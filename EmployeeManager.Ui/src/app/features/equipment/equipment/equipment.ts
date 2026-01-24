@@ -16,6 +16,7 @@ import { Department } from '../../../shared/models/department.model';
 import { EmployeeService } from '../../employees/employee.service';
 import { Employee } from '../../../shared/models/employee.model';
 import { EquipmentModalComponent } from '../equipment-modal/equipment-modal.component';
+import { formatDateDDMMYYYY } from '../../../shared/utils/display.utils';
 
 @Component({
   selector: 'app-equipment',
@@ -356,5 +357,25 @@ export class Equipment implements OnInit {
     }
     const emp = this.employees().find((e) => e.id === eq.responsibleEmployeeId);
     return emp ? (emp.callSign || 'Не вказано') : 'Не відомо';
+  }
+
+  formatDateForDisplay(dateString: string | null | undefined): string {
+    const formatted = formatDateDDMMYYYY(dateString);
+    if (!formatted || formatted === 'Не вказано') {
+      return '';
+    }
+    return formatted.replace(/\./g, '/');
+  }
+
+  // Open native date picker when clicking anywhere on the wrapper
+  openDatePicker(input: HTMLInputElement | null): void {
+    if (!input) return;
+    input.focus();
+    (input as any).showPicker?.();
+  }
+
+  onDateWrapperMouseDown(event: MouseEvent, input: HTMLInputElement | null): void {
+    event.preventDefault();
+    this.openDatePicker(input);
   }
 }

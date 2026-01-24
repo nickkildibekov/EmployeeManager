@@ -26,34 +26,34 @@
   font-size: 1.1rem;
 }
 
-.tabs {
+/* Service type tabs (Електроенергія / Газ / Вода / Оренда) */
+.service-tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 2rem;
-  border-bottom: 2px solid var(--border-color, #444);
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color, #444);
 }
 
-.tab-button {
-  padding: 1rem 2rem;
+.service-tab-button {
+  padding: 0.75rem 1.5rem;
   background: transparent;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-bottom: 2px solid transparent;
   color: var(--text-secondary, #aaa);
-  font-size: 1.1rem;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.2s;
-  margin-bottom: -2px;
+  margin-bottom: -1px;
 }
 
-.tab-button:hover {
+.service-tab-button:hover {
   color: var(--text-primary, #fff);
-  background: var(--bg-secondary, #2a2a2a);
 }
 
-.tab-button.active {
+.service-tab-button.active {
   color: var(--primary, #007bff);
   border-bottom-color: var(--primary, #007bff);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .tab-content {
@@ -121,11 +121,11 @@
 }
 
 @media (max-width: 768px) {
-  .tabs {
+  .service-tabs {
     flex-direction: column;
   }
 
-  .tab-button {
+  .service-tab-button {
     width: 100%;
     text-align: left;
   }

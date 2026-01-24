@@ -28,8 +28,16 @@ namespace EmployeeManager.API.Data
         public DbSet<EquipmentCategory> EquipmentCategories => Set<EquipmentCategory>();
         public DbSet<ScheduleEntry> ScheduleEntries => Set<ScheduleEntry>();
         public DbSet<Specialization> Specializations => Set<Specialization>();
-        public DbSet<UtilityPayment> UtilityPayments => Set<UtilityPayment>();
-        public DbSet<FuelPayment> FuelPayments => Set<FuelPayment>();
+
+        // Комунальні платежі розділені по типах послуг
+        public DbSet<ElectricityPayment> ElectricityPayments => Set<ElectricityPayment>();
+        public DbSet<GasPayment> GasPayments => Set<GasPayment>();
+        public DbSet<WaterPayment> WaterPayments => Set<WaterPayment>();
+        public DbSet<RentPayment> RentPayments => Set<RentPayment>();
+
+        public DbSet<FuelPayment> FuelExpenses => Set<FuelPayment>();
+        public DbSet<FuelIncome> FuelIncomes => Set<FuelIncome>();
+        public DbSet<FuelTransaction> FuelTransactions => Set<FuelTransaction>();
 
         public DbSet<DepartmentPosition> DepartmentPositions => Set<DepartmentPosition>();
 
@@ -127,46 +135,145 @@ namespace EmployeeManager.API.Data
                 .Property(s => s.Hours)
                 .HasPrecision(18, 2);
 
-            // Configure UtilityPayment
-            modelBuilder.Entity<UtilityPayment>()
+            // Configure ElectricityPayment
+            modelBuilder.Entity<ElectricityPayment>()
                 .Property(u => u.Id)
                 .ValueGeneratedOnAdd();
 
-            modelBuilder.Entity<UtilityPayment>()
+            modelBuilder.Entity<ElectricityPayment>()
                 .HasOne(u => u.Department)
                 .WithMany()
                 .HasForeignKey(u => u.DepartmentId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<UtilityPayment>()
+            modelBuilder.Entity<ElectricityPayment>()
                 .HasOne(u => u.ResponsibleEmployee)
                 .WithMany()
                 .HasForeignKey(u => u.ResponsibleEmployeeId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Configure decimal precision for UtilityPayment
-            modelBuilder.Entity<UtilityPayment>()
+            modelBuilder.Entity<ElectricityPayment>()
                 .Property(u => u.PreviousValue)
                 .HasPrecision(18, 3);
 
-            modelBuilder.Entity<UtilityPayment>()
+            modelBuilder.Entity<ElectricityPayment>()
                 .Property(u => u.CurrentValue)
                 .HasPrecision(18, 3);
 
-            modelBuilder.Entity<UtilityPayment>()
+            modelBuilder.Entity<ElectricityPayment>()
                 .Property(u => u.PreviousValueNight)
                 .HasPrecision(18, 3);
 
-            modelBuilder.Entity<UtilityPayment>()
+            modelBuilder.Entity<ElectricityPayment>()
                 .Property(u => u.CurrentValueNight)
                 .HasPrecision(18, 3);
 
-            modelBuilder.Entity<UtilityPayment>()
+            modelBuilder.Entity<ElectricityPayment>()
                 .Property(u => u.PricePerUnit)
                 .HasPrecision(18, 2);
 
-            // Configure FuelPayment
+            modelBuilder.Entity<ElectricityPayment>()
+                .Property(u => u.PricePerUnitNight)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<ElectricityPayment>()
+                .Property(u => u.TotalAmount)
+                .HasPrecision(18, 3);
+
+            // Configure GasPayment
+            modelBuilder.Entity<GasPayment>()
+                .Property(u => u.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<GasPayment>()
+                .HasOne(u => u.Department)
+                .WithMany()
+                .HasForeignKey(u => u.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<GasPayment>()
+                .HasOne(u => u.ResponsibleEmployee)
+                .WithMany()
+                .HasForeignKey(u => u.ResponsibleEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<GasPayment>()
+                .Property(u => u.PreviousValue)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<GasPayment>()
+                .Property(u => u.CurrentValue)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<GasPayment>()
+                .Property(u => u.PricePerUnit)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<GasPayment>()
+                .Property(u => u.TotalAmount)
+                .HasPrecision(18, 3);
+
+            // Configure WaterPayment
+            modelBuilder.Entity<WaterPayment>()
+                .Property(u => u.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<WaterPayment>()
+                .HasOne(u => u.Department)
+                .WithMany()
+                .HasForeignKey(u => u.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<WaterPayment>()
+                .HasOne(u => u.ResponsibleEmployee)
+                .WithMany()
+                .HasForeignKey(u => u.ResponsibleEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<WaterPayment>()
+                .Property(u => u.PreviousValue)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<WaterPayment>()
+                .Property(u => u.CurrentValue)
+                .HasPrecision(18, 3);
+
+            modelBuilder.Entity<WaterPayment>()
+                .Property(u => u.PricePerUnit)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<WaterPayment>()
+                .Property(u => u.TotalAmount)
+                .HasPrecision(18, 3);
+
+            // Configure RentPayment
+            modelBuilder.Entity<RentPayment>()
+                .Property(u => u.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<RentPayment>()
+                .HasOne(u => u.Department)
+                .WithMany()
+                .HasForeignKey(u => u.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<RentPayment>()
+                .HasOne(u => u.ResponsibleEmployee)
+                .WithMany()
+                .HasForeignKey(u => u.ResponsibleEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<RentPayment>()
+                .Property(u => u.PricePerUnit)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<RentPayment>()
+                .Property(u => u.TotalAmount)
+                .HasPrecision(18, 3);
+
+            // Configure FuelPayment (FuelExpenses table)
             modelBuilder.Entity<FuelPayment>()
+                .ToTable("FuelExpenses")
                 .Property(f => f.Id)
                 .ValueGeneratedOnAdd();
 
@@ -198,11 +305,39 @@ namespace EmployeeManager.API.Data
                 .HasPrecision(18, 2);
 
             modelBuilder.Entity<FuelPayment>()
-                .Property(f => f.PricePerLiter)
+                .Property(f => f.TotalAmount)
                 .HasPrecision(18, 2);
 
-            modelBuilder.Entity<FuelPayment>()
-                .Property(f => f.TotalAmount)
+            // Configure FuelIncome (FuelIncomes table)
+            modelBuilder.Entity<FuelIncome>()
+                .ToTable("FuelIncomes")
+                .Property(fi => fi.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<FuelIncome>()
+                .HasOne(fi => fi.Department)
+                .WithMany()
+                .HasForeignKey(fi => fi.DepartmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<FuelIncome>()
+                .HasOne(fi => fi.ReceiverEmployee)
+                .WithMany()
+                .HasForeignKey(fi => fi.ReceiverEmployeeId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<FuelIncome>()
+                .Property(fi => fi.Amount)
+                .HasPrecision(18, 2);
+
+            // Configure FuelTransaction
+            modelBuilder.Entity<FuelTransaction>()
+                .ToTable("FuelTransactions")
+                .Property(ft => ft.Id)
+                .ValueGeneratedOnAdd();
+
+            modelBuilder.Entity<FuelTransaction>()
+                .Property(ft => ft.Amount)
                 .HasPrecision(18, 2);
 
         }

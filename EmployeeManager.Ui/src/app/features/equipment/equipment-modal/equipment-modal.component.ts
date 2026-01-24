@@ -6,7 +6,7 @@ import { EquipmentCategory } from '../../../shared/models/equipmentCategory.mode
 import { Employee } from '../../../shared/models/employee.model';
 import { Equipment } from '../../../shared/models/equipment.model';
 import { EquipmentCreationPayload, EquipmentUpdatePayload } from '../../../shared/models/payloads';
-import { getDepartmentDisplayName } from '../../../shared/utils/display.utils';
+import { getDepartmentDisplayName, formatDateDDMMYYYY } from '../../../shared/utils/display.utils';
 import { EquipmentService } from '../equipment.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { EquipmentCategoryModalComponent } from '../equipment-category-modal/equipment-category-modal.component';
@@ -128,6 +128,27 @@ export class EquipmentModalComponent implements OnChanges {
     } catch {
       return '';
     }
+  }
+
+  // Display date in dd/MM/yyyy format for UI
+  formatDateForDisplay(dateString: string | null | undefined): string {
+    const formatted = formatDateDDMMYYYY(dateString);
+    if (!formatted || formatted === 'Не вказано') {
+      return '';
+    }
+    return formatted.replace(/\./g, '/');
+  }
+
+  // Open native date picker when clicking anywhere on the wrapper
+  openDatePicker(input: HTMLInputElement | null): void {
+    if (!input) return;
+    input.focus();
+    (input as any).showPicker?.();
+  }
+
+  onDateWrapperMouseDown(event: MouseEvent, input: HTMLInputElement | null): void {
+    event.preventDefault(); // prevent native text selection
+    this.openDatePicker(input);
   }
 
   onImageSelected(event: Event): void {

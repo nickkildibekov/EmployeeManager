@@ -45,10 +45,8 @@ namespace EmployeeManager.API.Tests
             var department = await _context.Departments.FirstAsync();
             var environmentMock = new Moq.Mock<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
             var loggerMock = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<UtilityPaymentsController>>();
-            var repositoryMock = new Moq.Mock<EmployeeManager.API.Repositories.IUtilityPaymentRepository>();
             
             var controller = new UtilityPaymentsController(
-                repositoryMock.Object,
                 _context,
                 environmentMock.Object,
                 loggerMock.Object);
@@ -68,10 +66,8 @@ namespace EmployeeManager.API.Tests
             // Arrange
             var environmentMock = new Moq.Mock<Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
             var loggerMock = new Moq.Mock<Microsoft.Extensions.Logging.ILogger<UtilityPaymentsController>>();
-            var repositoryMock = new Moq.Mock<EmployeeManager.API.Repositories.IUtilityPaymentRepository>();
             
             var controller = new UtilityPaymentsController(
-                repositoryMock.Object,
                 _context,
                 environmentMock.Object,
                 loggerMock.Object);

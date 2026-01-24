@@ -29,7 +29,7 @@ namespace EmployeeManager.API.Controllers
         {
             var query = _appDbContext.ScheduleEntries
                 .Include(s => s.Employee)
-                .ThenInclude(e => e.Position)
+                .ThenInclude(e => e!.Position)
                 .AsQueryable();
 
             if (departmentId.HasValue)
@@ -57,7 +57,9 @@ namespace EmployeeManager.API.Controllers
                     Hours = s.Hours,
                     State = s.State,
                     DepartmentId = s.DepartmentId,
-                    EmployeeName = s.Employee != null ? $"{s.Employee.FirstName} {s.Employee.LastName}" : null,
+                    EmployeeName = s.Employee != null
+                        ? $"{(s.Employee.FirstName ?? string.Empty)} {(s.Employee.LastName ?? string.Empty)}"
+                        : null,
                     PositionTitle = s.Employee != null && s.Employee.Position != null ? s.Employee.Position.Title : null
                 })
                 .ToListAsync(cancellationToken);

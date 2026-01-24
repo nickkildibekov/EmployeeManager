@@ -5,9 +5,12 @@ import { Department } from '../../../shared/models/department.model';
 import { Employee } from '../../../shared/models/employee.model';
 import { Equipment } from '../../../shared/models/equipment.model';
 import { FuelPaymentCreate, FuelType, LatestFuelPayment } from '../../../shared/models/fuel-payment.model';
+import { FuelStockEntryCreate } from '../../../shared/models/fuel-stock-entry.model';
 import { FuelPaymentService } from '../fuel-payment.service';
+import { FuelStockService } from '../fuel-stock.service';
 import { EquipmentService } from '../../equipment/equipment.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { formatDateDDMMYYYY } from '../../../shared/utils/display.utils';
 
 @Component({
   selector: 'app-fuel-payment-form',
@@ -19,6 +22,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 export class FuelPaymentFormComponent {
   private fb = inject(FormBuilder);
   private fuelPaymentService = inject(FuelPaymentService);
+  private fuelStockService = inject(FuelStockService);
   private equipmentService = inject(EquipmentService);
   private toastService = inject(ToastService);
 
@@ -28,6 +32,7 @@ export class FuelPaymentFormComponent {
   paymentSaved = output<void>();
 
   form: FormGroup;
+  addFuelForm: FormGroup;
   selectedOdometerImage = signal<File | null>(null);
   odometerImagePreview = signal<string | null>(null);
   isSubmitting = signal(false);
@@ -36,11 +41,14 @@ export class FuelPaymentFormComponent {
   equipmentList = signal<Equipment[]>([]);
   isLoadingEquipment = signal(false);
 
+  // Modal state for adding fuel
+  showAddFuelModal = signal(false);
+
   // Signal to track form values for computed calculation
   private formValues = signal({
     currentMileage: 0,
     previousMileage: 0,
-    pricePerLiter: 0,
+    consumptionPer100km: 0,
   });
 
   // Computed signal for total amount calculation
@@ -48,10 +56,16 @@ export class FuelPaymentFormComponent {
     const values = this.formValues();
     const current = values.currentMileage ?? 0;
     const previous = values.previousMileage ?? 0;
-    const pricePerLiter = values.pricePerLiter ?? 0;
+    const consumptionPer100km = values.consumptionPer100km ?? 0;
 
     const mileageDifference = current - previous; // Пробіг в кілометрах
-    return mileageDifference * pricePerLiter;
+    const litersUsed =
+      mileageDifference > 0 && consumptionPer100km > 0
+        ? (mileageDifference / 100) * consumptionPer100km
+        : 0;
+
+    // Вартість більше не рахуємо – завжди 0
+    return 0;
   });
 
   constructor() {
@@ -66,9 +80,19 @@ export class FuelPaymentFormComponent {
       entryDate: [defaultDate, Validators.required],
       previousMileage: [null, Validators.required],
       currentMileage: [null, Validators.required],
-      pricePerLiter: [0, [Validators.required, Validators.min(0.01)]],
+      consumptionPer100km: [0, [Validators.min(0.01)]],
+      fuelUsed: [0],
+      fuelBalance: [null],
       fuelType: [FuelType.Gasoline, Validators.required],
       totalAmount: [0, Validators.required],
+    });
+
+    // Form for "Add fuel" modal
+    this.addFuelForm = this.fb.group({
+      amount: [0, [Validators.required, Validators.min(0.01)]],
+      fuelType: [FuelType.Gasoline, Validators.required],
+      receiverEmployeeId: [null],
+      transactionDate: [defaultDate, Validators.required],
     });
 
     // Initialize formValues with current form values
@@ -90,9 +114,12 @@ export class FuelPaymentFormComponent {
       if (departmentId) {
         this.loadEquipmentByDepartment(departmentId);
         // Reset equipment selection when department changes
-        this.form.patchValue({ equipmentId: '' });
+        this.form.patchValue({ equipmentId: '' }, { emitEvent: false });
+        // Load shared fuel balance for department + current fuel type
+        this.loadFuelBalanceForDepartment();
       } else {
         this.equipmentList.set([]);
+        this.form.patchValue({ fuelBalance: null }, { emitEvent: false });
       }
     });
 
@@ -102,15 +129,37 @@ export class FuelPaymentFormComponent {
         this.loadLatestPayment(equipmentId);
       }
     });
+
+    // When fuel type changes, оновлюємо баланс для обраного типу
+    this.form.get('fuelType')?.valueChanges.subscribe(() => {
+      this.loadFuelBalanceForDepartment();
+    });
+
+    // Вартість завжди вимкнена (noCost = true), валідатори не потрібні
   }
 
   private updateFormValues(): void {
     const formValue = this.form.value;
+
     this.formValues.set({
       currentMileage: formValue.currentMileage ?? 0,
       previousMileage: formValue.previousMileage ?? 0,
-      pricePerLiter: formValue.pricePerLiter ?? 0,
+      consumptionPer100km: formValue.consumptionPer100km ?? 0,
     });
+
+    // Update computed fuel used (liters) based on mileage and consumption
+    const mileageDifference =
+      (formValue.currentMileage ?? 0) - (formValue.previousMileage ?? 0);
+    const consumptionPer100km = formValue.consumptionPer100km ?? 0;
+    const fuelUsed =
+      mileageDifference > 0 && consumptionPer100km > 0
+        ? (mileageDifference / 100) * consumptionPer100km
+        : 0;
+
+    this.form.patchValue(
+      { fuelUsed },
+      { emitEvent: false }
+    );
   }
 
   private loadEquipmentByDepartment(departmentId: string): void {
@@ -130,22 +179,41 @@ export class FuelPaymentFormComponent {
   }
 
   private loadLatestPayment(equipmentId: string): void {
-    this.fuelPaymentService.getLatest(equipmentId).subscribe({
+    const fuelType = this.form.get('fuelType')?.value ?? FuelType.Gasoline;
+
+    this.fuelPaymentService.getLatest(equipmentId, fuelType).subscribe({
       next: (latest) => {
         if (latest.previousMileage !== null && latest.previousMileage !== undefined) {
-          this.form.patchValue({
-            previousMileage: latest.previousMileage,
-          });
-        }
-        if (latest.pricePerLiter !== null && latest.pricePerLiter !== undefined) {
-          this.form.patchValue({
-            pricePerLiter: latest.pricePerLiter,
-          });
+          this.form.patchValue(
+            {
+              previousMileage: latest.previousMileage,
+            },
+            { emitEvent: false }
+          );
         }
       },
       error: (err) => {
         console.error('Error loading latest payment:', err);
         // Don't show error if no previous payment exists
+      },
+    });
+  }
+
+  private loadFuelBalanceForDepartment(): void {
+    const departmentId = this.form.get('departmentId')?.value as string | null;
+    const fuelType = this.form.get('fuelType')?.value ?? FuelType.Gasoline;
+
+    if (!departmentId) {
+      this.form.patchValue({ fuelBalance: null }, { emitEvent: false });
+      return;
+    }
+
+    this.fuelPaymentService.getBalance(departmentId, fuelType).subscribe({
+      next: (balance) => {
+        this.form.patchValue({ fuelBalance: balance }, { emitEvent: false });
+      },
+      error: (err) => {
+        console.error('Error loading fuel balance:', err);
       },
     });
   }
@@ -193,9 +261,10 @@ export class FuelPaymentFormComponent {
       entryDate: formValue.entryDate,
       previousMileage: formValue.previousMileage,
       currentMileage: formValue.currentMileage,
-      pricePerLiter: formValue.pricePerLiter,
       fuelType: formValue.fuelType,
       totalAmount: this.totalAmount(),
+      consumptionPer100km: formValue.consumptionPer100km ?? null,
+      fuelUsed: formValue.fuelUsed ?? null,
     };
 
     this.fuelPaymentService.create(paymentData, this.selectedOdometerImage() || undefined).subscribe({
@@ -226,5 +295,100 @@ export class FuelPaymentFormComponent {
     const current = this.form.get('currentMileage')?.value ?? 0;
     const previous = this.form.get('previousMileage')?.value ?? 0;
     return current - previous;
+  }
+
+  formatDateForDisplay(dateString: string | null | undefined): string {
+    const formatted = formatDateDDMMYYYY(dateString);
+    if (!formatted || formatted === 'Не вказано') {
+      return '';
+    }
+    return formatted.replace(/\./g, '/');
+  }
+
+  // Open native date picker when clicking anywhere on the wrapper
+  openDatePicker(input: HTMLInputElement | null): void {
+    if (!input) return;
+    input.focus();
+    (input as any).showPicker?.();
+  }
+
+  onDateWrapperMouseDown(event: MouseEvent, input: HTMLInputElement | null): void {
+    event.preventDefault();
+    this.openDatePicker(input);
+  }
+
+  openAddFuelModal(): void {
+    const departmentId = this.form.get('departmentId')?.value;
+    if (!departmentId) {
+      this.toastService.error('Спочатку оберіть підрозділ');
+      return;
+    }
+
+    const fuelType = this.form.get('fuelType')?.value ?? FuelType.Gasoline;
+    const entryDate = this.form.get('entryDate')?.value;
+    const responsible = this.form.get('responsibleEmployeeId')?.value || null;
+
+    const now = new Date();
+    const defaultDate =
+      entryDate ||
+      `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+        now.getDate()
+      ).padStart(2, '0')}`;
+
+    this.addFuelForm.setValue({
+      amount: 0,
+      fuelType,
+      receiverEmployeeId: responsible,
+      transactionDate: defaultDate,
+    });
+
+    this.showAddFuelModal.set(true);
+  }
+
+  closeAddFuelModal(): void {
+    this.showAddFuelModal.set(false);
+  }
+
+  onAddFuelSubmit(): void {
+    if (this.addFuelForm.invalid) {
+      this.addFuelForm.markAllAsTouched();
+      return;
+    }
+
+    const departmentId = this.form.get('departmentId')?.value;
+    if (!departmentId) {
+      this.toastService.error('Спочатку оберіть підрозділ');
+      return;
+    }
+
+    const value = this.addFuelForm.value;
+    const fuelTypeNumber: FuelType =
+      typeof value.fuelType === 'string'
+        ? (parseInt(value.fuelType, 10) as FuelType)
+        : (value.fuelType as FuelType);
+    const payload: FuelStockEntryCreate = {
+      departmentId,
+      receiverEmployeeId: value.receiverEmployeeId || null,
+      fuelType: fuelTypeNumber,
+      amount: value.amount,
+      transactionDate: value.transactionDate,
+    };
+
+    this.isSubmitting.set(true);
+
+    this.fuelStockService.create(payload).subscribe({
+      next: () => {
+        this.toastService.success('Надходження палива успішно додано');
+        this.showAddFuelModal.set(false);
+        // Після успішного додавання – оновлюємо баланс з бекенда
+        this.loadFuelBalanceForDepartment();
+        this.isSubmitting.set(false);
+      },
+      error: (err) => {
+        console.error('Error adding fuel stock:', err);
+        this.toastService.error('Помилка додавання надходження палива');
+        this.isSubmitting.set(false);
+      },
+    });
   }
 }

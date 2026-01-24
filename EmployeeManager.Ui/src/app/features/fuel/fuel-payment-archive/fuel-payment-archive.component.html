@@ -1,5 +1,5 @@
 <div class="fuel-payment-archive">
-  <h3>Архів платежів за паливо</h3>
+  <h3>Рух палива</h3>
 
   <!-- Filters -->
   <div class="filters">
@@ -35,43 +35,39 @@
   <!-- Loading State -->
   @if (isLoading()) {
   <div class="loading">
-    <p>Завантаження платежів...</p>
+    <p>Завантаження транзакцій...</p>
   </div>
   }
 
-  <!-- Payments Table -->
-  @if (!isLoading() && payments().length > 0) {
+  <!-- Transactions Table -->
+  @if (!isLoading() && transactions().length > 0) {
   <div class="table-container">
     <table class="payments-table">
       <thead>
         <tr>
+          <th>Створено</th>
           <th>Відділ</th>
-          <th>Обладнання</th>
           <th>Тип палива</th>
-          <th>Дата внесення</th>
-          <th>Попередній пробіг</th>
-          <th>Поточний пробіг</th>
-          <th>Пробіг (км)</th>
-          <th>Ціна за літр</th>
-          <th>Сума</th>
-          <th>Відповідальна особа</th>
-          <th>Дата створення</th>
+          <th>Кількість</th>
+          <th>Транзакція</th>
         </tr>
       </thead>
       <tbody>
-        @for (payment of payments(); track payment.id) {
+        @for (transaction of transactions(); track transaction.id) {
         <tr>
-          <td>{{ payment.departmentName || 'Невідомо' }}</td>
-          <td>{{ payment.equipmentName || 'Невідомо' }}</td>
-          <td>{{ getFuelTypeName(payment.fuelType) }}</td>
-          <td>{{ formatDate(payment.entryDate) }}</td>
-          <td>{{ payment.previousMileage.toFixed(2) }} км</td>
-          <td>{{ payment.currentMileage.toFixed(2) }} км</td>
-          <td><strong>{{ getMileageDifference(payment.previousMileage, payment.currentMileage).toFixed(2) }} км</strong></td>
-          <td>{{ payment.pricePerLiter.toFixed(2) }} грн/л</td>
-          <td><strong>{{ formatCurrency(payment.totalAmount) }}</strong></td>
-          <td>{{ payment.responsibleEmployeeName || '-' }}</td>
-          <td>{{ formatDate(payment.createdAt) }}</td>
+          <td>{{ formatDate(transaction.createdAt) }}</td>
+          <td>{{ transaction.departmentName || 'Невідомо' }}</td>
+          <td>{{ transaction.fuelTypeName }}</td>
+          <td>{{ transaction.amount.toFixed(2) }} л</td>
+          <td>
+            <button
+              type="button"
+              class="link-button"
+              (click)="openTransaction(transaction)"
+            >
+              Подивитись транзакцію
+            </button>
+          </td>
         </tr>
         }
       </tbody>
@@ -103,9 +99,89 @@
   }
 
   <!-- No Data -->
-  @if (!isLoading() && payments().length === 0) {
+  @if (!isLoading() && transactions().length === 0) {
   <div class="no-data">
-    <p>Платежів не знайдено</p>
+    <p>Транзакцій не знайдено</p>
+  </div>
+  }
+
+  <!-- Transaction View Modal -->
+  @if (showTransactionModal() && selectedTransaction() && transactionDetails()) {
+  <div class="modal-backdrop">
+    <div class="modal">
+      <h4>Перегляд транзакції</h4>
+      <div class="modal-body">
+        <!-- Загальні поля для обох типів -->
+        <div class="modal-row">
+          <span class="label">Підрозділ:</span>
+          <span class="value">{{ transactionDetails()!.departmentName || 'Невідомо' }}</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Тип палива:</span>
+          <span class="value">{{ getFuelTypeName(transactionDetails()!.fuelType) }}</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Дата:</span>
+          <span class="value">{{ formatDate(transactionDetails()!.entryDate) }}</span>
+        </div>
+
+        <!-- Поля для витрати (Expense) -->
+        @if (transactionDetails()!.transactionType === 'Expense') {
+        <div class="modal-row">
+          <span class="label">Обладнання:</span>
+          <span class="value">{{ transactionDetails()!.equipmentName || 'Невідомо' }}</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Попередній пробіг:</span>
+          <span class="value">{{ transactionDetails()!.previousMileage.toFixed(2) }} км</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Поточний пробіг:</span>
+          <span class="value">{{ transactionDetails()!.currentMileage.toFixed(2) }} км</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Пробіг (км):</span>
+          <span class="value">
+            {{ (transactionDetails()!.currentMileage - transactionDetails()!.previousMileage).toFixed(2) }}
+            км
+          </span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Кількість:</span>
+          <span class="value">-{{ (transactionDetails()!.fuelAmount || 0).toFixed(2) }} л</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Відповідальна особа:</span>
+          <span class="value">{{ transactionDetails()!.responsibleEmployeeName || '-' }}</span>
+        </div>
+        }
+
+        <!-- Поля для надходження (Income) -->
+        @if (transactionDetails()!.transactionType === 'Income') {
+        <div class="modal-row">
+          <span class="label">Кількість:</span>
+          <span class="value">{{ (transactionDetails()!.fuelAmount || 0).toFixed(2) }} л</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Відповідальна особа:</span>
+          <span class="value">{{ transactionDetails()!.responsibleEmployeeName || '-' }}</span>
+        </div>
+        }
+
+        <!-- Загальні поля -->
+        <div class="modal-row">
+          <span class="label">Дата створення:</span>
+          <span class="value">{{ formatDate(transactionDetails()!.createdAt) }}</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">ID транзакції:</span>
+          <span class="value">{{ selectedTransaction()!.id }}</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" (click)="closeTransactionModal()">Закрити</button>
+      </div>
+    </div>
   </div>
   }
 </div>

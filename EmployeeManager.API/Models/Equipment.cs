@@ -3,8 +3,8 @@ namespace EmployeeManager.API.Models
     public class Equipment
     {
         public Guid Id { get; set; }
-        public string Name { get; set; } = null!;
-        public string Description { get; set; } = null!;
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public string? SerialNumber { get; set; }
         public DateTime PurchaseDate { get; set; }
         public string Status { get; set; } = "Used";

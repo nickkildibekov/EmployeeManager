@@ -7,6 +7,7 @@ import { PaymentType, UtilityPaymentStatistics } from '../../../shared/models/ut
 import { UtilityPaymentService } from '../utility-payment.service';
 import { DepartmentService } from '../../departments/department.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { formatDateDDMMYYYY } from '../../../shared/utils/display.utils';
 import {
   Chart,
   ChartConfiguration,
@@ -68,6 +69,12 @@ export class UtilityStatisticsComponent implements OnInit, OnDestroy {
     // Reload statistics when filters change (after initialization)
     effect(() => {
       if (!this.isInitialized || this.isDestroyed) return;
+
+      // For оренда статистика не потрібна
+      if (this.paymentType() === PaymentType.Rent) {
+        this.statistics.set(null);
+        return;
+      }
       
       // Track all filter changes to react to selector changes
       const start = this.startDate();
@@ -87,7 +94,9 @@ export class UtilityStatisticsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadDepartments();
     this.isInitialized = true;
-    this.loadStatistics();
+    if (this.paymentType() !== PaymentType.Rent) {
+      this.loadStatistics();
+    }
   }
 
   private loadDepartments(): void {
@@ -112,6 +121,7 @@ export class UtilityStatisticsComponent implements OnInit, OnDestroy {
 
   private loadStatistics(): void {
     if (this.isLoading() || this.isDestroyed) return; // Prevent multiple simultaneous requests
+    if (this.paymentType() === PaymentType.Rent) return;
     
     const start = this.startDate();
     const end = this.endDate();
@@ -314,6 +324,26 @@ export class UtilityStatisticsComponent implements OnInit, OnDestroy {
       'Гру',
     ];
     return `${monthNames[parseInt(month) - 1]} ${year}`;
+  }
+
+  formatDateForDisplay(dateString: string | null | undefined): string {
+    const formatted = formatDateDDMMYYYY(dateString);
+    if (!formatted || formatted === 'Не вказано') {
+      return '';
+    }
+    return formatted.replace(/\./g, '/');
+  }
+
+  onDateWrapperMouseDown(event: MouseEvent, input: HTMLInputElement | null): void {
+    event.preventDefault();
+    this.openDatePicker(input);
+  }
+
+  // Open native date picker when clicking anywhere on the wrapper
+  openDatePicker(input: HTMLInputElement | null): void {
+    if (!input) return;
+    input.focus();
+    (input as any).showPicker?.();
   }
 
   onDepartmentChange(event: Event): void {

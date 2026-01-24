@@ -6,7 +6,7 @@ import { Position } from '../../../shared/models/position.model';
 import { Specialization } from '../../../shared/models/specialization.model';
 import { Employee } from '../../../shared/models/employee.model';
 import { NewEmployeeData, EmployeeUpdateData } from '../../../shared/models/payloads';
-import { getDepartmentDisplayName, getPositionDisplayName, getSpecializationDisplayName } from '../../../shared/utils/display.utils';
+import { getDepartmentDisplayName, getPositionDisplayName, getSpecializationDisplayName, formatDateDDMMYYYY } from '../../../shared/utils/display.utils';
 
 @Component({
   selector: 'app-employee-modal',
@@ -46,7 +46,7 @@ export class EmployeeModalComponent implements OnChanges {
   isEditMode = signal(false);
 
   constructor() {
-    // Effect to set default values when lists are loaded and modal is open for new employee
+    // Effect to setup form state when modal is opened
     effect(() => {
       const isOpen = this.isOpen();
       const hasEmployee = this.employee !== null && this.employee !== undefined;
@@ -54,10 +54,16 @@ export class EmployeeModalComponent implements OnChanges {
       const specializations = this.specializations;
       const positionsLoaded = positions.length > 0;
       const specializationsLoaded = specializations.length > 0;
-      
-      // Only set defaults if modal is open, no employee (new mode), and lists are loaded
-      if (isOpen && !hasEmployee && positionsLoaded && specializationsLoaded) {
-        this.setDefaultsIfNeeded();
+
+      // When opening modal for creating a new employee, always reset form state
+      // so that it doesn't reuse data from the previous edit session.
+      if (isOpen && !hasEmployee) {
+        this.initializeNewEmployeeForm();
+
+        // If reference data is already loaded, ensure default values are applied.
+        if (positionsLoaded && specializationsLoaded) {
+          this.setDefaultsIfNeeded();
+        }
       }
     });
   }
@@ -199,6 +205,30 @@ export class EmployeeModalComponent implements OnChanges {
     } catch {
       return '';
     }
+  }
+
+  // Open native date picker when clicking anywhere on the wrapper
+  openDatePicker(input: HTMLInputElement | null): void {
+    if (!input) return;
+    // Focus first so keyboard users also benefit
+    input.focus();
+    // Use showPicker where supported (Chrome/Edge)
+    (input as any).showPicker?.();
+  }
+
+  onDateWrapperMouseDown(event: MouseEvent, input: HTMLInputElement | null): void {
+    event.preventDefault(); // prevent native text selection
+    this.openDatePicker(input);
+  }
+
+  // Display date in dd/MM/yyyy format for UI
+  formatDateForDisplay(dateString: string | null | undefined): string {
+    const formatted = formatDateDDMMYYYY(dateString);
+    if (!formatted || formatted === 'Не вказано') {
+      return '';
+    }
+    // Replace dots with slashes to match required dd/MM/yyyy
+    return formatted.replace(/\./g, '/');
   }
 
   onBirthDateChange(event: Event): void {

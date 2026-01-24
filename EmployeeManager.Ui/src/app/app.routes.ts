@@ -82,5 +82,12 @@ export const routes: Routes = [
         (m) => m.UtilitiesPageComponent
       ),
   },
+  {
+    path: 'fuel',
+    loadComponent: () =>
+      import('./features/fuel/fuel-page/fuel-page.component').then(
+        (m) => m.FuelPageComponent
+      ),
+  },
   { path: '**', redirectTo: 'home' },
 ];

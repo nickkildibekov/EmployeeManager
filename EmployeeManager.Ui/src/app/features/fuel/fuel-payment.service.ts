@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { FuelPayment, FuelPaymentCreate, LatestFuelPayment, FuelPaymentListResponse, FuelType, FuelPaymentStatistics } from '../../shared/models/fuel-payment.model';
+import { map, Observable } from 'rxjs';
+import { FuelPayment, FuelPaymentCreate, LatestFuelPayment, FuelPaymentListResponse, FuelTransaction, FuelTransactionListResponse, FuelType, FuelPaymentStatistics } from '../../shared/models/fuel-payment.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,8 +10,19 @@ export class FuelPaymentService {
   private http = inject(HttpClient);
   private apiUrl = 'api/fuelpayments';
 
-  getLatest(equipmentId: string): Observable<LatestFuelPayment> {
-    return this.http.get<LatestFuelPayment>(`${this.apiUrl}/latest/${equipmentId}`);
+  getLatest(equipmentId: string, fuelType: FuelType): Observable<LatestFuelPayment> {
+    const params = new HttpParams().set('fuelType', fuelType.toString());
+    return this.http.get<LatestFuelPayment>(`${this.apiUrl}/latest/${equipmentId}`, { params });
+  }
+
+  getBalance(departmentId: string, fuelType: FuelType): Observable<number> {
+    const params = new HttpParams()
+      .set('departmentId', departmentId)
+      .set('fuelType', fuelType.toString());
+
+    return this.http
+      .get<{ fuelBalance: number }>(`${this.apiUrl}/balance`, { params })
+      .pipe(map((res) => res.fuelBalance ?? 0));
   }
 
   getAll(
@@ -19,7 +30,7 @@ export class FuelPaymentService {
     fuelType?: FuelType | null,
     page: number = 1,
     pageSize: number = 10
-  ): Observable<FuelPaymentListResponse> {
+  ): Observable<FuelTransactionListResponse> {
     let params = new HttpParams()
       .set('page', page.toString())
       .set('pageSize', pageSize.toString());
@@ -32,11 +43,16 @@ export class FuelPaymentService {
       params = params.set('fuelType', fuelType.toString());
     }
 
-    return this.http.get<FuelPaymentListResponse>(this.apiUrl, { params });
+    return this.http.get<FuelTransactionListResponse>(this.apiUrl, { params });
+  }
+
+  getTransactionDetails(relatedId: string): Observable<FuelPayment> {
+    return this.http.get<FuelPayment>(`${this.apiUrl}/transaction/${relatedId}`);
   }
 
   getStatistics(
     departmentId?: string | null,
+    fuelType?: FuelType | null,
     startDate?: string,
     endDate?: string
   ): Observable<FuelPaymentStatistics> {
@@ -44,6 +60,10 @@ export class FuelPaymentService {
 
     if (departmentId) {
       params = params.set('departmentId', departmentId);
+    }
+
+    if (fuelType !== null && fuelType !== undefined) {
+      params = params.set('fuelType', fuelType.toString());
     }
 
     if (startDate) {
@@ -75,9 +95,12 @@ export class FuelPaymentService {
 
     formData.append('PreviousMileage', formatDecimal(payment.previousMileage));
     formData.append('CurrentMileage', formatDecimal(payment.currentMileage));
-    formData.append('PricePerLiter', formatDecimal(payment.pricePerLiter));
     formData.append('FuelType', payment.fuelType.toString());
     formData.append('TotalAmount', formatDecimal(payment.totalAmount));
+
+    if (payment.fuelUsed !== undefined && payment.fuelUsed !== null) {
+      formData.append('FuelUsed', formatDecimal(payment.fuelUsed));
+    }
 
     if (odometerImage) {
       formData.append('odometerImage', odometerImage);

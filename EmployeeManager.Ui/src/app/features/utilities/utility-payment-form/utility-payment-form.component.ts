@@ -58,6 +58,11 @@ export class UtilityPaymentFormComponent {
     const pricePerUnit = values.pricePerUnit ?? 0;
     const pricePerUnitNight = values.pricePerUnitNight ?? 0;
 
+    // Оренда: загальна сума дорівнює ціні (без лічильників)
+    if (this.paymentType() === PaymentType.Rent) {
+      return pricePerUnit;
+    }
+
     if (this.isTwoZoneMeter() && this.paymentType() === PaymentType.Electricity) {
       const dayConsumption = current - previous;
       const nightConsumption = currentNight - previousNight;
@@ -145,6 +150,18 @@ export class UtilityPaymentFormComponent {
     });
   }
 
+  // Open native month picker when clicking anywhere on the wrapper
+  private openMonthPicker(input: HTMLInputElement | null): void {
+    if (!input) return;
+    input.focus();
+    (input as any).showPicker?.();
+  }
+
+  onMonthWrapperMouseDown(event: MouseEvent, input: HTMLInputElement | null): void {
+    event.preventDefault();
+    this.openMonthPicker(input);
+  }
+
   private updateFormValues(): void {
     const formValue = this.form.value;
     this.formValues.set({
@@ -161,6 +178,14 @@ export class UtilityPaymentFormComponent {
     const departmentId = this.form.get('departmentId')?.value;
     const paymentMonth = this.form.get('paymentMonth')?.value;
     const paymentType = this.paymentType();
+    
+    // Для оренди попередні показники лічильника не потрібні
+    if (paymentType === PaymentType.Rent) {
+      this.previousMonthPayments.set([]);
+      this.selectedPreviousPaymentId.set(null);
+      this.form.patchValue({ previousPaymentId: null }, { emitEvent: false });
+      return;
+    }
     
     if (departmentId && paymentMonth && paymentType) {
       this.loadPreviousMonthPayments(departmentId, paymentType, paymentMonth);
@@ -354,13 +379,15 @@ export class UtilityPaymentFormComponent {
       return;
     }
 
-    // Validate current value >= previous value
-    const current = this.form.get('currentValue')?.value;
-    const previous = this.form.get('previousValue')?.value;
-    
-    if (previous !== null && current !== null && current < previous) {
-      this.toastService.error('Поточні не можуть бути меншими за попередні');
-      return;
+    // Validate current value >= previous value (крім оренди, де немає лічильника)
+    if (this.paymentType() !== PaymentType.Rent) {
+      const current = this.form.get('currentValue')?.value;
+      const previous = this.form.get('previousValue')?.value;
+      
+      if (previous !== null && current !== null && current < previous) {
+        this.toastService.error('Поточні не можуть бути меншими за попередні');
+        return;
+      }
     }
 
     // Validate night values if two-zone meter
@@ -382,8 +409,8 @@ export class UtilityPaymentFormComponent {
         departmentId: formValue.departmentId,
         responsibleEmployeeId: formValue.responsibleEmployeeId || null,
         paymentType: this.paymentType(),
-        previousValue: formValue.previousValue ?? null,
-        currentValue: formValue.currentValue ?? null,
+        previousValue: this.paymentType() === PaymentType.Rent ? null : (formValue.previousValue ?? null),
+        currentValue: this.paymentType() === PaymentType.Rent ? null : (formValue.currentValue ?? null),
         previousValueNight: this.isTwoZoneMeter() ? (formValue.previousValueNight ?? null) : null,
         currentValueNight: this.isTwoZoneMeter() ? (formValue.currentValueNight ?? null) : null,
         pricePerUnit: formValue.pricePerUnit,

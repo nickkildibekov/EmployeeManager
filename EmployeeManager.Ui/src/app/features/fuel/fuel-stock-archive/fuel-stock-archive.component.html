@@ -1,0 +1,79 @@
+<div class="fuel-stock-archive">
+  <h3>Архів надходжень палива</h3>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Відділ:</label>
+      <select
+        [value]="selectedDepartmentId() || ''"
+        (change)="onDepartmentChange($event)"
+        class="form-input"
+      >
+        <option value="">Всі відділи</option>
+        @for (dept of departments(); track dept.id) {
+        <option [value]="dept.id">{{ dept.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Тип палива:</label>
+      <select
+        [value]="selectedFuelType()?.toString() || ''"
+        (change)="onFuelTypeChange($event)"
+        class="form-input"
+      >
+        <option value="">Всі типи</option>
+        @for (type of fuelTypes; track type.value) {
+        <option [value]="type.value">{{ type.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+  <div class="loading">
+    <p>Завантаження надходжень...</p>
+  </div>
+  }
+
+  <!-- Entries Table -->
+  @if (!isLoading() && entries().length > 0) {
+  <div class="table-container">
+    <table class="entries-table">
+      <thead>
+        <tr>
+          <th>Відділ</th>
+          <th>Тип палива</th>
+          <th>Кількість, л</th>
+          <th>Відповідальна особа</th>
+          <th>Дата операції</th>
+          <th>Дата створення</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (entry of entries(); track entry.id) {
+        <tr>
+          <td>{{ entry.departmentName || 'Невідомо' }}</td>
+          <td>{{ entry.fuelTypeName }}</td>
+          <td>{{ entry.amount.toFixed(2) }}</td>
+          <td>{{ entry.receiverEmployeeName || '-' }}</td>
+          <td>{{ formatDate(entry.transactionDate) }}</td>
+          <td>{{ formatDate(entry.createdAt) }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  }
+
+  <!-- No Data -->
+  @if (!isLoading() && entries().length === 0) {
+  <div class="no-data">
+    <p>Надходжень палива не знайдено</p>
+  </div>
+  }
+</div>
+

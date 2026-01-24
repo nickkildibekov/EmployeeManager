@@ -1,4 +1,4 @@
-import { Component, DestroyRef, effect, inject, OnInit, signal, untracked } from '@angular/core';
+import { Component, DestroyRef, effect, inject, input, OnInit, signal, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -23,20 +23,14 @@ export class UtilityPaymentArchiveComponent implements OnInit {
 
   departments = signal<Department[]>([]);
   selectedDepartmentId = signal<string | null>(null);
-  selectedPaymentType = signal<PaymentType | null>(null);
+  // Payment type is controlled by parent page (Комуналка service tabs)
+  paymentType = input<PaymentType | null>(null);
   
   payments = signal<UtilityPayment[]>([]);
   totalCount = signal<number>(0);
   currentPage = signal<number>(1);
   pageSize = signal<number>(20);
   isLoading = signal<boolean>(false);
-
-  paymentTypes = [
-    { value: PaymentType.Electricity, label: 'Електроенергія' },
-    { value: PaymentType.Gas, label: 'Газ' },
-    { value: PaymentType.Water, label: 'Вода' },
-    { value: PaymentType.Rent, label: 'Оренда' },
-  ];
 
   private isInitialized = false;
 
@@ -46,7 +40,7 @@ export class UtilityPaymentArchiveComponent implements OnInit {
       if (!this.isInitialized) return;
       
       const departmentId = this.selectedDepartmentId();
-      const paymentType = this.selectedPaymentType();
+      const paymentType = this.paymentType();
       const page = this.currentPage();
       
       // Use untracked to prevent infinite loops when calling loadPayments
@@ -82,7 +76,7 @@ export class UtilityPaymentArchiveComponent implements OnInit {
     this.utilityPaymentService
       .getAll(
         this.selectedDepartmentId(),
-        this.selectedPaymentType(),
+        this.paymentType(),
         this.currentPage(),
         this.pageSize()
       )
@@ -107,12 +101,6 @@ export class UtilityPaymentArchiveComponent implements OnInit {
     this.currentPage.set(1); // Reset to first page when filter changes
   }
 
-  onPaymentTypeChange(event: Event): void {
-    const value = (event.target as HTMLSelectElement).value;
-    this.selectedPaymentType.set(value ? +value : null);
-    this.currentPage.set(1); // Reset to first page when filter changes
-  }
-
   onPageChange(page: number): void {
     this.currentPage.set(page);
   }
@@ -122,12 +110,15 @@ export class UtilityPaymentArchiveComponent implements OnInit {
   }
 
   formatDate(dateString: string): string {
+    if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('uk-UA', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
+    if (isNaN(date.getTime())) return '';
+    
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    
+    return `${day}/${month}/${year}`;
   }
 
   formatMonth(monthString: string): string {
@@ -147,7 +138,23 @@ export class UtilityPaymentArchiveComponent implements OnInit {
   }
 
   getPaymentTypeName(paymentType: PaymentType): string {
-    const type = this.paymentTypes.find(t => t.value === paymentType);
-    return type?.label || 'Невідомо';
+    switch (paymentType) {
+      case PaymentType.Electricity:
+        return 'Електроенергія';
+      case PaymentType.Gas:
+        return 'Газ';
+      case PaymentType.Water:
+        return 'Вода';
+      case PaymentType.Rent:
+        return 'Оренда';
+      default:
+        return 'Невідомо';
+    }
+  }
+
+  getCurrentPaymentTypeLabel(): string {
+    const type = this.paymentType();
+    if (type === null || type === undefined) return '';
+    return this.getPaymentTypeName(type);
   }
 }

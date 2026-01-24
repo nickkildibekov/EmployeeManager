@@ -56,9 +56,9 @@ namespace EmployeeManager.API.Controllers
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var searchLower = search.ToLower();
-                query = query.Where(e => 
-                    e.Name.ToLower().Contains(searchLower) || 
-                    e.SerialNumber.ToLower().Contains(searchLower));
+                query = query.Where(e =>
+                    (e.Name != null && e.Name.ToLower().Contains(searchLower)) ||
+                    (e.SerialNumber != null && e.SerialNumber.ToLower().Contains(searchLower)));
             }
 
             if (!string.IsNullOrWhiteSpace(status))
@@ -87,8 +87,8 @@ namespace EmployeeManager.API.Controllers
                         ? query.OrderByDescending(e => e.SerialNumber)
                         : query.OrderBy(e => e.SerialNumber),
                     "category" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
-                        ? query.OrderByDescending(e => e.Category.Name)
-                        : query.OrderBy(e => e.Category.Name),
+                        ? query.OrderByDescending(e => e.Category != null ? e.Category.Name : string.Empty)
+                        : query.OrderBy(e => e.Category != null ? e.Category.Name : string.Empty),
                     "purchasedate" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
                         ? query.OrderByDescending(e => e.PurchaseDate)
                         : query.OrderBy(e => e.PurchaseDate),

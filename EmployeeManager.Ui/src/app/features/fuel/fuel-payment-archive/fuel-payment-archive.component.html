@@ -45,7 +45,7 @@
     <table class="payments-table">
       <thead>
         <tr>
-          <th>Створено</th>
+          <th>Дата внесення</th>
           <th>Відділ</th>
           <th>Тип палива</th>
           <th>Кількість</th>
@@ -55,7 +55,7 @@
       <tbody>
         @for (transaction of transactions(); track transaction.id) {
         <tr>
-          <td>{{ formatDate(transaction.createdAt) }}</td>
+          <td>{{ formatDate(transaction.entryDate) }}</td>
           <td>{{ transaction.departmentName || 'Невідомо' }}</td>
           <td>{{ transaction.fuelTypeName }}</td>
           <td>{{ transaction.amount.toFixed(2) }} л</td>

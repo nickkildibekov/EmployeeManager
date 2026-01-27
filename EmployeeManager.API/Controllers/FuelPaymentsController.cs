@@ -54,7 +54,8 @@ namespace EmployeeManager.API.Controllers
             var totalCount = await query.CountAsync(cancellationToken);
 
             var transactions = await query
-                .OrderByDescending(t => t.CreatedAt)
+                .OrderByDescending(t => t.EntryDate)
+                .ThenByDescending(t => t.CreatedAt)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(t => new FuelTransactionDTO
@@ -66,6 +67,7 @@ namespace EmployeeManager.API.Controllers
                     FuelTypeName = t.Type == FuelType.Gasoline ? "Бензин" : "Дізель",
                     Amount = t.Amount,
                     RelatedId = t.RelatedId,
+                    EntryDate = t.EntryDate,
                     CreatedAt = t.CreatedAt
                 })
                 .ToListAsync(cancellationToken);
@@ -83,67 +85,51 @@ namespace EmployeeManager.API.Controllers
         {
             var txQuery = _context.FuelTransactions.AsQueryable();
 
-            // If dates are not provided, use default range (last 12 months from latest transaction)
+            // If dates are not provided, use default range (current month)
             if (!startDate.HasValue || !endDate.HasValue)
             {
-                var latestTxDate = await txQuery
-                    .OrderByDescending(t => t.CreatedAt)
-                    .Select(t => t.CreatedAt)
-                    .FirstOrDefaultAsync(cancellationToken);
-
-                if (latestTxDate == default(DateTime))
-                {
-                    return Ok(new FuelPaymentStatisticsDTO
-                    {
-                        MonthlyExpenses = new List<FuelPaymentStatisticsDTO.MonthlyDataPoint>(),
-                        MonthlyConsumption = new List<FuelPaymentStatisticsDTO.MonthlyDataPoint>()
-                    });
-                }
-
-                var endMonth = new DateTime(latestTxDate.Year, latestTxDate.Month, 1);
-                startDate = endMonth.AddMonths(-11); // Last 12 months including the latest month
-                endDate = endMonth.AddMonths(1); // Exclusive end date (first day of next month)
+                var now = DateTime.UtcNow;
+                startDate = new DateTime(now.Year, now.Month, 1);
+                endDate = new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month));
             }
 
-            // Normalize dates to first day of month for comparison
-            var startDateNormalized = new DateTime(startDate.Value.Year, startDate.Value.Month, 1);
-            var endDateExclusive = new DateTime(endDate.Value.Year, endDate.Value.Month, 1).AddMonths(1);
+            // Normalize dates: start at beginning of day, end at end of day
+            var startDateNormalized = startDate.Value.Date;
+            var endDateInclusive = endDate.Value.Date.AddDays(1); // Exclusive end for comparison
 
-            txQuery = txQuery.Where(t => t.CreatedAt >= startDateNormalized &&
-                                         t.CreatedAt < endDateExclusive);
+            txQuery = txQuery.Where(t => t.EntryDate >= startDateNormalized &&
+                                         t.EntryDate < endDateInclusive);
 
             if (departmentId.HasValue)
             {
                 txQuery = txQuery.Where(t => t.DepartmentId == departmentId.Value);
             }
 
-            List<FuelPaymentStatisticsDTO.MonthlyDataPoint> monthlyGas;
-            List<FuelPaymentStatisticsDTO.MonthlyDataPoint> monthlyDiesel;
+            List<FuelPaymentStatisticsDTO.DailyDataPoint> dailyGas;
+            List<FuelPaymentStatisticsDTO.DailyDataPoint> dailyDiesel;
 
             // Helper local function to aggregate liters (only negative amounts – витрати)
-            // Returns data with Year and Month, formatting happens in memory after query execution
-            static async Task<List<FuelPaymentStatisticsDTO.MonthlyDataPoint>> BuildLitersQueryAsync(
+            // Returns data grouped by date (EntryDate)
+            static async Task<List<FuelPaymentStatisticsDTO.DailyDataPoint>> BuildLitersQueryAsync(
                 IQueryable<FuelTransaction> query,
                 FuelType type,
                 CancellationToken cancellationToken)
             {
                 var rawData = await query
                     .Where(t => t.Type == type && t.Amount < 0)
-                    .GroupBy(t => new { Year = t.CreatedAt.Year, Month = t.CreatedAt.Month })
+                    .GroupBy(t => t.EntryDate.Date)
                     .Select(g => new
                     {
-                        g.Key.Year,
-                        g.Key.Month,
+                        Date = g.Key,
                         Value = -g.Sum(t => t.Amount) // Amount negative -> liters positive
                     })
-                    .OrderBy(x => x.Year)
-                    .ThenBy(x => x.Month)
+                    .OrderBy(x => x.Date)
                     .ToListAsync(cancellationToken);
 
-                // Format Month string in memory after query execution
-                return rawData.Select(x => new FuelPaymentStatisticsDTO.MonthlyDataPoint
+                // Format Date string in memory after query execution
+                return rawData.Select(x => new FuelPaymentStatisticsDTO.DailyDataPoint
                 {
-                    Month = $"{x.Year}-{x.Month:D2}",
+                    Date = x.Date.ToString("yyyy-MM-dd"),
                     Value = x.Value
                 }).ToList();
             }
@@ -153,26 +139,26 @@ namespace EmployeeManager.API.Controllers
                 // Один тип пального: один список з даними, інший порожній
                 if (fuelType.Value == FuelType.Gasoline)
                 {
-                    monthlyGas = await BuildLitersQueryAsync(txQuery, FuelType.Gasoline, cancellationToken);
-                    monthlyDiesel = new List<FuelPaymentStatisticsDTO.MonthlyDataPoint>();
+                    dailyGas = await BuildLitersQueryAsync(txQuery, FuelType.Gasoline, cancellationToken);
+                    dailyDiesel = new List<FuelPaymentStatisticsDTO.DailyDataPoint>();
                 }
                 else // Diesel
                 {
-                    monthlyGas = new List<FuelPaymentStatisticsDTO.MonthlyDataPoint>();
-                    monthlyDiesel = await BuildLitersQueryAsync(txQuery, FuelType.Diesel, cancellationToken);
+                    dailyGas = new List<FuelPaymentStatisticsDTO.DailyDataPoint>();
+                    dailyDiesel = await BuildLitersQueryAsync(txQuery, FuelType.Diesel, cancellationToken);
                 }
             }
             else
             {
-                // Всі типи: Бензин -> MonthlyExpenses, Дизель -> MonthlyConsumption
-                monthlyGas = await BuildLitersQueryAsync(txQuery, FuelType.Gasoline, cancellationToken);
-                monthlyDiesel = await BuildLitersQueryAsync(txQuery, FuelType.Diesel, cancellationToken);
+                // Всі типи: Бензин -> DailyExpenses, Дизель -> DailyConsumption
+                dailyGas = await BuildLitersQueryAsync(txQuery, FuelType.Gasoline, cancellationToken);
+                dailyDiesel = await BuildLitersQueryAsync(txQuery, FuelType.Diesel, cancellationToken);
             }
 
             return Ok(new FuelPaymentStatisticsDTO
             {
-                MonthlyExpenses = monthlyGas,
-                MonthlyConsumption = monthlyDiesel
+                DailyExpenses = dailyGas,
+                DailyConsumption = dailyDiesel
             });
         }
 
@@ -386,6 +372,7 @@ namespace EmployeeManager.API.Controllers
                 Type = payment.FuelType,
                 Amount = -fuelUsed,
                 RelatedId = payment.Id,
+                EntryDate = payment.EntryDate,
                 CreatedAt = DateTime.UtcNow
             };
 

@@ -96,6 +96,7 @@ namespace EmployeeManager.API.Controllers
                 Type = entry.FuelType,
                 Amount = entry.Amount, // додатнє значення
                 RelatedId = entry.Id,
+                EntryDate = entry.TransactionDate,
                 CreatedAt = DateTime.UtcNow
             };
 

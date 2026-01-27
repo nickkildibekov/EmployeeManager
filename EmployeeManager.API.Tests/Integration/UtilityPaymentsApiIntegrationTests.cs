@@ -43,10 +43,9 @@ namespace EmployeeManager.API.Tests.Integration
             using var scope = _factory.Services.CreateScope();
             var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             
-            var payment = new UtilityPayment
+            var payment = new ElectricityPayment
             {
                 DepartmentId = department.Id,
-                PaymentType = PaymentType.Electricity,
                 PreviousValue = 100.5m,
                 CurrentValue = 150.0m,
                 PricePerUnit = 2.5m,
@@ -54,7 +53,7 @@ namespace EmployeeManager.API.Tests.Integration
                 PaymentMonth = new DateTime(2026, 1, 1),
                 CreatedAt = DateTime.UtcNow
             };
-            context.UtilityPayments.Add(payment);
+            context.ElectricityPayments.Add(payment);
             await context.SaveChangesAsync();
 
             // Act

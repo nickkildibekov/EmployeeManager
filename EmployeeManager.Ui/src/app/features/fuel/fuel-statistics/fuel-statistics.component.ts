@@ -50,10 +50,10 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
   selectedFuelType = signal<FuelType | null>(null);
 
   constructor() {
-    // Set default dates (last 12 months)
+    // Set default dates (current month)
     const now = new Date();
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1); // First day of next month
-    const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1); // 12 months ago
+    const startDate = new Date(now.getFullYear(), now.getMonth(), 1); // First day of current month
+    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of current month
     
     this.startDate.set(startDate.toISOString().split('T')[0]);
     this.endDate.set(endDate.toISOString().split('T')[0]);
@@ -159,29 +159,29 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
     }
 
     // Завжди два графіки: один для бензину, один для дизеля
-    this.createExpensesChart(stats, FuelType.Gasoline, 'fuelExpensesChart', stats.monthlyExpenses);
-    this.createExpensesChart(stats, FuelType.Diesel, 'fuelDieselChart', stats.monthlyConsumption);
+    this.createExpensesChart(stats, FuelType.Gasoline, 'fuelExpensesChart', stats.dailyExpenses);
+    this.createExpensesChart(stats, FuelType.Diesel, 'fuelDieselChart', stats.dailyConsumption);
   }
 
   private createExpensesChart(
     stats: FuelPaymentStatistics,
     fuelType: FuelType,
     canvasId: string,
-    dataPoints: { month: string; value: number }[]
+    dataPoints: { date: string; value: number }[]
   ): void {
     const canvas = document.getElementById(canvasId) as HTMLCanvasElement;
     if (!canvas) return;
 
-    // Створюємо унікальні місяці з обох наборів даних для правильних labels
-    const allMonths = new Set<string>();
-    stats.monthlyExpenses.forEach((d) => allMonths.add(d.month));
-    stats.monthlyConsumption.forEach((d) => allMonths.add(d.month));
-    const sortedMonths = Array.from(allMonths).sort();
-    const labels = sortedMonths.map((m) => this.formatMonth(m));
+    // Створюємо унікальні дати з обох наборів даних для правильних labels
+    const allDates = new Set<string>();
+    stats.dailyExpenses.forEach((d) => allDates.add(d.date));
+    stats.dailyConsumption.forEach((d) => allDates.add(d.date));
+    const sortedDates = Array.from(allDates).sort();
+    const labels = sortedDates.map((d) => this.formatDate(d));
 
-    // Створюємо масив даних для всіх місяців
-    const dataMap = new Map(dataPoints.map((d) => [d.month, d.value]));
-    const data = sortedMonths.map((month) => dataMap.get(month) || 0);
+    // Створюємо масив даних для всіх дат
+    const dataMap = new Map(dataPoints.map((d) => [d.date, d.value]));
+    const data = sortedDates.map((date) => dataMap.get(date) || 0);
 
     const fuelTypeName = fuelType === FuelType.Gasoline ? 'Бензин' : 'Дізель';
     const chartColor = fuelType === FuelType.Gasoline 
@@ -234,6 +234,10 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
           x: {
             ticks: {
               color: 'var(--text-secondary, #aaa)',
+              maxRotation: 45,
+              minRotation: 45,
+              autoSkip: true,
+              maxTicksLimit: 15,
             },
             grid: {
               color: 'var(--border-color, #444)',
@@ -250,23 +254,11 @@ export class FuelStatisticsComponent implements OnInit, OnDestroy {
     }
   }
 
-  private formatMonth(monthString: string): string {
-    const [year, month] = monthString.split('-');
-    const monthNames = [
-      'Січ',
-      'Лют',
-      'Бер',
-      'Кві',
-      'Тра',
-      'Чер',
-      'Лип',
-      'Сер',
-      'Вер',
-      'Жов',
-      'Лис',
-      'Гру',
-    ];
-    return `${monthNames[parseInt(month) - 1]} ${year}`;
+  private formatDate(dateString: string): string {
+    const date = new Date(dateString + 'T00:00:00');
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${day}.${month}`;
   }
 
   formatDateForDisplay(dateString: string | null | undefined): string {

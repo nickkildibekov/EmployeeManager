@@ -51,6 +51,7 @@ export interface FuelTransaction {
   fuelTypeName: string;
   amount: number;
   relatedId: string;
+  entryDate: string;
   createdAt: string;
 }
 
@@ -64,12 +65,12 @@ export interface FuelTransactionListResponse {
   total: number;
 }
 
-export interface MonthlyDataPoint {
-  month: string; // Format: "YYYY-MM"
+export interface DailyDataPoint {
+  date: string; // Format: "YYYY-MM-DD"
   value: number;
 }
 
 export interface FuelPaymentStatistics {
-  monthlyExpenses: MonthlyDataPoint[];
-  monthlyConsumption: MonthlyDataPoint[]; // Пробіг в км
+  dailyExpenses: DailyDataPoint[];
+  dailyConsumption: DailyDataPoint[]; // Пробіг в км
 }

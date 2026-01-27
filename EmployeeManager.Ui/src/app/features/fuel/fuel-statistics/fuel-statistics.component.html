@@ -90,7 +90,7 @@
   }
 
   <!-- No Data -->
-  @if (!isLoading() && statistics() && statistics()!.monthlyExpenses.length === 0 && statistics()!.monthlyConsumption.length === 0) {
+  @if (!isLoading() && statistics() && statistics()!.dailyExpenses.length === 0 && statistics()!.dailyConsumption.length === 0) {
   <div class="no-data">
     <p>Немає даних для відображення статистики</p>
   </div>

@@ -67,12 +67,23 @@ namespace EmployeeManager.API.Tests.Integration
                 EntryDate = DateTime.UtcNow,
                 PreviousMileage = 1000.0m,
                 CurrentMileage = 1500.0m,
-                PricePerLiter = 50.0m,
                 FuelType = FuelType.Gasoline,
                 TotalAmount = 25000.0m,
                 CreatedAt = DateTime.UtcNow
             };
-            context.FuelPayments.Add(payment);
+            context.FuelExpenses.Add(payment);
+            
+            // Створюємо транзакцію для тесту
+            var transaction = new FuelTransaction
+            {
+                Id = Guid.NewGuid(),
+                DepartmentId = department.Id,
+                Type = FuelType.Gasoline,
+                Amount = -50.0m, // Витрата
+                RelatedId = payment.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+            context.FuelTransactions.Add(transaction);
             await context.SaveChangesAsync();
 
             // Act
@@ -92,13 +103,13 @@ namespace EmployeeManager.API.Tests.Integration
             var (department, equipment) = await SetupTestData();
 
             // Act
-            var response = await _client.GetAsync($"/api/fuelpayments/latest/{equipment.Id}");
+            var response = await _client.GetAsync($"/api/fuelpayments/latest/{equipment.Id}?fuelType=1");
 
             // Assert
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var result = await response.Content.ReadFromJsonAsync<JsonElement>();
             Assert.True(result.TryGetProperty("previousMileage", out _));
-            Assert.True(result.TryGetProperty("pricePerLiter", out _));
+            Assert.True(result.TryGetProperty("fuelBalance", out _));
         }
 
         [Fact]
@@ -117,12 +128,23 @@ namespace EmployeeManager.API.Tests.Integration
                 EntryDate = DateTime.UtcNow,
                 PreviousMileage = 1000.0m,
                 CurrentMileage = 1500.0m,
-                PricePerLiter = 50.0m,
                 FuelType = FuelType.Gasoline,
                 TotalAmount = 25000.0m,
                 CreatedAt = DateTime.UtcNow
             };
-            context.FuelPayments.Add(payment);
+            context.FuelExpenses.Add(payment);
+            
+            // Створюємо транзакцію для тесту
+            var transaction = new FuelTransaction
+            {
+                Id = Guid.NewGuid(),
+                DepartmentId = department.Id,
+                Type = FuelType.Gasoline,
+                Amount = -50.0m, // Витрата
+                RelatedId = payment.Id,
+                CreatedAt = DateTime.UtcNow
+            };
+            context.FuelTransactions.Add(transaction);
             await context.SaveChangesAsync();
 
             // Act
@@ -183,9 +205,9 @@ namespace EmployeeManager.API.Tests.Integration
             formData.Add(new StringContent(DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)), "EntryDate");
             formData.Add(new StringContent(1500.0m.ToString(CultureInfo.InvariantCulture)), "PreviousMileage");
             formData.Add(new StringContent(1000.0m.ToString(CultureInfo.InvariantCulture)), "CurrentMileage"); // Less than previous
-            formData.Add(new StringContent(50.0m.ToString(CultureInfo.InvariantCulture)), "PricePerLiter");
             formData.Add(new StringContent("1"), "FuelType");
             formData.Add(new StringContent(0m.ToString(CultureInfo.InvariantCulture)), "TotalAmount");
+            formData.Add(new StringContent(50.0m.ToString(CultureInfo.InvariantCulture)), "FuelUsed");
 
             // Act
             var response = await _client.PostAsync("/api/fuelpayments", formData);
@@ -207,9 +229,9 @@ namespace EmployeeManager.API.Tests.Integration
             formData.Add(new StringContent(DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)), "EntryDate");
             formData.Add(new StringContent(1000.0m.ToString(CultureInfo.InvariantCulture)), "PreviousMileage");
             formData.Add(new StringContent(1500.0m.ToString(CultureInfo.InvariantCulture)), "CurrentMileage");
-            formData.Add(new StringContent(50.0m.ToString(CultureInfo.InvariantCulture)), "PricePerLiter");
             formData.Add(new StringContent("1"), "FuelType");
             formData.Add(new StringContent(25000.0m.ToString(CultureInfo.InvariantCulture)), "TotalAmount");
+            formData.Add(new StringContent(50.0m.ToString(CultureInfo.InvariantCulture)), "FuelUsed");
 
             // Act
             var response = await _client.PostAsync("/api/fuelpayments", formData);
@@ -231,9 +253,9 @@ namespace EmployeeManager.API.Tests.Integration
             formData.Add(new StringContent(DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)), "EntryDate");
             formData.Add(new StringContent(1000.0m.ToString(CultureInfo.InvariantCulture)), "PreviousMileage");
             formData.Add(new StringContent(1500.0m.ToString(CultureInfo.InvariantCulture)), "CurrentMileage");
-            formData.Add(new StringContent(50.0m.ToString(CultureInfo.InvariantCulture)), "PricePerLiter");
             formData.Add(new StringContent("1"), "FuelType");
             formData.Add(new StringContent(25000.0m.ToString(CultureInfo.InvariantCulture)), "TotalAmount");
+            formData.Add(new StringContent(50.0m.ToString(CultureInfo.InvariantCulture)), "FuelUsed");
 
             // Act
             var response = await _client.PostAsync("/api/fuelpayments", formData);
@@ -256,9 +278,9 @@ namespace EmployeeManager.API.Tests.Integration
             formData.Add(new StringContent(DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)), "EntryDate");
             formData.Add(new StringContent(1000.0m.ToString(CultureInfo.InvariantCulture)), "PreviousMileage");
             formData.Add(new StringContent(1500.0m.ToString(CultureInfo.InvariantCulture)), "CurrentMileage");
-            formData.Add(new StringContent(50.0m.ToString(CultureInfo.InvariantCulture)), "PricePerLiter");
             formData.Add(new StringContent("1"), "FuelType");
             formData.Add(new StringContent(25000.0m.ToString(CultureInfo.InvariantCulture)), "TotalAmount");
+            formData.Add(new StringContent(50.0m.ToString(CultureInfo.InvariantCulture)), "FuelUsed");
 
             // Act
             var response = await _client.PostAsync("/api/fuelpayments", formData);
@@ -306,12 +328,23 @@ namespace EmployeeManager.API.Tests.Integration
                 EntryDate = new DateTime(2026, 1, 15),
                 PreviousMileage = 1000.0m,
                 CurrentMileage = 1500.0m,
-                PricePerLiter = 50.0m,
                 FuelType = FuelType.Gasoline,
                 TotalAmount = 25000.0m,
                 CreatedAt = DateTime.UtcNow
             };
-            context.FuelPayments.Add(payment);
+            context.FuelExpenses.Add(payment);
+            
+            // Створюємо транзакцію для тесту
+            var transaction = new FuelTransaction
+            {
+                Id = Guid.NewGuid(),
+                DepartmentId = department.Id,
+                Type = FuelType.Gasoline,
+                Amount = -50.0m, // Витрата
+                RelatedId = payment.Id,
+                CreatedAt = new DateTime(2026, 1, 15)
+            };
+            context.FuelTransactions.Add(transaction);
             await context.SaveChangesAsync();
 
             // Act

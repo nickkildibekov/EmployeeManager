@@ -25,6 +25,12 @@ namespace EmployeeManager.API.Models
         /// </summary>
         public Guid RelatedId { get; set; }
 
+        /// <summary>
+        /// Дата внесення (з форми внесення даних).
+        /// Для витрат береться з FuelPayment.EntryDate, для надходжень - з FuelIncome.TransactionDate.
+        /// </summary>
+        public DateTime EntryDate { get; set; }
+
         public DateTime CreatedAt { get; set; }
     }
 }

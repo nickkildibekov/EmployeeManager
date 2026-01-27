@@ -45,17 +45,18 @@ namespace EmployeeManager.API.DTO
         public string FuelTypeName { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public Guid RelatedId { get; set; }
+        public DateTime EntryDate { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 
     public class FuelPaymentStatisticsDTO
     {
-        public List<MonthlyDataPoint> MonthlyExpenses { get; set; } = new();
-        public List<MonthlyDataPoint> MonthlyConsumption { get; set; } = new(); // Пробіг в км
+        public List<DailyDataPoint> DailyExpenses { get; set; } = new();
+        public List<DailyDataPoint> DailyConsumption { get; set; } = new(); // Пробіг в км
 
-        public class MonthlyDataPoint
+        public class DailyDataPoint
         {
-            public string Month { get; set; } = string.Empty; // Format: "YYYY-MM"
+            public string Date { get; set; } = string.Empty; // Format: "YYYY-MM-DD"
             public decimal Value { get; set; }
         }
     }

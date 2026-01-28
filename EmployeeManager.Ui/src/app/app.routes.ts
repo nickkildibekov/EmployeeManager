@@ -75,5 +75,26 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/equipment/equipment/equipment').then((m) => m.Equipment),
   },
+  {
+    path: 'utilities',
+    loadComponent: () =>
+      import('./features/utilities/utilities-page/utilities-page.component').then(
+        (m) => m.UtilitiesPageComponent
+      ),
+  },
+  {
+    path: 'fuel',
+    loadComponent: () =>
+      import('./features/fuel/fuel-page/fuel-page.component').then(
+        (m) => m.FuelPageComponent
+      ),
+  },
+  {
+    path: 'schedule',
+    loadComponent: () =>
+      import('./features/schedule/schedule-page/schedule-page.component').then(
+        (m) => m.SchedulePageComponent
+      ),
+  },
   { path: '**', redirectTo: 'home' },
 ];

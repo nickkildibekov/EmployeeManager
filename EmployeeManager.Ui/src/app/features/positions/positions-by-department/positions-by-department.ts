@@ -30,8 +30,8 @@ export class PositionsByDepartmentComponent implements OnInit {
 
   ngOnInit(): void {
     const depId =
-      Number(this.route.snapshot.paramMap.get('id')) ||
-      Number(this.route.snapshot.paramMap.get('depId'));
+      this.route.snapshot.paramMap.get('id') ||
+      this.route.snapshot.paramMap.get('depId');
     if (!depId) {
       this.error.set('Invalid department id');
       return;
@@ -40,7 +40,7 @@ export class PositionsByDepartmentComponent implements OnInit {
     this.loadPositions(depId);
   }
 
-  private loadPositions(depId: number) {
+  private loadPositions(depId: string) {
     this.isLoading.set(true);
     this.positionService.getPositionsByDepartmentId(depId).subscribe({
       next: (p) => {

@@ -1,8 +1,6 @@
-using EmployeeManager.API.Data;
 using EmployeeManager.API.DTO;
-using EmployeeManager.API.Models;
+using EmployeeManager.API.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace EmployeeManager.Api.Controllers
 {
@@ -10,126 +8,28 @@ namespace EmployeeManager.Api.Controllers
     [Route("api/[controller]")]
     public class DepartmentsController : ControllerBase
     {
-        private readonly AppDbContext _appDbContext;
+        private readonly IDepartmentService _departmentService;
 
-        public DepartmentsController(AppDbContext appDbContext)
+        public DepartmentsController(IDepartmentService departmentService)
         {
-            _appDbContext = appDbContext;
-        }
-
-        private IQueryable<Department> GetDepartmentQuery()
-        {
-            return _appDbContext.Departments
-                .Include(d => d.DepartmentPositions!)
-                    .ThenInclude(dp => dp.Position)
-                .Include(d => d.Employees!)
-                    .ThenInclude(e => e.Position)
-                .Include(d => d.Employees!)
-                    .ThenInclude(e => e.Specialization)
-                .AsNoTracking();
+            _departmentService = departmentService;
         }
 
         [HttpGet]
         public async Task<IActionResult> GetAll(CancellationToken cancellationToken = default)
         {
-            var data = await GetDepartmentQuery()
-                .OrderBy(d => d.Name)
-                .Select(d => new DepartmentDTO
-                {
-                    Id = d.Id,
-                    Name = d.Name,
-                    Positions = d.DepartmentPositions!
-                        .Select(dp => new PositionDTO
-                        {
-                            Id = dp.Position!.Id,
-                            Title = dp.Position.Title                            
-                        }).ToList(),
-
-                    Employees = d.Employees!.Select(e => new EmployeeDTO
-                    {
-                        Id = e.Id,
-                        FirstName = e.FirstName,
-                        LastName = e.LastName,
-                        PhoneNumber = e.PhoneNumber,
-                        DepartmentId = e.DepartmentId,
-                        DepartmentName = d.Name,
-                        PositionId = e.PositionId,
-                        PositionName = e.Position != null ? e.Position.Title : null,
-                        SpecializationId = e.SpecializationId,
-                        SpecializationName = e.Specialization != null ? e.Specialization.Name : null
-                    }).ToList(),
-
-                    Equipments = d.Equipments!
-                        .Select(eq => new EquipmentDTO
-                        {
-                            Id = eq.Id,
-                            Name = eq.Name,
-                            SerialNumber = eq.SerialNumber,
-                            PurchaseDate = eq.PurchaseDate,
-                            Status = eq.Status,
-                            Description = eq.Description,
-                            CategoryId = eq.CategoryId,
-                            CategoryName = eq.Category!.Name,
-                            DepartmentId = eq.DepartmentId,
-                            DepartmentName = d.Name,
-                        }).ToList()
-                })
-                .ToListAsync(cancellationToken);
-
+            var data = await _departmentService.GetAllAsync(cancellationToken);
             return Ok(data);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken = default)
         {
-            var dep = await GetDepartmentQuery()
-                .Where(d => d.Id == id)
-                .Select(d => new DepartmentDTO
-                {
-                    Id = d.Id,
-                    Name = d.Name,
-                    Positions = d.DepartmentPositions!
-                        .Select(dp => new PositionDTO
-                        {
-                            Id = dp.Position!.Id,
-                            Title = dp.Position.Title
-                        }).ToList(),
-
-                    Employees = d.Employees!.Select(e => new EmployeeDTO
-                    {
-                        Id = e.Id,
-                        FirstName = e.FirstName,
-                        LastName = e.LastName,
-                        PhoneNumber = e.PhoneNumber,
-                        DepartmentId = e.DepartmentId,
-                        DepartmentName = d.Name,
-                        PositionId = e.PositionId,
-                        PositionName = e.Position != null ? e.Position.Title : null,
-                        SpecializationId = e.SpecializationId,
-                        SpecializationName = e.Specialization != null ? e.Specialization.Name : null
-                    }).ToList(),
-
-                    Equipments = d.Equipments!
-                        .Select(eq => new EquipmentDTO
-                        {
-                            Id = eq.Id,
-                            Name = eq.Name,
-                            SerialNumber = eq.SerialNumber,
-                            PurchaseDate = eq.PurchaseDate,
-                            Status = eq.Status,
-                            Description = eq.Description,
-                            CategoryId = eq.CategoryId,
-                            CategoryName = eq.Category!.Name,
-                            DepartmentId = eq.DepartmentId,
-                            DepartmentName = d.Name,
-                        }).ToList()
-                })
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (dep == null)
+            var department = await _departmentService.GetByIdAsync(id, cancellationToken);
+            if (department == null)
                 return NotFound(new { message = $"Department with ID {id} not found." });
 
-            return Ok(dep);
+            return Ok(department);
         }
 
         [HttpPost]
@@ -143,19 +43,12 @@ namespace EmployeeManager.Api.Controllers
                 return BadRequest(new { message = "Name is required." });
             }
 
-            var dep = new Department
-            {
-                Name = depDto.Name,
-            };
-            _appDbContext.Departments.Add(dep);
-            await _appDbContext.SaveChangesAsync(cancellationToken);
-
-            var createdDto = new DepartmentDTO { Id = dep.Id, Name = dep.Name };
-            return CreatedAtAction(nameof(GetById), new { id = dep.Id }, createdDto);
+            var createdDto = await _departmentService.CreateAsync(depDto, cancellationToken);
+            return CreatedAtAction(nameof(GetById), new { id = createdDto.Id }, createdDto);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] DepartmentDTO depDto, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Update(Guid id, [FromBody] DepartmentDTO depDto, CancellationToken cancellationToken = default)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -165,109 +58,27 @@ namespace EmployeeManager.Api.Controllers
                 return BadRequest(new { message = "Name is required." });
             }
 
-            var dep = await _appDbContext.Departments.FindAsync(new object[] { id }, cancellationToken);
-            if (dep == null)
+            var updatedDto = await _departmentService.UpdateAsync(id, depDto, cancellationToken);
+            if (updatedDto == null)
                 return NotFound(new { message = $"Department with ID {id} not found." });
 
-            dep.Name = depDto.Name;
-
-            await _appDbContext.SaveChangesAsync(cancellationToken);
-
-            var updatedDto = new DepartmentDTO { Id = dep.Id, Name = dep.Name };
             return Ok(updatedDto);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
         {
-            // Prevent deletion of Global Reserve department
-            var globalReserve = await _appDbContext.Departments
-                .FirstOrDefaultAsync(d => d.Name == "Global Reserve", cancellationToken);
-            
-            if (globalReserve != null && id == globalReserve.Id)
+            var department = await _departmentService.GetByIdAsync(id, cancellationToken);
+            if (department != null && department.Name == "Reserve")
             {
-                return BadRequest(new { message = "Cannot delete the Global Reserve department." });
+                return BadRequest(new { message = "Cannot delete the Reserve department." });
             }
 
-            var dep = await _appDbContext.Departments
-                .Include(d => d.Employees)
-                .Include(d => d.Equipments)
-                .Include(d => d.DepartmentPositions)
-                .FirstOrDefaultAsync(d => d.Id == id, cancellationToken);
-                
-            if (dep == null)
+            var deleted = await _departmentService.DeleteAsync(id, cancellationToken);
+            if (!deleted)
                 return NotFound(new { message = $"Department with ID {id} not found." });
 
-            // Use transaction to ensure atomicity (if supported by database)
-            var supportsTransactions = _appDbContext.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory";
-            Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? transaction = null;
-            
-            if (supportsTransactions)
-            {
-                transaction = await _appDbContext.Database.BeginTransactionAsync(cancellationToken);
-            }
-
-            try
-            {
-                // Move employees to Reserve (set DepartmentId to null)
-                if (dep.Employees?.Any() == true)
-                {
-                    foreach (var employee in dep.Employees)
-                    {
-                        employee.DepartmentId = null;
-                    }
-                }
-
-                // Move equipment to Warehouse (set DepartmentId to null)
-                if (dep.Equipments?.Any() == true)
-                {
-                    foreach (var equipment in dep.Equipments)
-                    {
-                        equipment.DepartmentId = null;
-                    }
-                }
-
-                // Remove DepartmentPositions (join table entries)
-                if (dep.DepartmentPositions?.Any() == true)
-                {
-                    _appDbContext.DepartmentPositions.RemoveRange(dep.DepartmentPositions);
-                }
-
-                // Delete the department
-                _appDbContext.Departments.Remove(dep);
-                
-                await _appDbContext.SaveChangesAsync(cancellationToken);
-                
-                if (transaction != null)
-                {
-                    await transaction.CommitAsync(cancellationToken);
-                }
-                
-                return NoContent();
-            }
-            catch (DbUpdateException ex)
-            {
-                if (transaction != null)
-                {
-                    await transaction.RollbackAsync(cancellationToken);
-                }
-                return StatusCode(500, new { message = "Error deleting department.", detail = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                if (transaction != null)
-                {
-                    await transaction.RollbackAsync(cancellationToken);
-                }
-                return StatusCode(500, new { message = "Unexpected error deleting department.", detail = ex.Message });
-            }
-            finally
-            {
-                if (transaction != null)
-                {
-                    await transaction.DisposeAsync();
-                }
-            }
+            return NoContent();
         }
     }
 }

@@ -5,6 +5,7 @@ import { DepartmentService } from '../department.service';
 import { Department } from '../../../shared/models/department.model';
 import { NavigationService } from '../../../shared/services/navigation.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { getDepartmentDisplayName } from '../../../shared/utils/display.utils';
 
 import { Router } from '@angular/router';
 
@@ -95,5 +96,9 @@ export class DepartmentListComponent implements OnInit {
   cancelAdd() {
     this.resetForm();
     this.isAddFormVisible.set(false);
+  }
+
+  getDepartmentDisplayName(name: string): string {
+    return getDepartmentDisplayName(name);
   }
 }

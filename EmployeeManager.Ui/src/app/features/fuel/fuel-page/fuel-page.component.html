@@ -1,0 +1,62 @@
+<div class="fuel-page">
+  <div class="container">
+    <header class="page-header">
+      <h1>Паливо</h1>
+      <p class="subtitle">Облік витрат на паливо та запасу палива</p>
+    </header>
+
+    <!-- Fuel Sub-tabs -->
+    <div class="sub-tabs">
+      <button
+        class="sub-tab-button"
+        [class.active]="activeFuelSubTab() === 'entry'"
+        (click)="setFuelSubTab('entry')"
+      >
+        Внесення даних
+      </button>
+      <button
+        class="sub-tab-button"
+        [class.active]="activeFuelSubTab() === 'statistics'"
+        (click)="setFuelSubTab('statistics')"
+      >
+        Статистика витрат
+      </button>
+      <button
+        class="sub-tab-button"
+        [class.active]="activeFuelSubTab() === 'archive'"
+        (click)="setFuelSubTab('archive')"
+      >
+        Рух палива
+      </button>
+    </div>
+
+    <div class="tab-content">
+      <!-- Entry Sub-tab -->
+      @if (activeFuelSubTab() === 'entry') {
+      <div class="sub-tab-content">
+        <app-fuel-payment-form
+          [departments]="departments()"
+          [employees]="employees()"
+          (paymentSaved)="onPaymentSaved()"
+        />
+      </div>
+      }
+
+      <!-- Statistics Sub-tab -->
+      @if (activeFuelSubTab() === 'statistics') {
+      <div class="sub-tab-content">
+        <app-fuel-statistics />
+      </div>
+      }
+
+      <!-- Archive Sub-tab -->
+      @if (activeFuelSubTab() === 'archive') {
+      <div class="sub-tab-content">
+        <app-fuel-payment-archive />
+      </div>
+      }
+
+    </div>
+  </div>
+</div>
+

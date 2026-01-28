@@ -13,12 +13,15 @@ import { Employee } from '../../../shared/models/employee.model';
 import { Department } from '../../../shared/models/department.model';
 import { Position } from '../../../shared/models/position.model';
 import { Specialization } from '../../../shared/models/specialization.model';
-import { NewEmployeeData } from '../../../shared/models/payloads';
+import { NewEmployeeData, EmployeeUpdateData } from '../../../shared/models/payloads';
+import { EmployeeModalComponent } from '../employee-modal/employee-modal.component';
+import { ConfirmationDialogComponent } from '../../../shared/components/confirmation-dialog/confirmation-dialog';
+import { getDepartmentDisplayName, getPositionDisplayName } from '../../../shared/utils/display.utils';
 
 @Component({
   selector: 'app-employee-list-page',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EmployeeModalComponent, ConfirmationDialogComponent],
   templateUrl: './employee-list-page.html',
   styleUrls: ['./employee-list-page.css'],
 })
@@ -31,7 +34,7 @@ export class EmployeeListPageComponent implements OnInit {
   private destroyRef = inject(DestroyRef);
   private navigationService = inject(NavigationService);
   private toastService = inject(ToastService);
-  private dialogService = inject(DialogService);
+  dialogService = inject(DialogService);
 
   employees = signal<Employee[]>([]);
   departments = signal<Department[]>([]);
@@ -40,26 +43,31 @@ export class EmployeeListPageComponent implements OnInit {
   // Positions available for the add form, filtered by selected department
   formPositions = signal<Position[]>([]);
 
-  selectedDepartmentId = signal<number | null>(null);
-  selectedPositionId = signal<number | null>(null);
+  selectedDepartmentId = signal<string | null>(null);
+  selectedPositionId = signal<string | null>(null);
   searchTerm = signal('');
   page = signal(1);
   pageSize = signal(10);
   total = signal(0);
-  sortBy = signal<'firstName' | 'lastName' | 'phoneNumber' | 'department' | 'position' | ''>('');
+  sortBy = signal<'callSign' | 'firstName' | 'lastName' | 'phoneNumber' | 'department' | 'position' | ''>('');
   sortOrder = signal<'asc' | 'desc'>('asc');
 
   isLoading = signal(false);
   error = signal('');
   isAddFormVisible = signal(false);
 
+  isModalOpen = signal(false);
+  selectedEmployee = signal<Employee | null>(null);
+
   newEmployee = signal<NewEmployeeData>({
     firstName: '',
     lastName: '',
+    callSign: null,
     phoneNumber: '',
+    birthDate: null,
     positionId: null,
     departmentId: null,
-    specializationId: 0,
+    specializationId: '',
   });
 
   Math = Math;
@@ -98,7 +106,7 @@ export class EmployeeListPageComponent implements OnInit {
       next: (specs) => {
         this.specializations.set(specs);
         // Set default specialization if available
-        if (specs.length > 0 && this.newEmployee().specializationId === 0) {
+        if (specs.length > 0 && !this.newEmployee().specializationId) {
           this.newEmployee.update(emp => ({ ...emp, specializationId: specs[0].id }));
         }
       },
@@ -110,7 +118,7 @@ export class EmployeeListPageComponent implements OnInit {
     this.destroyRef.onDestroy(() => sub.unsubscribe());
   }
 
-  private loadPositionsForDepartment(depId: number) {
+  private loadPositionsForDepartment(depId: string | null) {
     const sub = this.positionService.getPositionsByDepartmentId(depId).subscribe({
       next: (pos) => this.formPositions.set(pos),
       error: (err: Error) => {
@@ -126,7 +134,7 @@ export class EmployeeListPageComponent implements OnInit {
     this.isLoading.set(true);
     const sub = this.employeeService
       .getEmployeesByDepartment(
-        this.selectedDepartmentId() ?? 0,
+        this.selectedDepartmentId(),
         this.page(),
         this.pageSize(),
         this.searchTerm(),
@@ -155,20 +163,20 @@ export class EmployeeListPageComponent implements OnInit {
   }
 
   onDepartmentChange(depId: string) {
-    const id = depId ? parseInt(depId, 10) : null;
+    const id = depId || null;
     this.selectedDepartmentId.set(id);
     this.page.set(1);
     this.loadEmployees();
   }
 
   onPositionChange(posId: string) {
-    const id = posId ? parseInt(posId, 10) : null;
+    const id = posId || null;
     this.selectedPositionId.set(id);
     this.page.set(1);
     this.loadEmployees();
   }
 
-  toggleSort(column: 'firstName' | 'lastName' | 'phoneNumber' | 'department' | 'position') {
+  toggleSort(column: 'callSign' | 'firstName' | 'lastName' | 'phoneNumber' | 'department' | 'position') {
     if (this.sortBy() === column) {
       this.sortOrder.update((order) => (order === 'asc' ? 'desc' : 'asc'));
     } else {
@@ -184,86 +192,87 @@ export class EmployeeListPageComponent implements OnInit {
     this.loadEmployees();
   }
 
-  toggleAddForm() {
-    this.isAddFormVisible.update((v) => !v);
+  openAddModal() {
+    this.selectedEmployee.set(null);
+    this.isModalOpen.set(true);
   }
 
-  cancelAdd() {
-    this.resetForm();
-    this.isAddFormVisible.set(false);
+  openEditModal(employee: Employee) {
+    this.selectedEmployee.set(employee);
+    if (employee.departmentId) {
+      this.loadPositionsForDepartment(employee.departmentId);
+    } else {
+      this.formPositions.set([]);
+    }
+    this.isModalOpen.set(true);
   }
 
-  resetForm() {
-    const defaultSpecId = this.specializations().length > 0 ? this.specializations()[0].id : 0;
-    this.newEmployee.set({
-      firstName: '',
-      lastName: '',
-      phoneNumber: '',
-      positionId: null,
-      departmentId: null,
-      specializationId: defaultSpecId,
-    });
+  closeModal() {
+    this.isModalOpen.set(false);
+    this.selectedEmployee.set(null);
     this.formPositions.set([]);
   }
 
-  isFormValid(): boolean {
-    const emp = this.newEmployee();
-    return !!(
-      emp.firstName.trim() &&
-      emp.lastName.trim() &&
-      emp.phoneNumber.trim() &&
-      emp.specializationId > 0
-    );
-  }
-
-  addEmployee() {
-    if (!this.isFormValid()) return;
-
-    const emp = this.newEmployee();
-    this.employeeService.addEmployee(emp).subscribe({
-      next: () => {
-        this.resetForm();
-        this.isAddFormVisible.set(false);
-        this.page.set(1);
-        this.selectedDepartmentId.set(null);
-        this.selectedPositionId.set(null);
-        this.loadEmployees();
-        this.toastService.success('Співробітника успішно створено');
-      },
-      error: (err: Error) => {
-        this.error.set(err.message);
-        this.toastService.error(err.message);
-      },
-    });
-  }
-
-  // Add form: when user selects the department, populate positions and enable the dropdown
-  onNewDepartmentChange(value: string) {
-    const id = value ? parseInt(value, 10) : null;
-    const current = this.newEmployee();
-    // Update department and clear previously selected position
-    this.newEmployee.set({
-      ...current,
-      departmentId: id,
-      positionId: null,
-    });
-    if (id) {
-      this.loadPositionsForDepartment(id);
+  onModalDepartmentChange(departmentId: string | null) {
+    if (departmentId) {
+      this.loadPositionsForDepartment(departmentId);
     } else {
       this.formPositions.set([]);
     }
   }
 
-  async deleteEmployee(id: number): Promise<void> {
-    const confirmed = await this.dialogService.confirm(
-      'Ви впевнені, що хочете видалити цього співробітника?'
-    );
+  onEmployeeSave(data: NewEmployeeData | EmployeeUpdateData) {
+    if ('id' in data) {
+      // Update existing employee
+      this.employeeService.updateEmployee(data as EmployeeUpdateData).subscribe({
+        next: () => {
+          this.closeModal();
+          this.loadEmployees();
+          this.toastService.success('Співробітника успішно оновлено');
+        },
+        error: (err: Error) => {
+          this.error.set(err.message);
+          this.toastService.error(err.message);
+        },
+      });
+    } else {
+      // Create new employee
+      this.employeeService.addEmployee(data as NewEmployeeData).subscribe({
+        next: () => {
+          this.closeModal();
+          this.page.set(1);
+          this.loadEmployees();
+          this.toastService.success('Співробітника успішно створено');
+        },
+        error: (err: Error) => {
+          this.error.set(err.message);
+          this.toastService.error(err.message);
+        },
+      });
+    }
+  }
+
+  async confirmDelete(employee: Employee): Promise<void> {
+    const isFromReserve = employee.departmentName === 'Reserve' || employee.departmentName === 'Резерв';
+    
+    const confirmed = await this.dialogService.confirm({
+      title: 'Видалити співробітника',
+      message: isFromReserve 
+        ? `Ви впевнені, що хочете остаточно видалити співробітника "${employee.firstName} ${employee.lastName}"? Цю дію неможливо скасувати.`
+        : `Ви впевнені, що хочете перемістити співробітника "${employee.firstName} ${employee.lastName}" в резерв?`,
+      confirmText: isFromReserve ? 'Видалити' : 'Перемістити в резерв',
+      cancelText: 'Скасувати',
+      variant: isFromReserve ? 'danger' : 'warning',
+    });
+    
     if (!confirmed) return;
 
-    this.employeeService.deleteEmployee(id).subscribe({
-      next: () => {
+    this.employeeService.deleteEmployee(employee.id).subscribe({
+      next: (result) => {
         this.loadEmployees();
-        this.toastService.success('Співробітника успішно видалено');
+        this.toastService.success(isFromReserve 
+          ? 'Співробітника успішно видалено' 
+          : 'Співробітника переміщено в резерв');
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -272,7 +281,19 @@ export class EmployeeListPageComponent implements OnInit {
     });
   }
 
-  openEmployee(id: number) {
+  openEmployee(id: string) {
     this.router.navigate(['/employees', id]);
+  }
+
+  getDepartmentDisplayName(name: string | null | undefined): string {
+    if (!name) return 'Резерв';
+    if (name === 'Reserve' || name === 'Global Reserve') return 'Резерв';
+    return name;
+  }
+
+  getPositionDisplayName(title: string | null | undefined): string {
+    if (!title) return 'Не вказано';
+    if (title === 'Unemployed') return 'Без Посади';
+    return title;
   }
 }

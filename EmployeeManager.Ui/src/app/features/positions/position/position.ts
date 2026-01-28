@@ -32,7 +32,7 @@ export class PositionComponent implements OnInit {
   departments = signal<Department[]>([]);
 
   editedPosition = signal<PositionUpdatePayload>({
-    id: 0,
+    id: '',
     title: '',
     departmentIds: [],
   });
@@ -51,7 +51,7 @@ export class PositionComponent implements OnInit {
   isEditMode = signal(false);
   error = signal('');
 
-  positionId: number | undefined;
+  positionId: string | undefined;
 
   ngOnInit(): void {
     this.loadDepartments();
@@ -59,10 +59,9 @@ export class PositionComponent implements OnInit {
     const subscription = this.route.paramMap
       .pipe(
         switchMap((params) => {
-          const idParam = params.get('id');
-          const id = idParam ? +idParam : undefined;
+          const id = params.get('id');
 
-          if (!id || isNaN(id)) {
+          if (!id) {
             this.error.set('ID посади відсутній або недійсний!');
             this.isFetching.set(false);
             return [];
@@ -120,11 +119,11 @@ export class PositionComponent implements OnInit {
     }
   }
 
-  isDepartmentSelected(departmentId: number): boolean {
+  isDepartmentSelected(departmentId: string): boolean {
     return this.editedPosition().departmentIds.includes(departmentId);
   }
 
-  toggleDepartment(departmentId: number): void {
+  toggleDepartment(departmentId: string): void {
     const currentIds = [...this.editedPosition().departmentIds];
     const index = currentIds.indexOf(departmentId);
 
@@ -162,6 +161,13 @@ export class PositionComponent implements OnInit {
         this.isSaving.set(false);
       },
     });
+  }
+
+  // Check if current position is Unemployed (cannot be deleted)
+  isUnemployedPosition(): boolean {
+    const pos = this.position();
+    if (!pos) return false;
+    return pos.title === 'Unemployed' || pos.title === 'Без Посади';
   }
 
   async deletePosition(): Promise<void> {

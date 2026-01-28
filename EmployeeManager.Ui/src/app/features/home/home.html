@@ -6,7 +6,7 @@
     </header>
 
     <div class="tiles-grid">
-      @for (tile of tiles; track tile.route) {
+      @for (tile of tiles; track $index) {
       @if (tile.route === '#') {
       <div
         [class.coming-soon]="true"

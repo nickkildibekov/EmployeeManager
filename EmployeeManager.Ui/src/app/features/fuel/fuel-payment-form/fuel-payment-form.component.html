@@ -1,0 +1,249 @@
+<div class="fuel-payment-form">
+  <h3>Внесення даних про паливо</h3>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <!-- Department, Responsible Employee, Equipment, Entry Date in one row -->
+    <div class="form-row-4">
+      <div class="form-group">
+        <label>Підрозділ <span class="required">*</span></label>
+        <select formControlName="departmentId" class="form-input">
+          <option value="">Оберіть підрозділ</option>
+          @for (dept of departments(); track dept.id) {
+          <option [value]="dept.id">{{ dept.name }}</option>
+          }
+        </select>
+        @if (form.get('departmentId')?.invalid && form.get('departmentId')?.touched) {
+        <span class="error">Підрозділ обов'язковий</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Відповідальна особа</label>
+        <select formControlName="responsibleEmployeeId" class="form-input">
+          <option [value]="null">Не призначено</option>
+          @for (emp of employees(); track emp.id) {
+          <option [value]="emp.id">{{ emp.callSign || (emp.firstName + ' ' + emp.lastName) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Обладнання <span class="required">*</span></label>
+        <select formControlName="equipmentId" class="form-input" [disabled]="!form.get('departmentId')?.value || isLoadingEquipment()">
+          <option value="">Оберіть обладнання</option>
+          @if (isLoadingEquipment()) {
+          <option disabled>Завантаження...</option>
+          } @else {
+          @for (equipment of equipmentList(); track equipment.id) {
+          <option [value]="equipment.id">{{ equipment.name }}</option>
+          }
+          }
+        </select>
+        @if (form.get('equipmentId')?.invalid && form.get('equipmentId')?.touched) {
+        <span class="error">Обладнання обов'язкове</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Дата внесення <span class="required">*</span></label>
+        <div class="date-input-wrapper" (mousedown)="onDateWrapperMouseDown($event, entryDateInput)">
+          <input
+            type="date"
+            formControlName="entryDate"
+            class="form-input date-input-native"
+            #entryDateInput
+          />
+          <span
+            class="date-input-display"
+            [class.placeholder]="!entryDateInput.value"
+          >
+            {{ entryDateInput.value ? formatDateForDisplay(entryDateInput.value) : 'Оберіть дату' }}
+          </span>
+        </div>
+        @if (form.get('entryDate')?.invalid && form.get('entryDate')?.touched) {
+        <span class="error">Дата внесення обов'язкова</span>
+        }
+      </div>
+    </div>
+
+    <!-- Mileage, consumption, fuel type, total in one row -->
+    <div class="form-row-5">
+      <div class="form-group">
+        <label>Попередній пробіг <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="previousMileage"
+          step="0.01"
+          class="form-input"
+          placeholder="0.00"
+        />
+        @if (form.get('previousMileage')?.invalid && form.get('previousMileage')?.touched) {
+        <span class="error">Попередній пробіг обов'язковий</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Поточний пробіг <span class="required">*</span></label>
+        <input
+          type="number"
+          formControlName="currentMileage"
+          step="0.01"
+          class="form-input"
+          placeholder="0.00"
+        />
+        @if (form.get('currentMileage')?.invalid && form.get('currentMileage')?.touched) {
+        <span class="error">Поточний пробіг обов'язковий</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label>Розхід на 100 км, л</label>
+        <input
+          type="number"
+          formControlName="consumptionPer100km"
+          step="0.1"
+          min="0"
+          class="form-input"
+          placeholder="0.0"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Розхід палива, л</label>
+        <input
+          type="number"
+          formControlName="fuelUsed"
+          class="form-input"
+          readonly
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Тип палива <span class="required">*</span></label>
+        <select formControlName="fuelType" class="form-input">
+          <option [value]="1">Бензин</option>
+          <option [value]="2">Дізель</option>
+        </select>
+        @if (form.get('fuelType')?.invalid && form.get('fuelType')?.touched) {
+        <span class="error">Тип палива обов'язковий</span>
+        }
+      </div>
+    </div>
+
+    <!-- Fuel balance with add-fuel action -->
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>Залишок палива, л</label>
+        <div class="fuel-balance-wrapper">
+          <input
+            type="number"
+            formControlName="fuelBalance"
+            step="0.1"
+            class="form-input"
+            placeholder="0.0"
+            readonly
+          />
+          <button
+            type="button"
+            class="btn-icon"
+            (click)="openAddFuelModal()"
+            [disabled]="!form.get('departmentId')?.value"
+            aria-label="Додати паливо"
+          >
+            +
+          </button>
+        </div>
+        <small class="hint">Може бути від'ємним значенням</small>
+      </div>
+    </div>
+
+    <!-- Odometer Image Upload -->
+    <div class="form-group">
+      <label>Фото спідометра (необов'язково)</label>
+      <input
+        type="file"
+        accept="image/*"
+        (change)="onOdometerImageSelected($event)"
+        class="form-input"
+      />
+      @if (odometerImagePreview()) {
+      <div class="image-preview">
+        <img [src]="odometerImagePreview()!" alt="Odometer preview" />
+        <button type="button" (click)="clearOdometerImage()" class="btn-remove-image">×</button>
+      </div>
+      }
+    </div>
+
+    <!-- Submit Button -->
+    <div class="form-actions">
+      <button type="submit" [disabled]="isSubmitting() || form.invalid" class="btn btn-primary">
+        @if (isSubmitting()) {
+        Збереження...
+        } @else {
+        Зберегти
+        }
+      </button>
+    </div>
+  </form>
+
+  <!-- Add fuel modal -->
+  @if (showAddFuelModal()) {
+  <div class="modal-backdrop">
+    <div class="modal">
+      <h4>Додати паливо</h4>
+      <form [formGroup]="addFuelForm" (ngSubmit)="onAddFuelSubmit()">
+        <div class="form-group">
+          <label>Кількість, л <span class="required">*</span></label>
+          <input
+            type="number"
+            formControlName="amount"
+            step="0.1"
+            min="0.01"
+            class="form-input"
+            placeholder="0.0"
+          />
+          @if (addFuelForm.get('amount')?.invalid && addFuelForm.get('amount')?.touched) {
+          <span class="error">Вкажіть кількість палива більше 0</span>
+          }
+        </div>
+
+        <div class="form-group">
+          <label>Тип палива <span class="required">*</span></label>
+          <select formControlName="fuelType" class="form-input">
+            <option [value]="1">Бензин</option>
+            <option [value]="2">Дізель</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Відповідальна особа</label>
+          <select formControlName="receiverEmployeeId" class="form-input">
+            <option [value]="null">Не призначено</option>
+            @for (emp of employees(); track emp.id) {
+            <option [value]="emp.id">{{ emp.callSign || (emp.firstName + ' ' + emp.lastName) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Дата операції <span class="required">*</span></label>
+          <input
+            type="date"
+            formControlName="transactionDate"
+            class="form-input"
+          />
+        </div>
+
+        <div class="form-actions modal-actions">
+          <button type="button" class="btn" (click)="closeAddFuelModal()">
+            Скасувати
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="addFuelForm.invalid || isSubmitting()">
+            Зберегти
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  }
+</div>

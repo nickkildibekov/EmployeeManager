@@ -1,0 +1,45 @@
+@if (isOpen()) {
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="stopPropagation($event)">
+    <div class="modal-header">
+      <h2>Додати категорію обладнання</h2>
+      <button class="modal-close" (click)="onClose()" aria-label="Close">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label>Назва категорії <span class="required">*</span></label>
+          <input
+            type="text"
+            [ngModel]="categoryName()"
+            (ngModelChange)="onNameChange($event)"
+            class="form-input"
+            placeholder="Введіть назву категорії"
+          />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label>Опис (необов'язково)</label>
+          <input
+            type="text"
+            [ngModel]="categoryDescription()"
+            (ngModelChange)="onDescriptionChange($event)"
+            class="form-input"
+            placeholder="Введіть опис категорії"
+          />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onClose()">Скасувати</button>
+      <button class="btn btn-primary" (click)="onSave()" [disabled]="!isFormValid()">
+        Додати
+      </button>
+    </div>
+  </div>
+</div>
+}

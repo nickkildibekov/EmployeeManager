@@ -1,0 +1,187 @@
+<div class="fuel-payment-archive">
+  <h3>Рух палива</h3>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Відділ:</label>
+      <select
+        [value]="selectedDepartmentId() || ''"
+        (change)="onDepartmentChange($event)"
+        class="form-input"
+      >
+        <option value="">Всі відділи</option>
+        @for (dept of departments(); track dept.id) {
+        <option [value]="dept.id">{{ dept.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Тип палива:</label>
+      <select
+        [value]="selectedFuelType()?.toString() || ''"
+        (change)="onFuelTypeChange($event)"
+        class="form-input"
+      >
+        <option value="">Всі типи</option>
+        @for (type of fuelTypes; track type.value) {
+        <option [value]="type.value">{{ type.label }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+  <div class="loading">
+    <p>Завантаження транзакцій...</p>
+  </div>
+  }
+
+  <!-- Transactions Table -->
+  @if (!isLoading() && transactions().length > 0) {
+  <div class="table-container">
+    <table class="payments-table">
+      <thead>
+        <tr>
+          <th>Дата внесення</th>
+          <th>Відділ</th>
+          <th>Тип палива</th>
+          <th>Кількість</th>
+          <th>Транзакція</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (transaction of transactions(); track transaction.id) {
+        <tr>
+          <td>{{ formatDate(transaction.entryDate) }}</td>
+          <td>{{ transaction.departmentName || 'Невідомо' }}</td>
+          <td>{{ transaction.fuelTypeName }}</td>
+          <td>{{ transaction.amount.toFixed(2) }} л</td>
+          <td>
+            <button
+              type="button"
+              class="link-button"
+              (click)="openTransaction(transaction)"
+            >
+              Подивитись транзакцію
+            </button>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+
+    <!-- Pagination -->
+    @if (getTotalPages() > 1) {
+    <div class="pagination">
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage() === 1"
+        (click)="onPageChange(currentPage() - 1)"
+      >
+        Попередня
+      </button>
+      <span class="pagination-info">
+        Сторінка {{ currentPage() }} з {{ getTotalPages() }} (всього: {{ totalCount() }})
+      </span>
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage() === getTotalPages()"
+        (click)="onPageChange(currentPage() + 1)"
+      >
+        Наступна
+      </button>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- No Data -->
+  @if (!isLoading() && transactions().length === 0) {
+  <div class="no-data">
+    <p>Транзакцій не знайдено</p>
+  </div>
+  }
+
+  <!-- Transaction View Modal -->
+  @if (showTransactionModal() && selectedTransaction() && transactionDetails()) {
+  <div class="modal-backdrop">
+    <div class="modal">
+      <h4>Перегляд транзакції</h4>
+      <div class="modal-body">
+        <!-- Загальні поля для обох типів -->
+        <div class="modal-row">
+          <span class="label">Підрозділ:</span>
+          <span class="value">{{ transactionDetails()!.departmentName || 'Невідомо' }}</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Тип палива:</span>
+          <span class="value">{{ getFuelTypeName(transactionDetails()!.fuelType) }}</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Дата:</span>
+          <span class="value">{{ formatDate(transactionDetails()!.entryDate) }}</span>
+        </div>
+
+        <!-- Поля для витрати (Expense) -->
+        @if (transactionDetails()!.transactionType === 'Expense') {
+        <div class="modal-row">
+          <span class="label">Обладнання:</span>
+          <span class="value">{{ transactionDetails()!.equipmentName || 'Невідомо' }}</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Попередній пробіг:</span>
+          <span class="value">{{ transactionDetails()!.previousMileage.toFixed(2) }} км</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Поточний пробіг:</span>
+          <span class="value">{{ transactionDetails()!.currentMileage.toFixed(2) }} км</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Пробіг (км):</span>
+          <span class="value">
+            {{ (transactionDetails()!.currentMileage - transactionDetails()!.previousMileage).toFixed(2) }}
+            км
+          </span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Кількість:</span>
+          <span class="value">-{{ (transactionDetails()!.fuelAmount || 0).toFixed(2) }} л</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Відповідальна особа:</span>
+          <span class="value">{{ transactionDetails()!.responsibleEmployeeName || '-' }}</span>
+        </div>
+        }
+
+        <!-- Поля для надходження (Income) -->
+        @if (transactionDetails()!.transactionType === 'Income') {
+        <div class="modal-row">
+          <span class="label">Кількість:</span>
+          <span class="value">{{ (transactionDetails()!.fuelAmount || 0).toFixed(2) }} л</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">Відповідальна особа:</span>
+          <span class="value">{{ transactionDetails()!.responsibleEmployeeName || '-' }}</span>
+        </div>
+        }
+
+        <!-- Загальні поля -->
+        <div class="modal-row">
+          <span class="label">Дата створення:</span>
+          <span class="value">{{ formatDate(transactionDetails()!.createdAt) }}</span>
+        </div>
+        <div class="modal-row">
+          <span class="label">ID транзакції:</span>
+          <span class="value">{{ selectedTransaction()!.id }}</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" (click)="closeTransactionModal()">Закрити</button>
+      </div>
+    </div>
+  </div>
+  }
+</div>

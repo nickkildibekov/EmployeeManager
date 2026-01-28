@@ -11,19 +11,9 @@
   <div class="content">
     <div class="edit-section">
       <div class="button-group">
-        <button class="btn btn-primary" (click)="toggleEditMode()" [disabled]="isSaving()">
-          {{ isEditMode() ? '✕ Скасувати редагування' : '✏️ Редагувати обладнання' }}
+        <button class="btn btn-primary" (click)="openEditModal()" [disabled]="isSaving()">
+          ✏️ Редагувати обладнання
         </button>
-
-        @if (isEditMode()) {
-        <button
-          class="btn btn-success"
-          (click)="saveEquipment()"
-          [disabled]="isSaving() || !isFormValid()"
-        >
-          @if (isSaving()) { Збереження... } @else { 💾 Зберегти зміни }
-        </button>
-        }
 
         <button
           class="btn btn-danger"
@@ -67,13 +57,21 @@
       <div class="form-row">
         <div class="form-group">
           <label>Дата покупки</label>
-          <input
-            type="date"
-            placeholder="Дата покупки"
-            [(ngModel)]="editedEquipment().purchaseDate"
-            [readonly]="!isEditMode()"
-            class="form-input"
-          />
+          <div class="date-input-wrapper" (mousedown)="onDateWrapperMouseDown($event, purchaseDateInput)">
+            <input
+              type="date"
+              [(ngModel)]="editedEquipment().purchaseDate"
+              [readonly]="!isEditMode()"
+              class="form-input date-input-native"
+              #purchaseDateInput
+            />
+            <span
+              class="date-input-display"
+              [class.placeholder]="!purchaseDateInput.value"
+            >
+              {{ purchaseDateInput.value ? formatDateForDisplay(purchaseDateInput.value) : 'Оберіть дату' }}
+            </span>
+          </div>
         </div>
 
         <div class="form-group">
@@ -244,6 +242,15 @@
       </div>
 
       <div class="form-row">
+        <div class="form-group">
+          <label>Відповідальний співробітник</label>
+          <div class="form-input readonly">
+            {{ getResponsibleEmployeeName() }}
+          </div>
+        </div>
+      </div>
+
+      <div class="form-row">
         <div class="form-group image-group">
           <label>Зображення обладнання (необов'язково)</label>
           @if (isEditMode()) {
@@ -280,4 +287,16 @@
     </p>
   </div>
   }
+
+  <!-- Equipment Modal -->
+  <app-equipment-modal
+    [isOpen]="isEquipmentModalOpen"
+    [equipment]="equipment() || null"
+    [departments]="departments()"
+    [categories]="categories()"
+    [employees]="employees()"
+    (save)="onEquipmentSave($event)"
+    (close)="closeEquipmentModal()"
+    (categoryAdded)="onCategoryAdded($event)"
+  />
 </div>

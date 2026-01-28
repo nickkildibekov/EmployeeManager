@@ -1,0 +1,139 @@
+<div class="utility-payment-archive">
+  <h3>Архів платежів</h3>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Відділ:</label>
+      <select
+        [value]="selectedDepartmentId() || ''"
+        (change)="onDepartmentChange($event)"
+        class="form-input"
+      >
+        <option value="">Всі відділи</option>
+        @for (dept of departments(); track dept.id) {
+        <option [value]="dept.id">{{ dept.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Service type info -->
+  @if (paymentType() !== null && paymentType() !== undefined) {
+  <div class="service-info">
+    <span>Тип послуги: {{ getCurrentPaymentTypeLabel() }}</span>
+  </div>
+  }
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+  <div class="loading">
+    <p>Завантаження платежів...</p>
+  </div>
+  }
+
+  <!-- Payments Table -->
+  @if (!isLoading() && payments().length > 0) {
+  <div class="table-container">
+    @if (paymentType() === 4) {
+    <!-- Оренда: без показників лічильника -->
+    <table class="payments-table">
+      <thead>
+        <tr>
+          <th>Відділ</th>
+          <th>Місяць оплати</th>
+          <th>Ціна</th>
+          <th>Сума</th>
+          <th>Відповідальна особа</th>
+          <th>Дата створення</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (payment of payments(); track payment.id) {
+        <tr>
+          <td>{{ payment.departmentName || 'Невідомо' }}</td>
+          <td>{{ formatMonth(payment.paymentMonth) }}</td>
+          <td>{{ payment.pricePerUnit.toFixed(2) }} грн</td>
+          <td><strong>{{ formatCurrency(payment.totalAmount) }}</strong></td>
+          <td>{{ payment.responsibleEmployeeName || '-' }}</td>
+          <td>{{ formatDate(payment.createdAt) }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    } @else {
+    <!-- Електроенергія / Газ / Вода -->
+    <table class="payments-table">
+      <thead>
+        <tr>
+          <th>Відділ</th>
+          <th>Місяць оплати</th>
+          <th>Попередні (день)</th>
+          <th>Поточні (день)</th>
+          <th>Попередні (ніч)</th>
+          <th>Поточні (ніч)</th>
+          <th>Ціна (день)</th>
+          <th>Ціна (ніч)</th>
+          <th>Сума</th>
+          <th>Відповідальна особа</th>
+          <th>Дата створення</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (payment of payments(); track payment.id) {
+        <tr>
+          <td>{{ payment.departmentName || 'Невідомо' }}</td>
+          <td>{{ formatMonth(payment.paymentMonth) }}</td>
+          <td>{{ payment.previousValue?.toFixed(3) || '-' }}</td>
+          <td>{{ payment.currentValue?.toFixed(3) || '-' }}</td>
+          <td>{{ payment.previousValueNight?.toFixed(3) || '-' }}</td>
+          <td>{{ payment.currentValueNight?.toFixed(3) || '-' }}</td>
+          <td>{{ payment.pricePerUnit.toFixed(2) }} грн</td>
+          <td>
+            @if (payment.pricePerUnitNight) {
+              {{ payment.pricePerUnitNight.toFixed(2) }} грн
+            } @else {
+              -
+            }
+          </td>
+          <td><strong>{{ formatCurrency(payment.totalAmount) }}</strong></td>
+          <td>{{ payment.responsibleEmployeeName || '-' }}</td>
+          <td>{{ formatDate(payment.createdAt) }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    }
+
+    <!-- Pagination -->
+    @if (getTotalPages() > 1) {
+    <div class="pagination">
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage() === 1"
+        (click)="onPageChange(currentPage() - 1)"
+      >
+        Попередня
+      </button>
+      <span class="pagination-info">
+        Сторінка {{ currentPage() }} з {{ getTotalPages() }} (всього: {{ totalCount() }})
+      </span>
+      <button
+        class="pagination-btn"
+        [disabled]="currentPage() === getTotalPages()"
+        (click)="onPageChange(currentPage() + 1)"
+      >
+        Наступна
+      </button>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- No Data -->
+  @if (!isLoading() && payments().length === 0) {
+  <div class="no-data">
+    <p>Платежів не знайдено</p>
+  </div>
+  }
+</div>

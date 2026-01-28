@@ -24,14 +24,16 @@ export class EmployeeListComponent {
   newEmployee = signal<NewEmployeeData>({
     firstName: '',
     lastName: '',
+    callSign: null,
     phoneNumber: '',
+    birthDate: null,
     positionId: null,
     departmentId: null,
-    specializationId: 0,
+    specializationId: '',
   });
 
   onEmployeeAdded = output<NewEmployeeData>();
-  onEmployeeDeleted = output<number>();
+  onEmployeeDeleted = output<string>();
 
   isFormValid(): boolean {
     const data = this.newEmployee();
@@ -40,18 +42,20 @@ export class EmployeeListComponent {
       data.firstName.trim() &&
       data.lastName.trim() &&
       data.phoneNumber.trim() &&
-      data.specializationId > 0
+      data.specializationId
     );
   }
 
   resetForm() {
     const defaultSpecId = this.specializations() && this.specializations()!.length > 0 
       ? this.specializations()![0].id 
-      : 0;
+      : '';
     this.newEmployee.set({
       firstName: '',
       lastName: '',
+      callSign: null,
       phoneNumber: '',
+      birthDate: null,
       positionId: null,
       departmentId: null,
       specializationId: defaultSpecId,
@@ -67,7 +71,7 @@ export class EmployeeListComponent {
     this.isAddFormVisible.set(false);
   }
 
-  getPositionTitle(positionId: number | null): string {
+  getPositionTitle(positionId: string | null): string {
     if (!positionId) return 'Посада не призначена';
 
     const list = this.positions() || [];

@@ -4,7 +4,7 @@ namespace EmployeeManager.API.DTO
 {
     public class EquipmentDTO
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         
         [Required(ErrorMessage = "Equipment name is required")]
         [StringLength(200, MinimumLength = 1, ErrorMessage = "Name must be between 1 and 200 characters")]
@@ -34,12 +34,14 @@ namespace EmployeeManager.API.DTO
         public string? ImageData { get; set; } // Base64-encoded image (optional)
         
         [Required(ErrorMessage = "Category is required")]
-        [Range(1, int.MaxValue, ErrorMessage = "Valid category must be selected")]
-        public int CategoryId { get; set; }
+        public Guid CategoryId { get; set; }
         
         public string CategoryName { get; set; } = string.Empty;
         
-        public int? DepartmentId { get; set; }
+        public Guid? DepartmentId { get; set; }
         public string? DepartmentName { get; set; }
+        
+        public Guid? ResponsibleEmployeeId { get; set; }
+        public string? ResponsibleEmployeeName { get; set; }
     }
 }

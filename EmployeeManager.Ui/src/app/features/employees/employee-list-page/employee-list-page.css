@@ -170,6 +170,38 @@
   font-size: 14px;
 }
 
+.actions-cell {
+  white-space: nowrap;
+  width: 100px;
+}
+
+.btn-icon {
+  background: transparent;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin: 0 4px;
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  transform: scale(1.1);
+  background: var(--bg-secondary);
+}
+
+.btn-edit:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.btn-delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
 .list-container {
   display: flex;
   flex-direction: column;

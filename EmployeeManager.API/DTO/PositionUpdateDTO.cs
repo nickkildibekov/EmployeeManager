@@ -1,10 +1,10 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace EmployeeManager.API.DTO
 {
     public class PositionUpdateDTO: PositionDTO
     {
         [Required]
-        public List<int> DepartmentIds { get; set; } = new List<int>();
+        public List<Guid> DepartmentIds { get; set; } = new List<Guid>();
     }
 }

@@ -9,21 +9,26 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { DialogService } from '../../../shared/services/dialog.service';
 import { Equipment as EquipmentModel } from '../../../shared/models/equipment.model';
 import { EquipmentCategory } from '../../../shared/models/equipmentCategory.model';
-import { EquipmentUpdatePayload } from '../../../shared/models/payloads';
+import { EquipmentUpdatePayload, EquipmentCreationPayload } from '../../../shared/models/payloads';
 import { EquipmentService } from '../equipment.service';
 import { DepartmentService } from '../../departments/department.service';
 import { Department } from '../../../shared/models/department.model';
+import { EmployeeService } from '../../employees/employee.service';
+import { Employee } from '../../../shared/models/employee.model';
+import { EquipmentModalComponent } from '../equipment-modal/equipment-modal.component';
+import { formatDateDDMMYYYY } from '../../../shared/utils/display.utils';
 
 @Component({
   selector: 'app-equipment',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, EquipmentModalComponent],
   templateUrl: './equipment.html',
   styleUrl: './equipment.css',
 })
 export class Equipment implements OnInit {
   private equipmentService = inject(EquipmentService);
   private departmentService = inject(DepartmentService);
+  private employeeService = inject(EmployeeService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private destroyRef = inject(DestroyRef);
@@ -34,15 +39,16 @@ export class Equipment implements OnInit {
   equipment = signal<EquipmentModel | undefined>(undefined);
   departments = signal<Department[]>([]);
   categories = signal<EquipmentCategory[]>([]);
+  employees = signal<Employee[]>([]);
 
   isAddingNewCategory = signal(false);
   newCategoryName = signal('');
   newCategoryDescription = signal('');
 
   editedEquipment = signal<
-    EquipmentUpdatePayload & { departmentName?: string; categoryName?: string }
+    EquipmentUpdatePayload & { departmentName?: string; categoryName?: string; responsibleEmployeeId?: string | null }
   >({
-    id: 0,
+    id: '',
     name: '',
     serialNumber: '',
     purchaseDate: '',
@@ -55,37 +61,39 @@ export class Equipment implements OnInit {
     imageData: undefined,
     departmentName: '',
     categoryName: '',
+    responsibleEmployeeId: null,
   });
 
   isFetching = signal(false);
   isSaving = signal(false);
   isEditMode = signal(false);
   error = signal('');
+  isEquipmentModalOpen = signal(false);
 
   isFormValid = computed(() => {
     const eq = this.editedEquipment();
     return (
       eq.name.trim().length > 0 &&
-      (eq.departmentId ?? 0) > 0 &&
-      (eq.categoryId ?? 0) > 0 &&
+      eq.departmentId &&
+      eq.categoryId &&
       eq.purchaseDate.length > 0 &&
       !!eq.status
     );
   });
 
-  equipmentId: number | undefined;
+  equipmentId: string | undefined;
 
   ngOnInit(): void {
     this.loadDepartments();
     this.loadCategories();
+    this.loadEmployees();
 
     const subscription = this.route.paramMap
       .pipe(
         switchMap((params) => {
-          const idParam = params.get('id');
-          const id = idParam ? +idParam : undefined;
+          const id = params.get('id');
 
-          if (!id || isNaN(id)) {
+          if (!id) {
             this.error.set('Equipment Id is missing or invalid!');
             const errorMsg = 'ID обладнання відсутній або недійсний!';
             this.toastService.error(errorMsg);
@@ -110,11 +118,12 @@ export class Equipment implements OnInit {
             measurement: eq.measurement,
             amount: eq.amount,
             description: eq.description,
-            departmentId: eq.departmentId && eq.departmentId > 0 ? eq.departmentId : null,
+            departmentId: eq.departmentId || null,
             categoryId: eq.categoryId,
             imageData: eq.imageData,
             departmentName: eq.departmentName,
             categoryName: eq.categoryName,
+            responsibleEmployeeId: eq.responsibleEmployeeId ?? null,
           });
           this.isFetching.set(false);
         },
@@ -144,6 +153,17 @@ export class Equipment implements OnInit {
   private loadCategories() {
     const sub = this.equipmentService.getAllCategories().subscribe({
       next: (cats) => this.categories.set(cats),
+      error: (err: Error) => {
+        this.error.set(err.message);
+        this.toastService.error(err.message);
+      },
+    });
+    this.destroyRef.onDestroy(() => sub.unsubscribe());
+  }
+
+  private loadEmployees() {
+    const sub = this.employeeService.getEmployeesByDepartment('', 1, 1000, '', null, '', 'asc').subscribe({
+      next: (res) => this.employees.set(res.items),
       error: (err: Error) => {
         this.error.set(err.message);
         this.toastService.error(err.message);
@@ -187,92 +207,87 @@ export class Equipment implements OnInit {
     }
   }
 
-  toggleEditMode(): void {
-    this.isEditMode.update((val) => !val);
-    if (!this.isEditMode() && this.equipment()) {
-      const current = this.equipment()!;
-      this.editedEquipment.set({
-        id: current.id,
-        name: current.name,
-        serialNumber: current.serialNumber,
-        purchaseDate: (current.purchaseDate || '').slice(0, 10),
-        status: current.status,
-        measurement: current.measurement,
-        amount: current.amount,
-        description: current.description,
-        departmentId:
-          current.departmentId && current.departmentId > 0 ? current.departmentId : null,
-        categoryId: current.categoryId && current.categoryId > 0 ? current.categoryId : null,
-        imageData: current.imageData,
-        departmentName: current.departmentName,
-        categoryName: current.categoryName,
+  openEditModal(): void {
+    // Ensure equipment is loaded before opening modal
+    if (!this.equipment()) {
+      this.toastService.error('Обладнання не завантажено');
+      return;
+    }
+    this.isEquipmentModalOpen.set(true);
+  }
+
+  closeEquipmentModal(): void {
+    this.isEquipmentModalOpen.set(false);
+  }
+
+  onCategoryAdded(newCategory: EquipmentCategory) {
+    this.categories.update((cats) => [...cats, newCategory]);
+  }
+
+  onEquipmentSave(equipmentData: EquipmentCreationPayload | EquipmentUpdatePayload) {
+    if ('id' in equipmentData) {
+      // Update
+      this.equipmentService.updateEquipment(equipmentData as EquipmentUpdatePayload).subscribe({
+        next: () => {
+          this.closeEquipmentModal();
+          // Reload equipment to get updated data
+          if (this.equipmentId) {
+            this.equipmentService.getEquipmentById(this.equipmentId).subscribe({
+              next: (eq) => {
+                this.equipment.set(eq);
+                this.editedEquipment.set({
+                  id: eq.id,
+                  name: eq.name,
+                  serialNumber: eq.serialNumber || '',
+                  purchaseDate: eq.purchaseDate ? eq.purchaseDate.slice(0, 10) : '',
+                  status: eq.status,
+                  measurement: eq.measurement,
+                  amount: eq.amount,
+                  description: eq.description || '',
+                  departmentId: eq.departmentId || null,
+                  categoryId: eq.categoryId || '',
+                  imageData: eq.imageData,
+                  departmentName: eq.departmentName,
+                  categoryName: eq.categoryName,
+                  responsibleEmployeeId: eq.responsibleEmployeeId ?? null,
+                });
+              },
+            });
+          }
+          this.toastService.success('Обладнання успішно оновлено');
+        },
+        error: (err: Error) => {
+          this.error.set(err.message);
+          this.toastService.error(err.message);
+        },
       });
     }
   }
 
-  saveEquipment(): void {
-    const eq = this.editedEquipment();
-    if (!this.isFormValid()) {
-      const errorMsg = 'Будь ласка, заповніть всі обов\'язкові поля (назва, серійний номер, категорія, відділ, дата покупки).';
-      this.error.set(errorMsg);
-      this.toastService.error(errorMsg);
-      return;
-    }
-
-    this.isSaving.set(true);
-    this.error.set('');
-
-    const payload: EquipmentUpdatePayload = {
-      id: eq.id,
-      name: eq.name,
-      serialNumber: eq.serialNumber,
-      purchaseDate: eq.purchaseDate,
-      status: eq.status,
-      measurement: eq.measurement,
-      amount: eq.amount,
-      description: eq.description,
-      categoryId: eq.categoryId,
-      departmentId: eq.departmentId,
-      imageData: eq.imageData,
-    };
-
-    this.equipmentService.updateEquipment(payload).subscribe({
-      next: (updatedEq) => {
-        const merged =
-          updatedEq ||
-          ({
-            ...payload,
-            departmentName: eq.departmentName,
-            categoryName: eq.categoryName,
-          } as unknown as EquipmentModel);
-        this.equipment.set(merged);
-        this.isEditMode.set(false);
-        this.isSaving.set(false);
-        this.toastService.success('Обладнання успішно оновлено');
-      },
-      error: (err: Error) => {
-        this.error.set(err.message);
-        this.toastService.error(err.message);
-        this.isSaving.set(false);
-      },
-    });
-  }
-
   async deleteEquipment(): Promise<void> {
-    const confirmed = await this.dialogService.confirm({
-      title: 'Видалити обладнання',
-      message: 'Ви впевнені, що хочете видалити це обладнання? Цю дію неможливо скасувати.',
-      confirmText: 'Видалити',
-      variant: 'danger',
-    });
+    const confirmed = await this.dialogService.confirm(
+      'Ви впевнені, що хочете видалити це обладнання?'
+    );
     if (!confirmed) return;
 
     const id = this.equipmentId;
     if (!id) return;
 
     this.equipmentService.deleteEquipment(id).subscribe({
-      next: () => {
-        this.navigationService.afterDelete('equipment');
+      next: (response: any) => {
+        // Check if equipment was moved to Reserve or deleted
+        // If response is null, equipment was deleted (204 NoContent)
+        // If response has message, equipment was moved to Reserve (200 OK)
+        if (response && response.message && response.message.includes('moved to Reserve')) {
+          this.toastService.success('Обладнання переміщено до відділу Резерв');
+        } else if (response === null) {
+          this.toastService.success('Обладнання успішно видалено');
+        } else {
+          // Fallback message
+          this.toastService.success('Операція виконана успішно');
+        }
+        // Navigate back to equipment list after deletion (same as list page)
+        this.router.navigate(['/equipment']);
       },
       error: (err: Error) => {
         this.error.set(err.message);
@@ -333,5 +348,34 @@ export class Equipment implements OnInit {
 
   clearEditImage() {
     this.editedEquipment().imageData = undefined;
+  }
+
+  getResponsibleEmployeeName(): string {
+    const eq = this.equipment();
+    if (!eq || !eq.responsibleEmployeeId) {
+      return 'Не призначено';
+    }
+    const emp = this.employees().find((e) => e.id === eq.responsibleEmployeeId);
+    return emp ? (emp.callSign || 'Не вказано') : 'Не відомо';
+  }
+
+  formatDateForDisplay(dateString: string | null | undefined): string {
+    const formatted = formatDateDDMMYYYY(dateString);
+    if (!formatted || formatted === 'Не вказано') {
+      return '';
+    }
+    return formatted.replace(/\./g, '/');
+  }
+
+  // Open native date picker when clicking anywhere on the wrapper
+  openDatePicker(input: HTMLInputElement | null): void {
+    if (!input) return;
+    input.focus();
+    (input as any).showPicker?.();
+  }
+
+  onDateWrapperMouseDown(event: MouseEvent, input: HTMLInputElement | null): void {
+    event.preventDefault();
+    this.openDatePicker(input);
   }
 }

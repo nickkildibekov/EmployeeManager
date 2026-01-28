@@ -19,8 +19,8 @@ namespace EmployeeManager.API.Controllers
 
         [HttpGet]
         public async Task<IActionResult> GetAll(
-            [FromQuery] int? departmentId,
-            [FromQuery] int? categoryId,
+            [FromQuery] Guid? departmentId,
+            [FromQuery] Guid? categoryId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10,
             [FromQuery] string? search = null,
@@ -37,16 +37,17 @@ namespace EmployeeManager.API.Controllers
             var query = _appDbContext.Equipments
                 .Include(e => e.Category)
                 .Include(e => e.Department)
+                .Include(e => e.ResponsibleEmployee)
                 .AsQueryable();
 
             // Filter by department if specified
-            if (departmentId.HasValue && departmentId.Value > 0)
+            if (departmentId.HasValue)
             {
                 query = query.Where(e => e.DepartmentId == departmentId.Value);
             }
 
             // Filter by category if specified
-            if (categoryId.HasValue && categoryId.Value > 0)
+            if (categoryId.HasValue)
             {
                 query = query.Where(e => e.CategoryId == categoryId.Value);
             }
@@ -55,9 +56,9 @@ namespace EmployeeManager.API.Controllers
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var searchLower = search.ToLower();
-                query = query.Where(e => 
-                    e.Name.ToLower().Contains(searchLower) || 
-                    e.SerialNumber.ToLower().Contains(searchLower));
+                query = query.Where(e =>
+                    (e.Name != null && e.Name.ToLower().Contains(searchLower)) ||
+                    (e.SerialNumber != null && e.SerialNumber.ToLower().Contains(searchLower)));
             }
 
             if (!string.IsNullOrWhiteSpace(status))
@@ -86,8 +87,8 @@ namespace EmployeeManager.API.Controllers
                         ? query.OrderByDescending(e => e.SerialNumber)
                         : query.OrderBy(e => e.SerialNumber),
                     "category" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
-                        ? query.OrderByDescending(e => e.Category.Name)
-                        : query.OrderBy(e => e.Category.Name),
+                        ? query.OrderByDescending(e => e.Category != null ? e.Category.Name : string.Empty)
+                        : query.OrderBy(e => e.Category != null ? e.Category.Name : string.Empty),
                     "purchasedate" => sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase)
                         ? query.OrderByDescending(e => e.PurchaseDate)
                         : query.OrderBy(e => e.PurchaseDate),
@@ -138,11 +139,12 @@ namespace EmployeeManager.API.Controllers
 
         
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken = default)
         {
             var equipment = await _appDbContext.Equipments
                 .Include(e => e.Category)
                 .Include(e => e.Department)
+                .Include(e => e.ResponsibleEmployee)
                 .AsNoTracking()
                 .Where(e => e.Id == id)
                 .Select(e => new EquipmentDTO
@@ -159,7 +161,9 @@ namespace EmployeeManager.API.Controllers
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                     DepartmentId = e.DepartmentId,
                     DepartmentName = e.Department != null ? e.Department.Name : "Warehouse",
-                    ImageData = e.ImageData
+                    ImageData = e.ImageData,
+                    ResponsibleEmployeeId = e.ResponsibleEmployeeId,
+                    ResponsibleEmployeeName = e.ResponsibleEmployee != null ? e.ResponsibleEmployee.CallSign : null
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -197,11 +201,37 @@ namespace EmployeeManager.API.Controllers
             {
                 return BadRequest(new { message = $"Category with ID {equipmentDto.CategoryId} does not exist." });
             }
-            // Validate DepartmentId only if provided (nullable)
-            if (equipmentDto.DepartmentId.HasValue && 
-                !await _appDbContext.Departments.AnyAsync(d => d.Id == equipmentDto.DepartmentId.Value, cancellationToken))
+            
+            // Get or create Reserve department
+            var reserveDept = await _appDbContext.Departments
+                .FirstOrDefaultAsync(d => d.Name == "Reserve" || d.Name == "Резерв" || d.Name == "Global Reserve", cancellationToken);
+            
+            if (reserveDept == null)
             {
-                return BadRequest(new { message = $"Department with ID {equipmentDto.DepartmentId.Value} does not exist." });
+                reserveDept = new Department { Name = "Reserve" };
+                _appDbContext.Departments.Add(reserveDept);
+                await _appDbContext.SaveChangesAsync(cancellationToken);
+            }
+            
+            // If DepartmentId is not provided, assign to Reserve
+            Guid? departmentId = equipmentDto.DepartmentId ?? reserveDept.Id;
+            
+            // Validate DepartmentId
+            if (!await _appDbContext.Departments.AnyAsync(d => d.Id == departmentId.Value, cancellationToken))
+            {
+                return BadRequest(new { message = $"Department with ID {departmentId.Value} does not exist." });
+            }
+
+            // Validate ResponsibleEmployeeId if provided
+            if (equipmentDto.ResponsibleEmployeeId.HasValue)
+            {
+                var employeeExists = await _appDbContext.Employees
+                    .AnyAsync(e => e.Id == equipmentDto.ResponsibleEmployeeId.Value, cancellationToken);
+                
+                if (!employeeExists)
+                {
+                    return BadRequest(new { message = $"Employee with ID {equipmentDto.ResponsibleEmployeeId.Value} does not exist." });
+                }
             }
 
             var equipment = new Equipment
@@ -215,7 +245,8 @@ namespace EmployeeManager.API.Controllers
                 Amount = equipmentDto.Amount,
                 ImageData = equipmentDto.ImageData,
                 CategoryId = equipmentDto.CategoryId,
-                DepartmentId = equipmentDto.DepartmentId
+                DepartmentId = departmentId,
+                ResponsibleEmployeeId = equipmentDto.ResponsibleEmployeeId
             };
 
             _appDbContext.Equipments.Add(equipment);
@@ -224,6 +255,7 @@ namespace EmployeeManager.API.Controllers
             var createdEquipmentDto = await _appDbContext.Equipments
                 .Include(e => e.Category)
                 .Include(e => e.Department)
+                .Include(e => e.ResponsibleEmployee)
                 .AsNoTracking()
                 .Where(e => e.Id == equipment.Id)
                 .Select(e => new EquipmentDTO
@@ -240,7 +272,9 @@ namespace EmployeeManager.API.Controllers
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                     DepartmentId = e.DepartmentId,
                     DepartmentName = e.Department != null ? e.Department.Name : "Warehouse",
-                    ImageData = e.ImageData
+                    ImageData = e.ImageData,
+                    ResponsibleEmployeeId = e.ResponsibleEmployeeId,
+                    ResponsibleEmployeeName = e.ResponsibleEmployee != null ? e.ResponsibleEmployee.CallSign : null
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -249,7 +283,7 @@ namespace EmployeeManager.API.Controllers
 
         
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] EquipmentDTO equipmentDto, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Update(Guid id, [FromBody] EquipmentDTO equipmentDto, CancellationToken cancellationToken = default)
         {
             if (id != equipmentDto.Id)
             {
@@ -277,11 +311,37 @@ namespace EmployeeManager.API.Controllers
             {
                 return BadRequest(new { message = $"Category with ID {equipmentDto.CategoryId} does not exist." });
             }
-            // Validate DepartmentId only if provided (nullable)
-            if (equipmentDto.DepartmentId.HasValue && 
-                !await _appDbContext.Departments.AnyAsync(d => d.Id == equipmentDto.DepartmentId.Value, cancellationToken))
+            
+            // Get or create Reserve department
+            var reserveDept = await _appDbContext.Departments
+                .FirstOrDefaultAsync(d => d.Name == "Reserve" || d.Name == "Резерв" || d.Name == "Global Reserve", cancellationToken);
+            
+            if (reserveDept == null)
             {
-                return BadRequest(new { message = $"Department with ID {equipmentDto.DepartmentId.Value} does not exist." });
+                reserveDept = new Department { Name = "Reserve" };
+                _appDbContext.Departments.Add(reserveDept);
+                await _appDbContext.SaveChangesAsync(cancellationToken);
+            }
+            
+            // If DepartmentId is not provided, assign to Reserve
+            Guid? departmentId = equipmentDto.DepartmentId ?? reserveDept.Id;
+            
+            // Validate DepartmentId
+            if (!await _appDbContext.Departments.AnyAsync(d => d.Id == departmentId.Value, cancellationToken))
+            {
+                return BadRequest(new { message = $"Department with ID {departmentId.Value} does not exist." });
+            }
+
+            // Validate ResponsibleEmployeeId if provided
+            if (equipmentDto.ResponsibleEmployeeId.HasValue)
+            {
+                var employeeExists = await _appDbContext.Employees
+                    .AnyAsync(e => e.Id == equipmentDto.ResponsibleEmployeeId.Value, cancellationToken);
+                
+                if (!employeeExists)
+                {
+                    return BadRequest(new { message = $"Employee with ID {equipmentDto.ResponsibleEmployeeId.Value} does not exist." });
+                }
             }
 
             var equipment = await _appDbContext.Equipments.FindAsync(id);
@@ -300,7 +360,8 @@ namespace EmployeeManager.API.Controllers
             equipment.Amount = equipmentDto.Amount;
             equipment.ImageData = equipmentDto.ImageData;
             equipment.CategoryId = equipmentDto.CategoryId;
-            equipment.DepartmentId = equipmentDto.DepartmentId;
+            equipment.DepartmentId = departmentId;
+            equipment.ResponsibleEmployeeId = equipmentDto.ResponsibleEmployeeId;
 
             _appDbContext.Entry(equipment).State = EntityState.Modified;
 
@@ -323,6 +384,7 @@ namespace EmployeeManager.API.Controllers
             var updatedDto = await _appDbContext.Equipments
                 .Include(e => e.Category)
                 .Include(e => e.Department)
+                .Include(e => e.ResponsibleEmployee)
                 .AsNoTracking()
                 .Where(e => e.Id == id)
                 .Select(e => new EquipmentDTO
@@ -339,7 +401,9 @@ namespace EmployeeManager.API.Controllers
                     CategoryName = e.Category != null ? e.Category.Name : string.Empty,
                     DepartmentId = e.DepartmentId,
                     DepartmentName = e.Department != null ? e.Department.Name : "Warehouse",
-                    ImageData = e.ImageData
+                    ImageData = e.ImageData,
+                    ResponsibleEmployeeId = e.ResponsibleEmployeeId,
+                    ResponsibleEmployeeName = e.ResponsibleEmployee != null ? e.ResponsibleEmployee.CallSign : null
                 })
                 .FirstOrDefaultAsync(cancellationToken);
 
@@ -348,7 +412,7 @@ namespace EmployeeManager.API.Controllers
 
        
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id, [FromQuery] int? departmentId, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Delete(Guid id, [FromQuery] Guid? departmentId, CancellationToken cancellationToken = default)
         {
             var equip = await _appDbContext.Equipments.FindAsync(new object[] { id }, cancellationToken);
             if (equip == null)
@@ -359,17 +423,74 @@ namespace EmployeeManager.API.Controllers
                 return BadRequest(new { message = $"Equipment {id} does not belong to the specified department with id: {departmentId.Value}." });
             }
 
+            // Get or create Reserve department
+            var reserveDept = await _appDbContext.Departments
+                .FirstOrDefaultAsync(d => d.Name == "Reserve" || d.Name == "Резерв" || d.Name == "Global Reserve", cancellationToken);
+            
+            if (reserveDept == null)
+            {
+                reserveDept = new Department { Name = "Reserve" };
+                _appDbContext.Departments.Add(reserveDept);
+                await _appDbContext.SaveChangesAsync(cancellationToken);
+            }
+
+            // If equipment is already in Reserve department, delete it permanently
+            if (equip.DepartmentId == reserveDept.Id)
+            {
+                try
+                {
+                    _appDbContext.Equipments.Remove(equip);
+                    await _appDbContext.SaveChangesAsync(cancellationToken);
+                }
+                catch (DbUpdateException)
+                {
+                    return Conflict(new { message = "Cannot delete equipment with linked records." });
+                }
+
+                return NoContent();
+            }
+
+            // Otherwise, move equipment to Reserve department instead of deleting
+            equip.DepartmentId = reserveDept.Id;
+            _appDbContext.Entry(equip).State = EntityState.Modified;
+
             try
             {
-                _appDbContext.Equipments.Remove(equip);
                 await _appDbContext.SaveChangesAsync(cancellationToken);
             }
             catch (DbUpdateException)
             {
-                return Conflict(new { message = "Cannot delete equipment with linked records." });
+                return Conflict(new { message = "Cannot move equipment to Reserve department." });
             }
 
-            return NoContent();
+            // Return the updated equipment DTO
+            var updatedDto = await _appDbContext.Equipments
+                .Include(e => e.Category)
+                .Include(e => e.Department)
+                .Include(e => e.ResponsibleEmployee)
+                .AsNoTracking()
+                .Where(e => e.Id == id)
+                .Select(e => new EquipmentDTO
+                {
+                    Id = e.Id,
+                    Name = e.Name,
+                    SerialNumber = e.SerialNumber,
+                    PurchaseDate = e.PurchaseDate,
+                    Status = e.Status,
+                    Measurement = e.Measurement,
+                    Amount = e.Amount,
+                    Description = e.Description,
+                    CategoryId = e.CategoryId,
+                    CategoryName = e.Category != null ? e.Category.Name : string.Empty,
+                    DepartmentId = e.DepartmentId,
+                    DepartmentName = e.Department != null ? e.Department.Name : "Warehouse",
+                    ImageData = e.ImageData,
+                    ResponsibleEmployeeId = e.ResponsibleEmployeeId,
+                    ResponsibleEmployeeName = e.ResponsibleEmployee != null ? e.ResponsibleEmployee.CallSign : null
+                })
+                .FirstOrDefaultAsync(cancellationToken);
+
+            return Ok(new { message = "Equipment moved to Reserve department.", equipment = updatedDto });
         }
     }
 }

@@ -1,0 +1,98 @@
+<div class="fuel-statistics">
+  <h3>Статистика витрат</h3>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label>Відділ:</label>
+      <select
+        [value]="selectedDepartmentId() || ''"
+        (change)="onDepartmentChange($event)"
+        class="form-input"
+      >
+        <option value="">Всі відділи</option>
+        @for (dept of departments(); track dept.id) {
+        <option [value]="dept.id">{{ dept.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Тип палива:</label>
+      <select
+        [value]="selectedFuelType()?.toString() || ''"
+        (change)="onFuelTypeChange($event)"
+        class="form-input"
+      >
+        <option value="">Всі типи</option>
+        @for (type of fuelTypes; track type.value) {
+        <option [value]="type.value">{{ type.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label>Від:</label>
+      <div class="date-input-wrapper" (mousedown)="onDateWrapperMouseDown($event, startDateInput)">
+        <input
+          type="date"
+          [value]="startDate()"
+          (change)="onStartDateChange($event)"
+          class="form-input date-input-native"
+          #startDateInput
+        />
+        <span
+          class="date-input-display"
+          [class.placeholder]="!startDateInput.value"
+        >
+          {{ startDateInput.value ? formatDateForDisplay(startDateInput.value) : 'Оберіть дату' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <label>По:</label>
+      <div class="date-input-wrapper" (mousedown)="onDateWrapperMouseDown($event, endDateInput)">
+        <input
+          type="date"
+          [value]="endDate()"
+          (change)="onEndDateChange($event)"
+          class="form-input date-input-native"
+          #endDateInput
+        />
+        <span
+          class="date-input-display"
+          [class.placeholder]="!endDateInput.value"
+        >
+          {{ endDateInput.value ? formatDateForDisplay(endDateInput.value) : 'Оберіть дату' }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+  <div class="loading">
+    <p>Завантаження статистики...</p>
+  </div>
+  }
+
+  <!-- Charts -->
+  @if (!isLoading() && statistics()) {
+  <div class="charts-container">
+    <div class="chart-wrapper">
+      <canvas id="fuelExpensesChart"></canvas>
+    </div>
+    <div class="chart-wrapper">
+      <canvas id="fuelDieselChart"></canvas>
+    </div>
+  </div>
+  }
+
+  <!-- No Data -->
+  @if (!isLoading() && statistics() && statistics()!.dailyExpenses.length === 0 && statistics()!.dailyConsumption.length === 0) {
+  <div class="no-data">
+    <p>Немає даних для відображення статистики</p>
+  </div>
+  }
+</div>

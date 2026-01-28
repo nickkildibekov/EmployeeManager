@@ -1,0 +1,78 @@
+<div class="utilities-page">
+  <div class="container">
+    <header class="page-header">
+      <h1>Комуналка</h1>
+      <p class="subtitle">Облік комунальних послуг</p>
+    </header>
+
+    <!-- Service type sub-tabs -->
+    <div class="service-tabs">
+      @for (type of paymentTypes; track type.value) {
+      <button
+        class="service-tab-button"
+        [class.active]="selectedPaymentType() === type.value"
+        (click)="selectedPaymentType.set(type.value)"
+      >
+        {{ type.label }}
+      </button>
+      }
+    </div>
+
+    <div class="tab-content">
+      <!-- Utilities Sub-tabs (by action) -->
+      <div class="sub-tabs">
+        <button
+          class="sub-tab-button"
+          [class.active]="activeUtilitiesSubTab() === 'entry'"
+          (click)="setUtilitiesSubTab('entry')"
+        >
+          Внесення даних
+        </button>
+        @if (selectedPaymentType() !== PaymentTypeEnum.Rent) {
+        <button
+          class="sub-tab-button"
+          [class.active]="activeUtilitiesSubTab() === 'statistics'"
+          (click)="setUtilitiesSubTab('statistics')"
+        >
+          Статистика
+        </button>
+        }
+        <button
+          class="sub-tab-button"
+          [class.active]="activeUtilitiesSubTab() === 'archive'"
+          (click)="setUtilitiesSubTab('archive')"
+        >
+          Архів платежів
+        </button>
+      </div>
+
+      <!-- Entry Sub-tab -->
+      @if (activeUtilitiesSubTab() === 'entry') {
+      <div class="sub-tab-content">
+        <!-- Payment Form -->
+        <app-utility-payment-form
+          [departments]="departments()"
+          [employees]="employees()"
+          [paymentType]="selectedPaymentType()"
+          (paymentSaved)="onPaymentSaved()"
+        />
+      </div>
+      }
+
+      <!-- Statistics Sub-tab (hidden for Оренда) -->
+      @if (activeUtilitiesSubTab() === 'statistics' && selectedPaymentType() !== PaymentTypeEnum.Rent) {
+      <div class="sub-tab-content">
+        <!-- Statistics Component -->
+        <app-utility-statistics [paymentType]="selectedPaymentType()" />
+      </div>
+      }
+
+      <!-- Archive Sub-tab -->
+      @if (activeUtilitiesSubTab() === 'archive') {
+      <div class="sub-tab-content">
+        <app-utility-payment-archive [paymentType]="selectedPaymentType()" />
+      </div>
+      }
+    </div>
+  </div>
+</div>

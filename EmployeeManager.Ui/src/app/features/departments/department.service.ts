@@ -19,7 +19,7 @@ export class DepartmentService {
     );
   }
 
-  getDepartmentById(id: number): Observable<Department> {
+  getDepartmentById(id: string): Observable<Department> {
     return this.httpClient.get<Department>(this.apiUrl + id).pipe(
       catchError((error) => {
         console.error('Error in getDepartmentById:', error);
@@ -28,7 +28,7 @@ export class DepartmentService {
     );
   }
 
-  updateDepartment(id: number, name: string): Observable<Department> {
+  updateDepartment(id: string, name: string): Observable<Department> {
     const updatePayload = { id, name };
     return this.httpClient.put<Department>(this.apiUrl + id, updatePayload).pipe(
       catchError((error) => {
@@ -48,7 +48,7 @@ export class DepartmentService {
     );
   }
 
-  deleteDepartment(id: number): Observable<void> {
+  deleteDepartment(id: string): Observable<void> {
     return this.httpClient.delete<void>(this.apiUrl + id).pipe(
       catchError((error) => {
         console.error('Error in deleteDepartment:', error);

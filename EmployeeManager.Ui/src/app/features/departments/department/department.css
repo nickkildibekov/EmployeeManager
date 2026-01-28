@@ -295,6 +295,17 @@
   border-left-width: 4px;
 }
 
+.info-item.equipment-broken {
+  background-color: rgba(229, 62, 62, 0.1);
+  border-left-color: #e53e3e;
+  border-left-width: 4px;
+}
+
+.info-item.equipment-broken:hover {
+  background-color: rgba(229, 62, 62, 0.15);
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.2);
+}
+
 .filter-indicator {
   margin-left: 8px;
   font-size: 1rem;

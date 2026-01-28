@@ -1,12 +1,14 @@
 export interface Employee {
-  id: number;
-  firstName: string;
-  lastName: string;
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  callSign: string;
   phoneNumber: string;
-  positionId: number | null;
+  birthDate?: string | null;
+  positionId: string | null;
   positionName: string | null;
-  departmentId: number | null;
+  departmentId: string | null;
   departmentName: string | null;
-  specializationId: number;
+  specializationId: string;
   specializationName: string | null;
 }

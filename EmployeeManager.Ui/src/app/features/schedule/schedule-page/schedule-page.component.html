@@ -1,0 +1,225 @@
+<div class="schedule-page">
+  <div class="schedule-page-container">
+    <div class="schedule-header">
+      <h1>Графік роботи</h1>
+    </div>
+
+    <!-- View Toggle: Day/Week -->
+    <div class="view-toggle-panel">
+      <div class="view-toggle-buttons">
+        <button
+          type="button"
+          class="view-toggle-btn"
+          [class.active]="currentView() === 'day'"
+          (click)="setView('day')">
+          День
+        </button>
+        <button
+          type="button"
+          class="view-toggle-btn"
+          [class.active]="currentView() === 'week'"
+          (click)="setView('week')">
+          Тиждень
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Template Buttons -->
+    <div class="quick-templates-panel">
+      <div class="quick-templates-controls">
+        <label class="quick-fill-toggle">
+          <input
+            type="checkbox"
+            [checked]="isQuickFillMode()"
+            (change)="toggleQuickFillMode()" />
+          <span>Режим швидкого заповнення</span>
+        </label>
+        
+        <!-- Duration buttons -->
+        <div class="template-section">
+          <span class="section-label">Тривалість:</span>
+          <div class="template-buttons" [class.disabled]="!isQuickFillMode()">
+            <button
+              type="button"
+              class="template-btn"
+              [class.active]="selectedTemplate() === 4 && isQuickFillMode()"
+              [disabled]="!isQuickFillMode()"
+              (click)="selectTemplate(4)">
+              4 год
+            </button>
+            <button
+              type="button"
+              class="template-btn"
+              [class.active]="selectedTemplate() === 8 && isQuickFillMode()"
+              [disabled]="!isQuickFillMode()"
+              (click)="selectTemplate(8)">
+              8 год
+            </button>
+            <button
+              type="button"
+              class="template-btn"
+              [class.active]="selectedTemplate() === 12 && isQuickFillMode()"
+              [disabled]="!isQuickFillMode()"
+              (click)="selectTemplate(12)">
+              12 год
+            </button>
+          </div>
+        </div>
+        
+        <!-- State selection -->
+        <div class="template-section">
+          <span class="section-label">Тип:</span>
+          <div class="state-buttons">
+            <button
+              type="button"
+              class="state-btn"
+              [class.active]="selectedTemplateState() === 'OnWork'"
+              [style.background-color]="selectedTemplateState() === 'OnWork' ? '#10b981' : ''"
+              (click)="selectTemplateState('OnWork')">
+              Робота
+            </button>
+            <button
+              type="button"
+              class="state-btn"
+              [class.active]="selectedTemplateState() === 'Training'"
+              [style.background-color]="selectedTemplateState() === 'Training' ? '#3b82f6' : ''"
+              (click)="selectTemplateState('Training')">
+              Навчання
+            </button>
+            <button
+              type="button"
+              class="state-btn"
+              [class.active]="selectedTemplateState() === 'Vacation'"
+              [style.background-color]="selectedTemplateState() === 'Vacation' ? '#f59e0b' : ''"
+              (click)="selectTemplateState('Vacation')">
+              Відпустка
+            </button>
+            <button
+              type="button"
+              class="state-btn"
+              [class.active]="selectedTemplateState() === 'Illness'"
+              [style.background-color]="selectedTemplateState() === 'Illness' ? '#ef4444' : ''"
+              (click)="selectTemplateState('Illness')">
+              Лікарняний
+            </button>
+            <button
+              type="button"
+              class="state-btn"
+              [class.active]="selectedTemplateState() === 'Rest'"
+              [style.background-color]="selectedTemplateState() === 'Rest' ? '#6b7280' : ''"
+              (click)="selectTemplateState('Rest')">
+              Вихідний
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters row above calendar -->
+    <div class="schedule-filters-row">
+      <span class="filters-label">Типи записів:</span>
+      <div class="state-filters">
+        <label class="state-filter-item">
+          <input
+            type="checkbox"
+            [checked]="filterStates().Training"
+            (change)="toggleStateFilter('Training')" />
+          <span class="state-color" style="background-color: #3b82f6"></span>
+          Навчання
+        </label>
+        <label class="state-filter-item">
+          <input
+            type="checkbox"
+            [checked]="filterStates().OnWork"
+            (change)="toggleStateFilter('OnWork')" />
+          <span class="state-color" style="background-color: #10b981"></span>
+          Робота
+        </label>
+        <label class="state-filter-item">
+          <input
+            type="checkbox"
+            [checked]="filterStates().Rest"
+            (change)="toggleStateFilter('Rest')" />
+          <span class="state-color" style="background-color: #6b7280"></span>
+          Вихідний
+        </label>
+        <label class="state-filter-item">
+          <input
+            type="checkbox"
+            [checked]="filterStates().Vacation"
+            (change)="toggleStateFilter('Vacation')" />
+          <span class="state-color" style="background-color: #f59e0b"></span>
+          Відпустка
+        </label>
+        <label class="state-filter-item">
+          <input
+            type="checkbox"
+            [checked]="filterStates().Illness"
+            (change)="toggleStateFilter('Illness')" />
+          <span class="state-color" style="background-color: #ef4444"></span>
+          Лікарняний
+        </label>
+      </div>
+    </div>
+
+    <!-- Date Navigation (above scheduler) -->
+    <div class="date-navigation-panel">
+      <button
+        type="button"
+        class="nav-btn"
+        (click)="navigatePrevious()"
+        title="Попередній">
+        ‹
+      </button>
+      <div class="current-date-display">
+        {{ getCurrentDateDisplay() }}
+      </div>
+      <button
+        type="button"
+        class="nav-btn"
+        (click)="navigateNext()"
+        title="Наступний">
+        ›
+      </button>
+    </div>
+
+    <!-- Scheduler - shows in both view and build modes -->
+    <main class="schedule-main">
+      @if (isLoading()) {
+        <div class="loading">Завантаження...</div>
+      } @else {
+        <daypilot-scheduler [config]="config()" #scheduler></daypilot-scheduler>
+      }
+    </main>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  @if (isDeleteModalOpen()) {
+    <div class="modal-overlay" (click)="closeDeleteModal()">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Підтвердження видалення</h2>
+          <button class="modal-close" (click)="closeDeleteModal()" aria-label="Закрити">×</button>
+        </div>
+        <div class="modal-body">
+          <p>Ви впевнені, що хочете видалити цей запис графіка?</p>
+          @if (entryToDelete()) {
+            <div class="entry-info">
+              <strong>Працівник:</strong> {{ getEmployeeName(entryToDelete()!.employeeId) }}<br>
+              <strong>Тип:</strong> {{ getStateLabel(entryToDelete()!.state) }}<br>
+              <strong>Час:</strong> {{ formatTimeRange(entryToDelete()!.startTime, entryToDelete()!.endTime) }}
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">
+            Скасувати
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+            Видалити
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

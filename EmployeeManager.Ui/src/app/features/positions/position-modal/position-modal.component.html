@@ -1,0 +1,46 @@
+@if (isOpen()) {
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-content" (click)="stopPropagation($event)">
+    <div class="modal-header">
+      <h3>Додати посаду</h3>
+      <button class="close-btn" (click)="onClose()">×</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Назва посади <span class="required">*</span></label>
+        <input
+          type="text"
+          [ngModel]="newPosition().title"
+          (ngModelChange)="onTitleChange($event)"
+          class="form-input"
+          placeholder="Введіть назву посади"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="section-label">Оберіть відділи <span class="required">*</span></label>
+        <div class="departments-checkboxes">
+          <label *ngFor="let dep of filteredDepartments()" class="checkbox-label">
+            <input
+              type="checkbox"
+              [checked]="isDepartmentSelected(dep.id)"
+              (change)="toggleDepartment(dep.id)"
+              class="checkbox-input"
+            />
+            <span>{{ dep.name }}</span>
+          </label>
+          <p *ngIf="filteredDepartments().length === 0" class="text-muted">Відділів немає</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onClose()">Скасувати</button>
+      <button class="btn btn-primary" (click)="onSave()" [disabled]="!isFormValid()">
+        Додати
+      </button>
+    </div>
+  </div>
+</div>
+}

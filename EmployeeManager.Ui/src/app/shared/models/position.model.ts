@@ -1,11 +1,11 @@
 export interface Position {
-  id: number;
+  id: string;
   title: string;
-  departments?: Array<{ id: number; name: string }>;
+  departments?: Array<{ id: string; name: string }>;
 }
 
 export interface PositionUpdatePayload {
-  id: number;
+  id: string;
   title: string;
-  departmentIds: number[];
+  departmentIds: string[];
 }

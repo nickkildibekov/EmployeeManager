@@ -372,228 +372,48 @@
   color: var(--text-secondary);
 }
 
-/* FullCalendar overrides */
-:host ::ng-deep .fc {
+/* DayPilot Scheduler styles */
+:host ::ng-deep .dp-scheduler {
   height: 100% !important;
   width: 100% !important;
-  max-width: 100%;
   background: var(--bg-primary);
   color: var(--text-primary);
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-:host ::ng-deep .fc-view-harness {
-  height: 100% !important;
-  min-height: 0;
-  overflow: hidden;
-}
-
-:host ::ng-deep .fc-scroller {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: auto !important;
-}
-
-:host ::ng-deep .fc-scroller-liquid-absolute {
-  position: relative;
-}
-
-:host ::ng-deep .fc-scrollgrid {
-  width: 100% !important;
-  max-width: 100% !important;
-  table-layout: fixed;
-  box-sizing: border-box;
-  overflow: hidden;
-}
-
-:host ::ng-deep .fc-scrollgrid-section {
-  box-sizing: border-box;
-}
-
-:host ::ng-deep .fc-scrollgrid-section > table {
-  width: 100% !important;
-  max-width: 100% !important;
-  box-sizing: border-box;
-}
-
-:host ::ng-deep .fc-timeline-body {
-  width: 100%;
-  max-width: 100%;
-  height: 100%;
-  min-height: 0;
-  overflow: auto !important;
-}
-
-:host ::ng-deep .fc-header-toolbar {
-  margin-bottom: 1rem;
-}
-
-:host ::ng-deep .fc-button {
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
   border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  color: var(--text-primary);
-  font-size: 0.875rem;
+  border-radius: 0.5rem;
 }
 
-:host ::ng-deep .fc-button:hover {
+:host ::ng-deep .dp-scheduler-row-header {
   background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  padding: 7px;
 }
 
-:host ::ng-deep .fc-button-active {
-  background: var(--primary);
-  color: var(--bg-primary);
-  border-color: var(--primary);
+:host ::ng-deep .dp-scheduler-time-header {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+  padding: 7px;
 }
 
-:host ::ng-deep .fc-event {
+:host ::ng-deep .dp-scheduler-cell {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+:host ::ng-deep .dp-scheduler-event {
   cursor: pointer;
   border-radius: 0.25rem;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Resource Timeline specific styles */
-:host ::ng-deep .fc-timeline-header {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-:host ::ng-deep .fc-timeline-slot {
-  border-color: var(--border-color);
-}
-
-/* Highlight weekends in week view */
-:host ::ng-deep .fc-timeline-slot.fc-timeline-slot-label.fc-day-sat,
-:host ::ng-deep .fc-timeline-slot.fc-timeline-slot-label.fc-day-sun,
-:host ::ng-deep .fc-timeline-slot.fc-day-sat,
-:host ::ng-deep .fc-timeline-slot.fc-day-sun {
-  background-color: rgba(107, 114, 128, 0.1) !important;
-}
-
-:host ::ng-deep .fc-col-header-cell.fc-day-sat,
-:host ::ng-deep .fc-col-header-cell.fc-day-sun {
-  background-color: rgba(107, 114, 128, 0.15) !important;
-  color: var(--text-secondary);
-}
-
-:host ::ng-deep .fc-resource-area {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-  flex-shrink: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-:host ::ng-deep .fc-resource-area .fc-scroller {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-}
-
-:host ::ng-deep .fc-timeline-lane {
-  flex: 1;
-  min-width: 0;
-  min-height: 40px !important; /* Ensure lanes have minimum height for events */
-  position: relative !important;
-}
-
-:host ::ng-deep .fc-resource-cell {
-  background: var(--bg-primary);
-  border-color: var(--border-color);
-  color: var(--text-primary);
-}
-
-:host ::ng-deep .fc-resource-group-cell {
-  background: var(--bg-tertiary);
-  border-color: var(--border-color);
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-:host ::ng-deep .fc-timeline-event {
-  border-radius: 0.25rem;
+  font-weight: 500;
   padding: 2px 4px;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  overflow: visible !important;
-  text-overflow: ellipsis;
-  font-weight: 500;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: block !important;
-  /* Let FullCalendar handle positioning - don't override */
 }
 
-/* Better event display in week view */
-:host ::ng-deep .fc-timeline-event .fc-event-title {
-  font-weight: 500;
-  padding: 0 2px;
-}
-
-/* Ensure overnight events are displayed continuously */
-:host ::ng-deep .fc-timeline-event.fc-event {
-  display: block !important;
-}
-
-/* Allow events to span across day boundaries */
-:host ::ng-deep .fc-timeline-event[data-start][data-end] {
-  display: block;
-}
-
-:host ::ng-deep .fc-timeline-event:hover {
+:host ::ng-deep .dp-scheduler-event:hover {
   opacity: 0.9;
   z-index: 10;
 }
 
-:host ::ng-deep .fc-timeline-body {
-  background: var(--bg-primary);
-  width: 100%;
-  max-width: 100%;
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  overflow: auto !important;
-}
-
-:host ::ng-deep .fc-timeline-body .fc-scroller {
-  overflow: auto !important;
-}
-
-:host ::ng-deep .fc-timeline-header {
-  width: 100%;
-}
-
-:host ::ng-deep .fc-timeline-header .fc-scrollgrid-sync-table {
-  width: 100%;
-}
-
-:host ::ng-deep .fc-timegrid-col {
-  border-color: var(--border-color);
-}
-
-:host ::ng-deep .fc-col-header-cell {
-  background: var(--bg-secondary);
-  border-color: var(--border-color);
-  color: var(--text-primary);
-}
-
-:host ::ng-deep .fc-daygrid-day {
-  background: var(--bg-primary);
-  border-color: var(--border-color);
-}
-
-:host ::ng-deep .fc-daygrid-day-number {
-  color: var(--text-primary);
-}
-
-:host ::ng-deep .fc-scrollgrid {
+:host ::ng-deep .dp-scheduler-grid-line {
   border-color: var(--border-color);
 }
 
@@ -606,6 +426,144 @@
 .build-mode-placeholder h2 {
   color: var(--text-primary);
   margin-bottom: 1rem;
+}
+
+/* Delete Confirmation Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.modal-container {
+  background: var(--bg-primary);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.modal-close:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.modal-body p {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.entry-info {
+  background: var(--bg-secondary);
+  padding: 1rem;
+  border-radius: 0.375rem;
+  margin-top: 1rem;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.entry-info strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn {
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-tertiary);
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+/* Delete button on events */
+:host ::ng-deep .dp-event-delete-btn {
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+:host ::ng-deep .dp-event-delete-btn:hover {
+  opacity: 0.8;
+  transform: scale(1.1);
 }
 
 /* Mobile responsiveness */
@@ -626,5 +584,10 @@
   
   .main-tabs {
     flex-wrap: wrap;
+  }
+
+  .modal-container {
+    width: 95%;
+    margin: 1rem;
   }
 }

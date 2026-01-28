@@ -147,28 +147,43 @@
       </div>
     </div>
 
-    <!-- Calendar - shows in both view and build modes -->
+    <!-- Scheduler - shows in both view and build modes -->
     <main class="schedule-main">
       @if (isLoading()) {
         <div class="loading">Завантаження...</div>
       } @else {
-        <full-calendar [options]="calendarOptions()"></full-calendar>
+        <daypilot-scheduler [config]="config()" #scheduler></daypilot-scheduler>
       }
     </main>
   </div>
 
-  <!-- Schedule Entry Modal -->
-  <app-schedule-entry-modal
-    [isOpen]="isModalOpen"
-    [entry]="modalEntry()"
-    [departments]="departments()"
-    [employees]="employees()"
-    [selectedEmployeeId]="modalSelectedEmployeeId()"
-    [selectedDepartmentId]="modalSelectedDepartmentId()"
-    [startTime]="modalStartTime()"
-    [endTime]="modalEndTime()"
-    (save)="onModalSave($event)"
-    (delete)="onModalDelete($event)"
-    (close)="closeModal()"
-  />
+  <!-- Delete Confirmation Modal -->
+  @if (isDeleteModalOpen()) {
+    <div class="modal-overlay" (click)="closeDeleteModal()">
+      <div class="modal-container" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h2>Підтвердження видалення</h2>
+          <button class="modal-close" (click)="closeDeleteModal()" aria-label="Закрити">×</button>
+        </div>
+        <div class="modal-body">
+          <p>Ви впевнені, що хочете видалити цей запис графіка?</p>
+          @if (entryToDelete()) {
+            <div class="entry-info">
+              <strong>Працівник:</strong> {{ getEmployeeName(entryToDelete()!.employeeId) }}<br>
+              <strong>Тип:</strong> {{ getStateLabel(entryToDelete()!.state) }}<br>
+              <strong>Час:</strong> {{ formatTimeRange(entryToDelete()!.startTime, entryToDelete()!.endTime) }}
+            </div>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">
+            Скасувати
+          </button>
+          <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+            Видалити
+          </button>
+        </div>
+      </div>
+    </div>
+  }
 </div>

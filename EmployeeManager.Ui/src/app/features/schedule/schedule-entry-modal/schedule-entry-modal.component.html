@@ -1,0 +1,115 @@
+@if (isOpen()) {
+<div class="modal-overlay" (click)="onClose()">
+  <div class="modal-container" (click)="stopPropagation($event)">
+    <div class="modal-header">
+      <h2>{{ isEditMode() ? 'Редагувати запис графіка' : 'Створити запис графіка' }}</h2>
+      <button class="modal-close" (click)="onClose()" aria-label="Закрити">×</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Employee selection -->
+      <div class="form-group">
+        <label>Працівник <span class="required">*</span></label>
+        <select
+          [value]="editedEntry().employeeId"
+          (change)="onEmployeeChange($any($event.target).value)"
+          class="form-input"
+          [class.error]="!editedEntry().employeeId">
+          <option value="">Виберіть працівника</option>
+          @for (emp of filteredEmployees(); track emp.id) {
+            <option [value]="emp.id">
+              {{ emp.firstName }} {{ emp.lastName }} ({{ emp.callSign }})
+            </option>
+          }
+        </select>
+      </div>
+
+      <!-- Department selection -->
+      <div class="form-group">
+        <label>Відділ <span class="required">*</span></label>
+        <select
+          [value]="editedEntry().departmentId"
+          (change)="onDepartmentChange($any($event.target).value)"
+          class="form-input"
+          [class.error]="!editedEntry().departmentId">
+          <option value="">Виберіть відділ</option>
+          @for (dept of departments; track dept.id) {
+            <option [value]="dept.id">{{ dept.name }}</option>
+          }
+        </select>
+      </div>
+
+      <!-- State selection -->
+      <div class="form-group">
+        <label>Тип запису <span class="required">*</span></label>
+        <div class="state-buttons">
+          @for (state of states; track state.value) {
+            <button
+              type="button"
+              [class.active]="editedEntry().state === state.value"
+              (click)="onStateChange(state.value)"
+              class="state-button"
+              [style.background-color]="state.value === editedEntry().state ? state.color : 'transparent'"
+              [style.border-color]="state.color"
+              [style.color]="state.value === editedEntry().state ? 'white' : state.color">
+              <span class="state-color" [style.background-color]="state.color"></span>
+              {{ state.label }}
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Start time -->
+      <div class="form-group">
+        <label>Час початку <span class="required">*</span></label>
+        <input
+          type="datetime-local"
+          [value]="formatDateTime(editedEntry().startTime)"
+          (change)="onStartTimeChange($any($event.target).value)"
+          class="form-input"
+          [class.error]="isTimeRangeInvalid()">
+      </div>
+
+      <!-- End time -->
+      <div class="form-group">
+        <label>Час закінчення <span class="required">*</span></label>
+        <input
+          type="datetime-local"
+          [value]="formatDateTime(editedEntry().endTime)"
+          (change)="onEndTimeChange($any($event.target).value)"
+          class="form-input"
+          [class.error]="isTimeRangeInvalid()">
+        @if (isTimeRangeInvalid()) {
+          <span class="error-message">Час закінчення повинен бути після часу початку</span>
+        }
+      </div>
+
+      <!-- Duration display -->
+      @if (durationHours() > 0) {
+        <div class="duration-display">
+          <strong>Тривалість:</strong> 
+          {{ durationHours() }} годин
+        </div>
+      }
+    </div>
+
+    <div class="modal-footer">
+      @if (isEditMode()) {
+        <button type="button" class="btn btn-danger" (click)="onDelete()">
+          Видалити
+        </button>
+      }
+      <button type="button" class="btn btn-secondary" (click)="onClose()">
+        Скасувати
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        (click)="onSave()"
+        [disabled]="!isValid()">
+        {{ isEditMode() ? 'Зберегти зміни' : 'Створити запис' }}
+      </button>
+    </div>
+  </div>
+</div>
+}

@@ -65,7 +65,7 @@ export class HomeComponent {
       title: 'Графік',
       description: 'Управління робочим графіком та розкладом',
       icon: '📅',
-      route: '#',
+      route: '/schedule',
       color: '#4ecdc4',
     },
     {

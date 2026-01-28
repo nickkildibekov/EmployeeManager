@@ -10,20 +10,27 @@ namespace EmployeeManager.API.DTO
         public Guid EmployeeId { get; set; }
 
         [Required]
-        public DateTime Date { get; set; }
-
-        [Range(0, 24)]
-        public decimal Hours { get; set; }
+        public DateTime StartTime { get; set; }
 
         [Required]
-        [RegularExpression("^(OnWork|Rest|Vacation|Illness)$")]
+        public DateTime EndTime { get; set; }
+
+        [Required]
+        [RegularExpression("^(Training|OnWork|Rest|Vacation|Illness)$")]
         public string State { get; set; } = "Rest";
 
         [Required]
         public Guid DepartmentId { get; set; }
 
+        // Hours - automatically calculated on save, but can be read
+        public decimal Hours { get; set; }
+
         // Optional navigation props for read
         public string? EmployeeName { get; set; }
         public string? PositionTitle { get; set; }
+        public string? DepartmentName { get; set; }
+
+        // Computed property for duration in hours (for backward compatibility)
+        public decimal DurationHours => Hours > 0 ? Hours : (decimal)(EndTime - StartTime).TotalHours;
     }
 }

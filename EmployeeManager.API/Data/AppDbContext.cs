@@ -130,7 +130,7 @@ namespace EmployeeManager.API.Data
                 .Property(e => e.Amount)
                 .HasPrecision(18, 2);
 
-            // Configure decimal precision for ScheduleEntry.Hours
+            // Configure ScheduleEntry.Hours with decimal precision
             modelBuilder.Entity<ScheduleEntry>()
                 .Property(s => s.Hours)
                 .HasPrecision(18, 2);

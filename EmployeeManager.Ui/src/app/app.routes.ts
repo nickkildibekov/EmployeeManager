@@ -89,5 +89,12 @@ export const routes: Routes = [
         (m) => m.FuelPageComponent
       ),
   },
+  {
+    path: 'schedule',
+    loadComponent: () =>
+      import('./features/schedule/schedule-page/schedule-page.component').then(
+        (m) => m.SchedulePageComponent
+      ),
+  },
   { path: '**', redirectTo: 'home' },
 ];

@@ -30,6 +30,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // View state - default to day view
   currentView = signal<ScheduleView>('day');
+  currentDate = signal<DayPilot.Date>(DayPilot.Date.today());
 
   // Data
   scheduleEntries = signal<ScheduleEntry[]>([]);
@@ -74,7 +75,8 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   });
 
-  // Computed: resources (employees) for scheduler - flat list sorted by department
+  // Computed: hierarchical resources (departments with employees as children)
+  // DayPilot Lite doesn't support children property, so we use flat list with visual indentation
   schedulerResources = computed(() => {
     const employees = this.employees();
     const departments = this.departments();
@@ -83,23 +85,48 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       return [];
     }
 
-    // Group by department
+    // Group employees by department
     const grouped = employees.reduce((acc, emp) => {
       const dept = departments.find(d => d.id === emp.departmentId);
+      const deptId = dept?.id || 'no-dept';
       const deptName = dept?.name || 'Без відділу';
-      if (!acc[deptName]) {
-        acc[deptName] = [];
+      
+      if (!acc[deptId]) {
+        acc[deptId] = {
+          id: deptId,
+          name: deptName,
+          employees: []
+        };
       }
-      acc[deptName].push(emp);
+      acc[deptId].employees.push(emp);
       return acc;
-    }, {} as Record<string, typeof employees>);
+    }, {} as Record<string, { id: string; name: string; employees: typeof employees }>);
 
     // Sort departments by name
-    const sortedDepts = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'uk'));
+    const sortedDeptIds = Object.keys(grouped).sort((a, b) => 
+      grouped[a].name.localeCompare(grouped[b].name, 'uk')
+    );
 
-    // Sort employees within each department by CallSign, then by name
-    sortedDepts.forEach(deptName => {
-      grouped[deptName].sort((a, b) => {
+    // Build flat list with hierarchical visual structure
+    const resources: DayPilot.ResourceData[] = [];
+    
+    sortedDeptIds.forEach(deptId => {
+      const dept = grouped[deptId];
+      
+      // Add department as parent (non-selectable, visual only)
+      resources.push({
+        id: `dept-${deptId}`,
+        name: dept.name,
+        tags: {
+          departmentId: deptId,
+          departmentName: dept.name,
+          isDepartment: true,
+        },
+        cssClass: 'dp-resource-department',
+      });
+      
+      // Sort employees within department by CallSign, then by name
+      const sortedEmployees = [...dept.employees].sort((a, b) => {
         if (a.callSign && b.callSign) {
           return a.callSign.localeCompare(b.callSign, 'uk');
         }
@@ -109,11 +136,9 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
         const nameB = `${b.firstName} ${b.lastName}`;
         return nameA.localeCompare(nameB, 'uk');
       });
-    });
 
-    // Flatten to flat list with department info in tags
-    const resources = sortedDepts.flatMap((deptName) =>
-      grouped[deptName].map(emp => {
+      // Add employees as children with indentation
+      sortedEmployees.forEach(emp => {
         // Build name: use callSign if it exists and is not empty, otherwise use firstName + lastName
         let displayName = '';
         if (emp.callSign && emp.callSign.trim() !== '') {
@@ -126,18 +151,20 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
         const fullName = `${emp.firstName || ''} ${emp.lastName || ''}`.trim() || displayName;
 
-        return {
+        resources.push({
           id: emp.id,
-          name: displayName,
+          name: `  ${displayName}`, // Indent with spaces for visual hierarchy
           tags: {
             departmentId: emp.departmentId,
-            departmentName: deptName,
+            departmentName: dept.name,
             employeeName: fullName,
             callSign: emp.callSign || '',
+            isEmployee: true,
           },
-        };
-      })
-    );
+          cssClass: 'dp-resource-employee',
+        });
+      });
+    });
 
     return resources;
   });
@@ -170,7 +197,16 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
   schedulerEvents = computed<DayPilot.EventData[]>(() => {
     const filtered = this.filteredEntries();
     const resources = this.schedulerResources();
-    const resourceIds = new Set(resources.map(r => r.id));
+    
+    // Collect all employee IDs (skip department resources)
+    const resourceIds = new Set<string>();
+    resources.forEach(resource => {
+      const resourceId = String(resource.id || '');
+      // Only include actual employee resources, not department headers
+      if (resource.tags?.isEmployee === true && !resourceId.startsWith('dept-')) {
+        resourceIds.add(resourceId);
+      }
+    });
 
     return filtered
       .filter(entry => resourceIds.has(entry.employeeId))
@@ -202,30 +238,149 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
   });
 
   // View-dependent options (day/week/year); updated by updateSchedulerConfig()
+  // Initialize with day view settings (default view)
   private viewOptions = signal<Partial<DayPilot.SchedulerConfig>>({
     startDate: DayPilot.Date.today(),
-    days: DayPilot.Date.today().daysInMonth(),
+    days: 1,
     scale: 'Hour',
     timeHeaders: [
-      { groupBy: 'Month' },
       { groupBy: 'Day', format: 'dddd MMMM d, yyyy' },
       { groupBy: 'Hour', format: 'HH:mm' }
     ],
-    cellWidth: 45,
+    cellWidth: 60,
   });
 
   // Base scheduler options (static; view options and resources/events come from signals/computed)
   private getBaseConfig(): DayPilot.SchedulerConfig {
     return {
       eventHeight: 50,
-      rowHeaderWidth: 200,
+      rowHeaderWidth: 250,
       rowMarginTop: 2,
       rowMarginBottom: 2,
       durationBarVisible: false,
       timeRangeSelectedHandling: 'Enabled',
       eventMoveHandling: 'Update',
       eventResizeHandling: 'Update',
+      onBeforeRowHeaderRender: (args) => {
+        // Style department rows differently
+        // Access resource data through row.data (which contains the ResourceData)
+        const resourceData = args.row.data;
+        if (resourceData?.tags?.isDepartment) {
+          args.row.cssClass = 'dp-row-department';
+          args.row.html = `<strong>${resourceData.name || ''}</strong>`;
+        } else if (resourceData?.tags?.isEmployee) {
+          args.row.cssClass = 'dp-row-employee';
+        }
+      },
+      onBeforeCellRender: (args: any) => {
+        const view = this.currentView();
+        if (view === 'week') {
+          // Check if this is the last cell of a day (every 24th hour)
+          // DayPilot uses start property to identify time slots
+          try {
+            const start = args.start || args.time;
+            if (start) {
+              const startDate = start instanceof Date ? start : start.toDate();
+              const hour = startDate.getHours();
+              const minutes = startDate.getMinutes();
+              
+              // If it's 23:00 (last hour of day), make border thicker
+              if (hour === 23 && minutes === 0) {
+                if (args.cell) {
+                  args.cell.cssClass = (args.cell.cssClass || '') + ' dp-day-separator';
+                } else if (args.cssClass !== undefined) {
+                  args.cssClass = (args.cssClass || '') + ' dp-day-separator';
+                }
+              }
+              // If it's 00:00 (first hour of day), make border after it thicker
+              if (hour === 0 && minutes === 0) {
+                if (args.cell) {
+                  args.cell.cssClass = (args.cell.cssClass || '') + ' dp-after-midnight';
+                } else if (args.cssClass !== undefined) {
+                  args.cssClass = (args.cssClass || '') + ' dp-after-midnight';
+                }
+              }
+            }
+          } catch (error) {
+            // Ignore errors in cell rendering
+          }
+        }
+      },
+      onBeforeTimeHeaderRender: (args) => {
+        const view = this.currentView();
+        
+        // Translate day names to Ukrainian
+        const headerText = args.header.text || '';
+        const dayNamesMap: Record<string, string> = {
+          'Monday': 'Понеділок',
+          'Tuesday': 'Вівторок',
+          'Wednesday': 'Середа',
+          'Thursday': 'Четвер',
+          'Friday': 'П\'ятниця',
+          'Saturday': 'Субота',
+          'Sunday': 'Неділя',
+          'Mon': 'Понеділок',
+          'Tue': 'Вівторок',
+          'Wed': 'Середа',
+          'Thu': 'Четвер',
+          'Fri': 'П\'ятниця',
+          'Sat': 'Субота',
+          'Sun': 'Неділя'
+        };
+        
+        const monthNamesMap: Record<string, string> = {
+          'January': 'січня', 'February': 'лютого', 'March': 'березня', 'April': 'квітня',
+          'May': 'травня', 'June': 'червня', 'July': 'липня', 'August': 'серпня',
+          'September': 'вересня', 'October': 'жовтня', 'November': 'листопада', 'December': 'грудня'
+        };
+        
+        // First, check if this is a date header (not hour header)
+        if (/^\d{2}:\d{2}$/.test(headerText.trim())) {
+          // This is an hour header, hide it in week view
+          if (view === 'week') {
+            args.header.html = '';
+            args.header.cssClass = 'dp-time-header-hour-hidden';
+          }
+          return;
+        }
+        
+        // Parse the date format: "Wednesday January 28, 2026" or "Wednesday January 28"
+        const dateMatch = headerText.match(/(\w+)\s+(\w+)\s+(\d+)(?:\s*,\s*(\d+))?/);
+        if (dateMatch) {
+          const [, dayNameEn, monthNameEn, day, year] = dateMatch;
+          
+          // Translate day and month names
+          const dayName = dayNamesMap[dayNameEn] || dayNameEn;
+          const monthName = monthNamesMap[monthNameEn] || monthNameEn;
+          
+          // Format to Ukrainian: "Середа 28 січня 2026" or "Середа 28 січня"
+          const translatedText = year 
+            ? `${dayName} ${day} ${monthName} ${year}`
+            : `${dayName} ${day} ${monthName}`;
+          
+          args.header.html = translatedText;
+        } else {
+          // If no date match, just translate day/month names
+          let translatedText = headerText;
+          for (const [en, uk] of Object.entries(dayNamesMap)) {
+            translatedText = translatedText.replace(new RegExp(`\\b${en}\\b`, 'gi'), uk);
+          }
+          for (const [en, uk] of Object.entries(monthNamesMap)) {
+            translatedText = translatedText.replace(new RegExp(`\\b${en}\\b`, 'gi'), uk);
+          }
+          if (translatedText !== headerText) {
+            args.header.html = translatedText;
+          }
+        }
+        
+      },
       onTimeRangeSelected: async (args) => {
+        // Check if the selected resource is a department row
+        const resourceId = String(args.resource || '');
+        if (resourceId.startsWith('dept-')) {
+          args.control.clearSelection();
+          return;
+        }
         await this.handleTimeRangeSelected(args);
       },
       eventClickHandling: 'Enabled',
@@ -259,6 +414,8 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
   private lastQuickEntryKey = '';
   private isDestroyed = false;
   private initTimeoutId: any = null;
+  private resizeHandler: (() => void) | null = null;
+  private resizeTimeoutId: any = null;
 
   // Helper method to safely access scheduler control
   private getSchedulerControl() {
@@ -277,7 +434,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
     } catch (error) {
       // Control is disposed or not ready
       if (error instanceof Error && error.message.includes('disposed')) {
-        console.warn('Scheduler control is disposed');
+        console.warn('Елемент керування розкладом видалено');
       }
       return null;
     }
@@ -299,7 +456,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       if (error instanceof Error && error.message.includes('disposed')) {
         return;
       }
-      console.error('Error updating scheduler:', error);
+      console.error('Помилка оновлення розкладу:', error);
     }
   }
 
@@ -313,6 +470,9 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       this.loadDepartments(),
       this.loadEmployees()
     ]);
+    
+    // Initialize scheduler config after data is loaded
+    this.updateSchedulerConfig();
   }
 
   async ngAfterViewInit(): Promise<void> {
@@ -329,7 +489,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
       const control = this.getSchedulerControl();
       if (!control) {
-        console.warn('Scheduler not initialized yet, retrying...');
+        console.warn('Розклад ще не ініціалізовано, повторна спроба...');
         // Retry after a bit more time (only if not destroyed)
         if (!this.isDestroyed) {
           this.initTimeoutId = setTimeout(() => {
@@ -342,7 +502,16 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       }
 
       try {
-        // Load initial schedule data; resources/events come from config (computed) and are synced by DayPilot
+        // Ensure scheduler is updated with correct config, resources, and events
+        this.safeUpdateScheduler((ctrl) => {
+          const config = this.config();
+          ctrl.update(config);
+        });
+
+        // Wait a bit for scheduler to render with correct config
+        await new Promise(resolve => setTimeout(resolve, 150));
+
+        // Load initial schedule data
         const from = control.visibleStart().toDate();
         const to = control.visibleEnd().toDate();
 
@@ -357,18 +526,172 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
           return;
         }
 
+        // Force update scheduler with events and resources after data is loaded
+        // This ensures events are displayed correctly on first load
+        this.safeUpdateScheduler((ctrl) => {
+          const events = this.schedulerEvents();
+          const resources = this.schedulerResources();
+          ctrl.update({ events, resources });
+        });
+
+        // Recalculate and update cell width after scheduler is fully rendered
+        const view = this.currentView();
+        setTimeout(() => {
+          if (this.isDestroyed) return;
+          
+          if (view === 'day') {
+            const newCellWidth = this.calculateDayCellWidth();
+            const currentWidth = this.viewOptions().cellWidth || 60;
+            if (Math.abs(newCellWidth - currentWidth) > 5) {
+              this.viewOptions.update(options => ({
+                ...options,
+                cellWidth: newCellWidth
+              }));
+              this.safeUpdateScheduler((ctrl) => {
+                ctrl.update(this.config());
+              });
+            }
+          } else if (view === 'week') {
+            const newCellWidth = this.calculateWeekHourCellWidth();
+            const currentWidth = this.viewOptions().cellWidth || 5;
+            if (Math.abs(newCellWidth - currentWidth) > 1) {
+              this.viewOptions.update(options => ({
+                ...options,
+                cellWidth: newCellWidth
+              }));
+              this.safeUpdateScheduler((ctrl) => {
+                ctrl.update(this.config());
+              });
+            }
+            
+            // Apply thick borders between days after rendering
+            this.applyWeekDayBorders();
+          }
+        }, 300);
+
         // Scroll to 8 AM
         const today = DayPilot.Date.today();
-        const firstDay = today.firstDayOfMonth();
-        const scrollTime = firstDay.addHours(8);
+        const scrollTime = today.addHours(8);
         controlAfterLoad.scrollTo(scrollTime);
+
+        // Setup resize handler to recalculate cell width on window resize
+        this.setupResizeHandler();
       } catch (error) {
         // Only log if not a disposed error
         if (error instanceof Error && !error.message.includes('disposed')) {
           console.error('Error initializing scheduler:', error);
         }
       }
-    }, 200);
+    }, 300);
+  }
+
+  private applyWeekDayBorders(): void {
+    // Apply thick borders between days in week view using direct DOM manipulation
+    setTimeout(() => {
+      if (this.isDestroyed || this.currentView() !== 'week') {
+        return;
+      }
+
+      try {
+        // Find scheduler element - try multiple selectors
+        const schedulerElement = document.querySelector('.dp-scheduler') || 
+                                 document.querySelector('.schedule-main .dp-scheduler');
+        if (!schedulerElement) {
+          return;
+        }
+
+        // Find all cells in time header rows and body rows
+        // DayPilot uses table structure, so we need to find cells in each row
+        const timeHeaderRows = schedulerElement.querySelectorAll('.dp-scheduler-time-header-row');
+        const bodyRows = schedulerElement.querySelectorAll('.dp-scheduler-row');
+
+        // Process time header cells - each row contains all 168 cells (7 days * 24 hours)
+        timeHeaderRows.forEach((row) => {
+          const cells = row.querySelectorAll('.dp-scheduler-time-header-cell, td');
+          cells.forEach((cell, index) => {
+            // Every 24th cell is the end of a day
+            if ((index + 1) % 24 === 0) {
+              const htmlCell = cell as HTMLElement;
+              htmlCell.style.borderRight = '6px solid #000000';
+              htmlCell.style.setProperty('border-right-width', '6px', 'important');
+              htmlCell.style.setProperty('border-right-color', '#000000', 'important');
+              htmlCell.style.setProperty('border-right-style', 'solid', 'important');
+            }
+          });
+        });
+
+        // Process body cells - each row contains all 168 cells
+        bodyRows.forEach((row) => {
+          const cells = row.querySelectorAll('.dp-scheduler-cell, td');
+          cells.forEach((cell, index) => {
+            const htmlCell = cell as HTMLElement;
+            // Every 24th cell is the end of a day - make it very thick
+            if ((index + 1) % 24 === 0) {
+              htmlCell.style.borderRight = '6px solid #000000';
+              htmlCell.style.setProperty('border-right-width', '6px', 'important');
+              htmlCell.style.setProperty('border-right-color', '#000000', 'important');
+              htmlCell.style.setProperty('border-right-style', 'solid', 'important');
+            }
+            // Every 1st cell of each day (00:00) - make border after it thicker
+            if ((index + 1) % 24 === 1 && index > 0) {
+              htmlCell.style.borderRight = '4px solid #000000';
+              htmlCell.style.setProperty('border-right-width', '4px', 'important');
+              htmlCell.style.setProperty('border-right-color', '#000000', 'important');
+              htmlCell.style.setProperty('border-right-style', 'solid', 'important');
+            }
+          });
+        });
+      } catch (error) {
+        console.warn('Помилка застосування стилів меж днів:', error);
+      }
+    }, 500);
+  }
+
+  private setupResizeHandler(): void {
+    if (this.resizeHandler || typeof window === 'undefined') {
+      return;
+    }
+
+    this.resizeHandler = () => {
+      // Debounce resize events
+      if (this.resizeTimeoutId) {
+        clearTimeout(this.resizeTimeoutId);
+      }
+
+      this.resizeTimeoutId = setTimeout(() => {
+        if (this.isDestroyed) {
+          return;
+        }
+
+        const view = this.currentView();
+        const currentWidth = this.viewOptions().cellWidth || (view === 'day' ? 60 : 120);
+        let newCellWidth: number;
+
+        if (view === 'day') {
+          newCellWidth = this.calculateDayCellWidth();
+        } else if (view === 'week') {
+          newCellWidth = this.calculateWeekHourCellWidth();
+        } else {
+          return; // Don't update for year view
+        }
+
+        // Update if difference is significant (more than 1px for week view, 5px for day view)
+        const threshold = view === 'week' ? 1 : 5;
+        if (Math.abs(newCellWidth - currentWidth) > threshold) {
+          this.viewOptions.update(options => ({
+            ...options,
+            cellWidth: newCellWidth
+          }));
+
+          // Force scheduler update
+          this.safeUpdateScheduler((ctrl) => {
+            ctrl.update(this.config());
+          });
+        }
+      }, 250); // Debounce delay
+    };
+
+    window.addEventListener('resize', this.resizeHandler);
   }
 
   ngOnDestroy(): void {
@@ -379,11 +702,238 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       clearTimeout(this.initTimeoutId);
       this.initTimeoutId = null;
     }
+    
+    if (this.resizeTimeoutId) {
+      clearTimeout(this.resizeTimeoutId);
+      this.resizeTimeoutId = null;
+    }
+    
+    // Remove resize listener
+    if (this.resizeHandler && typeof window !== 'undefined') {
+      window.removeEventListener('resize', this.resizeHandler);
+      this.resizeHandler = null;
+    }
   }
 
   setView(view: ScheduleView): void {
     this.currentView.set(view);
+    // Reset to today when switching views
+    this.currentDate.set(DayPilot.Date.today());
     this.updateSchedulerConfig();
+  }
+
+  navigatePrevious(): void {
+    const view = this.currentView();
+    const current = this.currentDate();
+    
+    if (view === 'day') {
+      this.currentDate.set(current.addDays(-1));
+    } else if (view === 'week') {
+      this.currentDate.set(current.addDays(-7));
+    } else {
+      // For year view, go to previous month
+      const firstDay = current.firstDayOfMonth();
+      const firstDayDate = firstDay.toDate();
+      const dayOfMonth = firstDayDate.getDate();
+      const prevMonth = firstDay.addDays(-dayOfMonth);
+      this.currentDate.set(prevMonth.firstDayOfMonth());
+    }
+    
+    this.updateSchedulerConfig();
+  }
+
+  navigateNext(): void {
+    const view = this.currentView();
+    const current = this.currentDate();
+    
+    if (view === 'day') {
+      this.currentDate.set(current.addDays(1));
+    } else if (view === 'week') {
+      this.currentDate.set(current.addDays(7));
+    } else {
+      // For year view, go to next month
+      const firstDay = current.firstDayOfMonth();
+      const daysInMonth = firstDay.daysInMonth();
+      this.currentDate.set(firstDay.addDays(daysInMonth));
+    }
+    
+    this.updateSchedulerConfig();
+  }
+
+  navigateToday(): void {
+    this.currentDate.set(DayPilot.Date.today());
+    this.updateSchedulerConfig();
+  }
+
+  // Ukrainian day names
+  private ukrainianDays = ['Неділя', 'Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота'];
+  
+  // Ukrainian month names (genitive case)
+  private ukrainianMonths = [
+    'січня', 'лютого', 'березня', 'квітня', 'травня', 'червня',
+    'липня', 'серпня', 'вересня', 'жовтня', 'листопада', 'грудня'
+  ];
+  
+  // Ukrainian month names (nominative case)
+  private ukrainianMonthsNominative = [
+    'Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень',
+    'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'
+  ];
+
+  private formatDateUkrainian(date: DayPilot.Date, includeYear: boolean = true, useNominative: boolean = false): string {
+    const jsDate = date.toDate();
+    const dayOfWeek = jsDate.getDay();
+    const day = jsDate.getDate();
+    const month = jsDate.getMonth();
+    const year = jsDate.getFullYear();
+    
+    const dayName = this.ukrainianDays[dayOfWeek];
+    const monthName = useNominative 
+      ? this.ukrainianMonthsNominative[month]
+      : this.ukrainianMonths[month];
+    
+    if (includeYear) {
+      return `${dayName} ${day} ${monthName} ${year}`;
+    } else {
+      return `${dayName} ${day} ${monthName}`;
+    }
+  }
+
+  private calculateDayCellWidth(): number {
+    try {
+      // Get the actual scheduler container element
+      const schedulerElement = document.querySelector('.schedule-main');
+      if (!schedulerElement) {
+        // Fallback: use window width
+        const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+        const availableWidth = windowWidth - 400; // subtract margins, padding, row header (250px)
+        const cellWidth = Math.floor(availableWidth / 24);
+        return Math.max(45, cellWidth);
+      }
+
+      // Get actual container width
+      const containerRect = schedulerElement.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      
+      // Subtract padding (1rem = 16px on each side = 32px total)
+      // Subtract row header width (250px from config)
+      const padding = 32; // 1rem * 2
+      const rowHeaderWidth = 250;
+      const availableWidth = containerWidth - padding - rowHeaderWidth;
+      
+      // Calculate cell width for 24 hours
+      const cellWidth = Math.floor(availableWidth / 24);
+      
+      // Minimum 45px for readability, no maximum to allow full width filling
+      return Math.max(45, cellWidth);
+    } catch (error) {
+      console.warn('Не вдалося розрахувати ширину комірки, використовується значення за замовчуванням:', error);
+      // Fallback: calculate based on window width
+      const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+      const availableWidth = windowWidth - 400;
+      return Math.max(45, Math.floor(availableWidth / 24));
+    }
+  }
+
+  private calculateWeekCellWidth(): number {
+    try {
+      // Get the actual scheduler container element
+      const schedulerElement = document.querySelector('.schedule-main');
+      if (!schedulerElement) {
+        // Fallback: use window width
+        const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+        const availableWidth = windowWidth - 400; // subtract margins, padding, row header
+        const cellWidth = Math.floor(availableWidth / 7);
+        return Math.max(100, cellWidth);
+      }
+
+      // Get actual container width
+      const containerRect = schedulerElement.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      
+      // Subtract padding (1rem = 16px on each side = 32px total)
+      // Subtract row header width (250px from config)
+      const padding = 32;
+      const rowHeaderWidth = 250;
+      const availableWidth = containerWidth - padding - rowHeaderWidth;
+      
+      // Calculate cell width for 7 days
+      const cellWidth = Math.floor(availableWidth / 7);
+      
+      // Minimum 100px for readability, no maximum to allow full width filling
+      return Math.max(100, cellWidth);
+    } catch (error) {
+      console.warn('Could not calculate week cell width, using default:', error);
+      // Fallback: calculate based on window width
+      const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+      const availableWidth = windowWidth - 400;
+      return Math.max(100, Math.floor(availableWidth / 7));
+    }
+  }
+
+  private calculateWeekHourCellWidth(): number {
+    try {
+      // Get the actual scheduler container element
+      const schedulerElement = document.querySelector('.schedule-main');
+      if (!schedulerElement) {
+        // Fallback: use window width
+        const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+        const availableWidth = windowWidth - 400; // subtract margins, padding, row header
+        // For week with hours: 7 days * 24 hours = 168 columns
+        // Calculate to fill all available space
+        const cellWidth = availableWidth / 168;
+        // Use full width to fill the space, minimum 5px
+        return Math.max(5, Math.ceil(cellWidth));
+      }
+
+      // Get actual container width
+      const containerRect = schedulerElement.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      
+      // Subtract padding (1rem = 16px on each side = 32px total)
+      // Subtract row header width (250px from config)
+      const padding = 32;
+      const rowHeaderWidth = 250;
+      const availableWidth = containerWidth - padding - rowHeaderWidth;
+      
+      // Calculate cell width for 7 days * 24 hours = 168 columns
+      // Use full available width to fill the space completely
+      const cellWidth = availableWidth / 168;
+      
+      // Round up slightly to ensure we fill all available space, minimum 5px
+      return Math.max(5, Math.ceil(cellWidth));
+    } catch (error) {
+      console.warn('Не вдалося розрахувати ширину комірки години тижня, використовується значення за замовчуванням:', error);
+      // Fallback: calculate based on window width
+      const windowWidth = typeof window !== 'undefined' ? window.innerWidth : 1920;
+      const availableWidth = windowWidth - 400;
+      // Use full width to fill space
+      return Math.max(5, Math.ceil(availableWidth / 168));
+    }
+  }
+
+  getCurrentDateDisplay(): string {
+    const view = this.currentView();
+    const current = this.currentDate();
+
+    if (view === 'day') {
+      // Format: "Середа 28 січня 2026"
+      return this.formatDateUkrainian(current, true, false);
+    } else if (view === 'week') {
+      // Format: "Понеділок 26 січня - Неділя 1 лютого 2026"
+      const dayOfWeek = current.getDayOfWeek();
+      const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+      const monday = current.addDays(daysToMonday);
+      const sunday = monday.addDays(6);
+      
+      return `${this.formatDateUkrainian(monday, false)} - ${this.formatDateUkrainian(sunday, true)}`;
+    } else {
+      // Year view (month) - Format: "Січень 2026"
+      const jsDate = current.toDate();
+      const month = jsDate.getMonth();
+      const year = jsDate.getFullYear();
+      return `${this.ukrainianMonthsNominative[month]} ${year}`;
+    }
   }
 
   toggleStateFilter(state: ScheduleState): void {
@@ -414,44 +964,70 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   selectTemplateState(state: ScheduleState): void {
-    if (!this.isQuickFillMode()) {
-      return;
-    }
+    // Allow state selection in both quick fill and manual modes
     this.selectedTemplateState.set(state);
   }
 
   private updateSchedulerConfig(): void {
     const view = this.currentView();
-    const today = DayPilot.Date.today();
+    const current = this.currentDate();
+
+    let startDate: DayPilot.Date;
+    let days: number;
 
     if (view === 'day') {
+      // Day view: show selected day from 00:00 to 24:00
+      // Calculate cell width to fill available space (24 hours)
+      // Use larger cell width to fill the entire width
+      startDate = current;
+      days = 1;
+      
+      // Calculate optimal cell width based on available space
+      // For 24 hours, we want to fill the width, so use a larger cell width
+      // Default to 60px per hour, which gives 1440px total (24 * 60)
+      // This will be adjusted by DayPilot to fit available space if needed
+      const calculatedCellWidth = this.calculateDayCellWidth();
+      
       this.viewOptions.set({
-        startDate: today,
-        days: 1,
+        startDate: startDate,
+        days: days,
         scale: 'Hour',
-        cellWidth: 45,
+        cellWidth: calculatedCellWidth,
         timeHeaders: [
           { groupBy: 'Day', format: 'dddd MMMM d, yyyy' },
           { groupBy: 'Hour', format: 'HH:mm' }
         ],
       });
     } else if (view === 'week') {
-      const dayOfWeek = today.getDayOfWeek();
+      // Week view: show week containing selected date, from Monday to Sunday
+      // Use Hour scale to allow partial day events, but hide hour labels
+      const dayOfWeek = current.getDayOfWeek();
+      // DayPilot: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      // Calculate days to Monday (if current is Sunday, go back 6 days; otherwise go to Monday of current week)
       const daysToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-      const monday = today.addDays(daysToMonday);
+      startDate = current.addDays(daysToMonday);
+      days = 7;
+      
+      // Calculate optimal cell width for hours (7 days * 24 hours = 168 columns)
+      const calculatedCellWidth = this.calculateWeekHourCellWidth();
+      
       this.viewOptions.set({
-        startDate: monday,
-        days: 7,
-        scale: 'Day',
+        startDate: startDate,
+        days: days,
+        scale: 'Hour', // Use Hour scale to show events in correct time slots
+        cellWidth: calculatedCellWidth,
         timeHeaders: [
-          { groupBy: 'Week', format: 'Week of MMMM d, yyyy' },
           { groupBy: 'Day', format: 'dddd MMMM d' }
+          // Hour headers are hidden via CSS
         ],
       });
     } else {
+      // Year view (month)
+      startDate = current.firstDayOfMonth();
+      days = startDate.daysInMonth();
       this.viewOptions.set({
-        startDate: today.firstDayOfMonth(),
-        days: today.daysInMonth(),
+        startDate: startDate,
+        days: days,
         scale: 'Day',
         timeHeaders: [
           { groupBy: 'Month' },
@@ -459,6 +1035,53 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
         ],
       });
     }
+
+    // Load data for the new date range after a short delay to let scheduler update
+    // Also recalculate cell width for day view after scheduler is rendered
+    setTimeout(() => {
+      const control = this.getSchedulerControl();
+      if (control) {
+        const from = startDate.toDate();
+        const to = startDate.addDays(days).toDate();
+        this.loadScheduleDataForRange(from, to);
+        
+        // For day and week views, recalculate and update cell width after scheduler is rendered
+        if (view === 'day') {
+          setTimeout(() => {
+            const newCellWidth = this.calculateDayCellWidth();
+            const currentWidth = this.viewOptions().cellWidth || 60;
+            if (Math.abs(newCellWidth - currentWidth) > 5) { // Update if difference is more than 5px
+              this.viewOptions.update(options => ({
+                ...options,
+                cellWidth: newCellWidth
+              }));
+              // Force scheduler update
+              this.safeUpdateScheduler((ctrl) => {
+                ctrl.update(this.config());
+              });
+            }
+          }, 200);
+        } else if (view === 'week') {
+          setTimeout(() => {
+            const newCellWidth = this.calculateWeekHourCellWidth();
+            const currentWidth = this.viewOptions().cellWidth || 5;
+            if (Math.abs(newCellWidth - currentWidth) > 1) { // Update if difference is more than 1px
+              this.viewOptions.update(options => ({
+                ...options,
+                cellWidth: newCellWidth
+              }));
+              // Force scheduler update
+              this.safeUpdateScheduler((ctrl) => {
+                ctrl.update(this.config());
+              });
+            }
+            
+            // Apply thick borders between days
+            this.applyWeekDayBorders();
+          }, 200);
+        }
+      }
+    }, 100);
 
     // Update scheduler and reload data after view change
     setTimeout(() => {
@@ -470,6 +1093,13 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
         const from = ctrl.visibleStart().toDate();
         const to = ctrl.visibleEnd().toDate();
         this.loadScheduleDataForRange(from, to);
+        
+        // Apply week day borders after update
+        if (view === 'week') {
+          setTimeout(() => {
+            this.applyWeekDayBorders();
+          }, 300);
+        }
       });
     }, 100);
   }
@@ -489,20 +1119,11 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
         this.employeeService.getEmployeesByDepartment('', 1, 1000, '', null, '', 'asc')
       );
       const employees = response?.items || [];
-      console.log('👥 Loaded employees:', {
-        count: employees.length,
-        employees: employees.map(e => ({ 
-          id: e.id, 
-          firstName: e.firstName, 
-          lastName: e.lastName, 
-          callSign: e.callSign,
-          name: e.callSign || `${e.firstName || ''} ${e.lastName || ''}`.trim() || 'No name',
-          departmentId: e.departmentId 
-        }))
-      });
+      // Завантажено працівників
+      console.log('Завантажено працівників:', employees.length);
       this.employees.set(employees);
     } catch (error) {
-      console.error('❌ Error loading employees:', error);
+      console.error('Помилка завантаження працівників:', error);
     }
   }
 
@@ -531,10 +1152,19 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       this.scheduleEntries.set(uniqueEntries);
       this.lastLoadedRange = { start: new Date(start), end: new Date(end) };
 
-      // Update scheduler - effect will handle the update automatically
-      // No need to manually update here as effect will trigger
+      // Update scheduler explicitly to ensure events are displayed
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          this.safeUpdateScheduler((ctrl) => {
+            const events = this.schedulerEvents();
+            const resources = this.schedulerResources();
+            ctrl.update({ events, resources });
+          });
+        }, 50);
+      });
     } catch (error) {
-      console.error('Error loading schedule data:', error);
+      console.error('Помилка завантаження даних розкладу:', error);
       this.toastService.error('Помилка завантаження графіка');
     } finally {
       this.isLoading.set(false);
@@ -556,6 +1186,13 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (!resourceId) {
       this.toastService.warning('Виберіть працівника для створення запису');
+      args.control.clearSelection();
+      return;
+    }
+
+    // Prevent creating events on department rows
+    if (resourceId.startsWith('dept-')) {
+      this.toastService.warning('Неможливо створити подію в рядку підрозділу. Виберіть працівника.');
       args.control.clearSelection();
       return;
     }
@@ -633,11 +1270,12 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
       await this.createQuickTemplateEntry(create);
     } else {
-      // For non-quick-fill mode, create entry with default state
+      // For non-quick-fill mode, create entry with selected state (or default to OnWork)
+      const selectedState = this.selectedTemplateState();
       const create: ScheduleEntryCreate = {
         employeeId: resourceId,
         departmentId: employee.departmentId,
-        state: 'OnWork',
+        state: selectedState,
         startTime: this.formatWithTimezone(start),
         endTime: this.formatWithTimezone(end),
       };
@@ -656,7 +1294,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private async handleEventMove(args: DayPilot.SchedulerEventMoveArgs): Promise<void> {
     if (this.isUpdatingEntry) {
-      console.log('⏸️ Already updating entry, skipping move');
+      // Вже оновлюється запис, пропускаємо переміщення
       return;
     }
 
@@ -667,7 +1305,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       const entry = event.data.tags?.entry as ScheduleEntry;
 
       if (!entry) {
-        console.warn('⚠️ No entry data in event tags');
+        console.warn('Немає даних запису в тегах події');
         return;
       }
 
@@ -676,6 +1314,19 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       const newStartDate = args.newStart.toDateLocal();
       const newEndDate = args.newEnd.toDateLocal();
       const newResourceId = String(args.newResource || event.resource());
+
+      // Prevent moving events to department rows
+      if (newResourceId.startsWith('dept-')) {
+        this.toastService.warning('Неможливо перемістити подію в рядок підрозділу. Виберіть рядок працівника.');
+        const control = this.getSchedulerControl();
+        if (control) {
+          await this.loadScheduleDataForRange(
+            control.visibleStart().toDate(),
+            control.visibleEnd().toDate()
+          );
+        }
+        return;
+      }
 
       // Format time with timezone offset (same approach as schedule-entry-modal)
       // This ensures the server interprets the time correctly as local time
@@ -698,15 +1349,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       const newStartISO = formatWithTimezone(newStartDate);
       const newEndISO = formatWithTimezone(newEndDate);
 
-      console.log('🔄 Moving event:', {
-        entryId: entry.id,
-        oldResource: entry.employeeId,
-        newResource: newResourceId,
-        newStart: newStartISO,
-        newEnd: newEndISO,
-        newStartLocal: `${newStartDate.getHours().toString().padStart(2, '0')}:${newStartDate.getMinutes().toString().padStart(2, '0')}`,
-        newEndLocal: `${newEndDate.getHours().toString().padStart(2, '0')}:${newEndDate.getMinutes().toString().padStart(2, '0')}`
-      });
+      // Переміщення події
 
       // Validate time range
       if (newEndDate.getTime() <= newStartDate.getTime()) {
@@ -767,11 +1410,11 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Save to server and update local state (non-blocking)
       this.updateScheduleEntryWithoutReload(update).catch(error => {
-        console.error('Failed to save move:', error);
+        console.error('Помилка збереження переміщення:', error);
         this.toastService.error('Помилка збереження переміщення');
       });
     } catch (error: any) {
-      console.error('❌ Error in handleEventMove:', error);
+      console.error('Помилка в handleEventMove:', error);
       this.toastService.error('Помилка переміщення події');
       
       // Still confirm to prevent DayPilot from reverting
@@ -786,7 +1429,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private async handleEventResize(args: DayPilot.SchedulerEventResizeArgs): Promise<void> {
     if (this.isUpdatingEntry) {
-      console.log('⏸️ Already updating entry, skipping resize');
+      // Вже оновлюється запис, пропускаємо зміну розміру
       return;
     }
 
@@ -797,7 +1440,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       const entry = event.data.tags?.entry as ScheduleEntry;
 
       if (!entry) {
-        console.warn('⚠️ No entry data in event tags');
+        console.warn('Немає даних запису в тегах події');
         return;
       }
 
@@ -827,15 +1470,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
       const newStartISO = formatWithTimezone(newStartDate);
       const newEndISO = formatWithTimezone(newEndDate);
 
-      console.log('🔄 Resizing event:', {
-        entryId: entry.id,
-        oldStart: entry.startTime,
-        oldEnd: entry.endTime,
-        newStart: newStartISO,
-        newEnd: newEndISO,
-        newStartLocal: `${newStartDate.getHours().toString().padStart(2, '0')}:${newStartDate.getMinutes().toString().padStart(2, '0')}`,
-        newEndLocal: `${newEndDate.getHours().toString().padStart(2, '0')}:${newEndDate.getMinutes().toString().padStart(2, '0')}`
-      });
+      // Зміна розміру події
 
       // Validate time range
       if (newEndDate.getTime() <= newStartDate.getTime()) {
@@ -864,11 +1499,11 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
       // Save to server and update local state (non-blocking)
       this.updateScheduleEntryWithoutReload(update).catch(error => {
-        console.error('Failed to save resize:', error);
+        console.error('Помилка збереження зміни розміру:', error);
         this.toastService.error('Помилка збереження зміни розміру');
       });
     } catch (error: any) {
-      console.error('❌ Error in handleEventResize:', error);
+      console.error('Помилка в handleEventResize:', error);
       this.toastService.error('Помилка зміни розміру події');
       
       // Still confirm to prevent DayPilot from reverting
@@ -1043,7 +1678,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.loadScheduleDataForRange(from, to);
       }
     } catch (error: any) {
-      console.error('Error creating quick template entry:', error);
+      console.error('Помилка створення швидкого шаблонного запису:', error);
       const errorMessage = error?.error?.message || 'Помилка створення запису';
       this.toastService.error(errorMessage);
     }
@@ -1090,7 +1725,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private async updateScheduleEntryWithoutReload(update: ScheduleEntryUpdate): Promise<void> {
     try {
-      console.log('💾 Updating entry without reload:', update.id);
+      // Оновлення запису без перезавантаження
       
       const result = await firstValueFrom(
         this.scheduleService.createOrUpdate(update)
@@ -1123,13 +1758,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
         newEntries[entryIndex] = updatedEntry;
         this.scheduleEntries.set(newEntries);
 
-        console.log('✅ Entry updated locally:', {
-          id: updatedEntry.id,
-          startTime: updatedEntry.startTime,
-          endTime: updatedEntry.endTime,
-          startLocal: `${startTime.getHours().toString().padStart(2, '0')}:${startTime.getMinutes().toString().padStart(2, '0')}`,
-          endLocal: `${endTime.getHours().toString().padStart(2, '0')}:${endTime.getMinutes().toString().padStart(2, '0')}`
-        });
+        // Запис оновлено локально
         
         // DayPilot already updated the event with 'Update' mode, but may have used UTC.
         // After saving, update the event with correct local time so position matches displayed hours.
@@ -1150,29 +1779,18 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
 
                 const existingEvent = control.events.find(updatedEntry.id);
                 if (existingEvent) {
-                  console.log('🔄 Updating DayPilot event:', {
-                    id: updatedEntry.id,
-                    oldStart: existingEvent.data.start.toString(),
-                    oldEnd: existingEvent.data.end.toString(),
-                    newStart: start.toString(),
-                    newEnd: end.toString(),
-                    newText: title
-                  });
-                  
-                  // Update existing event with correct local time position
+                  // Оновлення події DayPilot
                   existingEvent.data.start = start;
                   existingEvent.data.end = end;
                   existingEvent.data.text = title;
                   existingEvent.data.resource = updatedEntry.employeeId;
                   control.events.update(existingEvent);
-                  
-                  console.log('✅ DayPilot event updated');
                 } else {
-                  console.warn('⚠️ Event not found in DayPilot:', updatedEntry.id);
+                  console.warn('Подію не знайдено в DayPilot:', updatedEntry.id);
                 }
               } catch (error) {
                 if (error instanceof Error && !error.message.includes('disposed')) {
-                  console.error('Error updating scheduler event:', error);
+                  console.error('Помилка оновлення події розкладу:', error);
                 }
               }
             }
@@ -1180,7 +1798,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
         });
       }
     } catch (error: any) {
-      console.error('❌ Error updating schedule entry:', error);
+      console.error('Помилка оновлення запису графіка:', error);
       const errorMessage = error?.error?.message || 'Помилка оновлення графіка';
       this.toastService.error(errorMessage);
 
@@ -1248,7 +1866,7 @@ export class SchedulePageComponent implements OnInit, AfterViewInit, OnDestroy {
         await this.loadScheduleDataForRange(from, to);
       }
     } catch (error: any) {
-      console.error('Error updating schedule entry:', error);
+      console.error('Помилка оновлення запису розкладу:', error);
       const errorMessage = error?.error?.message || 'Помилка оновлення графіка';
       this.toastService.error(errorMessage);
 

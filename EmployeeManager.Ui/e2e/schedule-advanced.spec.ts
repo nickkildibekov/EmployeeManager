@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Schedule Advanced Functionality Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/schedule');
-    await page.waitForSelector('.fc', { timeout: 10000 });
+    await page.waitForSelector('.dp-scheduler', { timeout: 10000 });
     await page.waitForTimeout(2000);
   });
 
@@ -37,11 +37,11 @@ test.describe('Schedule Advanced Functionality Tests', () => {
     await page.locator('.template-btn').filter({ hasText: '12 год' }).click();
     await page.waitForTimeout(300);
     
-    // Calendar should be ready to handle overnight shifts
-    await expect(page.locator('.fc')).toBeVisible();
+    // Scheduler should be ready to handle overnight shifts
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
     
-    // Check that calendar has proper configuration for overnight events
-    // (nextDayThreshold is set in code, verified by calendar rendering)
+    // Check that scheduler has proper configuration for overnight events
+    // (DayPilot handles overnight events automatically)
   });
 
   test('should prevent multiple notifications on drag and drop', async ({ page }) => {
@@ -54,13 +54,13 @@ test.describe('Schedule Advanced Functionality Tests', () => {
     
     // If toasts exist, verify they don't multiply
     // This is a basic check - full drag test requires actual schedule entries
-    await expect(page.locator('.fc')).toBeVisible();
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
   });
 
-  test('should maintain calendar state after filter changes', async ({ page }) => {
-    // Get initial calendar state
-    const calendar = page.locator('.fc');
-    await expect(calendar).toBeVisible();
+  test('should maintain scheduler state after filter changes', async ({ page }) => {
+    // Get initial scheduler state
+    const scheduler = page.locator('.dp-scheduler');
+    await expect(scheduler).toBeVisible();
     
     // Toggle a filter
     const trainingFilter = page.locator('.state-filter-item').filter({ hasText: 'Навчання' });
@@ -68,15 +68,15 @@ test.describe('Schedule Advanced Functionality Tests', () => {
     await checkbox.click();
     await page.waitForTimeout(1000);
     
-    // Calendar should still be visible and stable
-    await expect(calendar).toBeVisible();
+    // Scheduler should still be visible and stable
+    await expect(scheduler).toBeVisible();
     
     // Toggle filter back
     await checkbox.click();
     await page.waitForTimeout(1000);
     
-    // Calendar should still be visible
-    await expect(calendar).toBeVisible();
+    // Scheduler should still be visible
+    await expect(scheduler).toBeVisible();
   });
 
   test('should handle rapid filter toggling without errors', async ({ page }) => {
@@ -108,8 +108,8 @@ test.describe('Schedule Advanced Functionality Tests', () => {
     const errorMessages = page.locator('text=/error|помилка/i');
     await expect(errorMessages).toHaveCount(0);
     
-    // Calendar should be stable
-    await expect(page.locator('.fc')).toBeVisible();
+    // Scheduler should be stable
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
   });
 
   test('should handle template button state correctly', async ({ page }) => {
@@ -146,33 +146,28 @@ test.describe('Schedule Advanced Functionality Tests', () => {
     }
   });
 
-  test('should handle calendar view switching without data loss', async ({ page }) => {
+  test('should handle scheduler view switching without data loss', async ({ page }) => {
     // Wait for initial load
     await page.waitForTimeout(2000);
     
-    // Try to switch views if buttons are available
-    const viewButtons = page.locator('.fc-button');
-    const buttonCount = await viewButtons.count();
+    // Find view toggle buttons
+    const dayButton = page.locator('.view-toggle-btn').filter({ hasText: 'День' });
+    const weekButton = page.locator('.view-toggle-btn').filter({ hasText: 'Тиждень' });
     
-    if (buttonCount > 0) {
-      // Find and click a view button
-      const weekButton = page.locator('.fc-button').filter({ hasText: /тиждень|week/i });
-      if (await weekButton.count() > 0) {
-        await weekButton.click();
-        await page.waitForTimeout(2000);
-        
-        // Calendar should still be visible
-        await expect(page.locator('.fc')).toBeVisible();
-        
-        // Switch back to day view if available
-        const dayButton = page.locator('.fc-resourceTimelineDay-button, .fc-button').filter({ hasText: /^day$|^день$/i }).first();
-        if (await dayButton.count() > 0) {
-          await dayButton.click();
-          await page.waitForTimeout(2000);
-          await expect(page.locator('.fc')).toBeVisible();
-        }
-      }
-    }
+    await expect(dayButton).toBeVisible();
+    await expect(weekButton).toBeVisible();
+    
+    // Switch to week view
+    await weekButton.click();
+    await page.waitForTimeout(2000);
+    
+    // Scheduler should still be visible
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
+    
+    // Switch back to day view
+    await dayButton.click();
+    await page.waitForTimeout(2000);
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
   });
 
   test('should have proper responsive layout', async ({ page }) => {
@@ -196,8 +191,8 @@ test.describe('Schedule Advanced Functionality Tests', () => {
   });
 
   test('should handle empty state gracefully', async ({ page }) => {
-    // Calendar should render even with no data
-    await expect(page.locator('.fc')).toBeVisible();
+    // Scheduler should render even with no data
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
     
     // Should not show error messages
     const errorMessages = page.locator('text=/error|помилка/i');

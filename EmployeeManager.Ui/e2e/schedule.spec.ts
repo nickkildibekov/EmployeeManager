@@ -4,18 +4,18 @@ test.describe('Schedule Module E2E Tests', () => {
   test.beforeEach(async ({ page }) => {
     // Navigate to schedule page
     await page.goto('/schedule');
-    // Wait for calendar to load
-    await page.waitForSelector('.fc', { timeout: 10000 });
+    // Wait for DayPilot scheduler to load
+    await page.waitForSelector('.dp-scheduler', { timeout: 10000 });
     // Wait a bit for data to load
     await page.waitForTimeout(2000);
   });
 
-  test('should display schedule page with calendar', async ({ page }) => {
+  test('should display schedule page with scheduler', async ({ page }) => {
     // Check page title/header
     await expect(page.locator('h1')).toContainText('Графік роботи');
     
-    // Check calendar is visible
-    await expect(page.locator('.fc')).toBeVisible();
+    // Check DayPilot scheduler is visible
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
     
     // Check quick templates panel exists
     await expect(page.locator('.quick-templates-panel')).toBeVisible();
@@ -99,33 +99,35 @@ test.describe('Schedule Module E2E Tests', () => {
   });
 
   test('should switch between day and week views', async ({ page }) => {
-    // Wait for calendar to be ready
+    // Wait for scheduler to be ready
     await page.waitForTimeout(1000);
     
-    // Check if view buttons exist in FullCalendar toolbar
-    const viewButtons = page.locator('.fc-button');
-    const buttonCount = await viewButtons.count();
+    // Check if view toggle buttons exist
+    const dayButton = page.locator('.view-toggle-btn').filter({ hasText: 'День' });
+    const weekButton = page.locator('.view-toggle-btn').filter({ hasText: 'Тиждень' });
     
-    // Should have view buttons
-    expect(buttonCount).toBeGreaterThan(0);
+    await expect(dayButton).toBeVisible();
+    await expect(weekButton).toBeVisible();
     
-    // Try to find and click week view button
-    const weekButton = page.locator('.fc-button').filter({ hasText: /тиждень|week/i });
-    if (await weekButton.count() > 0) {
-      await weekButton.click();
-      await page.waitForTimeout(1000);
-      // Calendar should still be visible
-      await expect(page.locator('.fc')).toBeVisible();
-    }
+    // Click week view button
+    await weekButton.click();
+    await page.waitForTimeout(1000);
+    // Scheduler should still be visible
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
+    
+    // Click day view button
+    await dayButton.click();
+    await page.waitForTimeout(1000);
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
   });
 
-  test('should handle calendar interaction without errors', async ({ page }) => {
-    // Try to interact with calendar
-    const calendar = page.locator('.fc');
-    await expect(calendar).toBeVisible();
+  test('should handle scheduler interaction without errors', async ({ page }) => {
+    // Try to interact with scheduler
+    const scheduler = page.locator('.dp-scheduler');
+    await expect(scheduler).toBeVisible();
     
-    // Try clicking on calendar (should not throw errors)
-    await calendar.click({ force: true });
+    // Try clicking on scheduler (should not throw errors)
+    await scheduler.click({ force: true });
     await page.waitForTimeout(500);
     
     // Check no error messages appeared
@@ -170,7 +172,7 @@ test.describe('Schedule Module E2E Tests', () => {
   test('should handle page load without infinite loops', async ({ page }) => {
     // Navigate and wait
     await page.goto('/schedule');
-    await page.waitForSelector('.fc', { timeout: 10000 });
+    await page.waitForSelector('.dp-scheduler', { timeout: 10000 });
     
     // Wait for initial load
     await page.waitForTimeout(3000);
@@ -184,9 +186,9 @@ test.describe('Schedule Module E2E Tests', () => {
       await expect(loading).not.toBeVisible({ timeout: 5000 });
     }
     
-    // Calendar should be stable (not constantly reloading)
-    const calendar = page.locator('.fc');
-    await expect(calendar).toBeVisible();
+    // Scheduler should be stable (not constantly reloading)
+    const scheduler = page.locator('.dp-scheduler');
+    await expect(scheduler).toBeVisible();
   });
 
   test('should display state filters correctly', async ({ page }) => {
@@ -209,25 +211,28 @@ test.describe('Schedule Module E2E Tests', () => {
     }
   });
 
-  test('should handle calendar navigation', async ({ page }) => {
-    // Wait for calendar
-    await page.waitForSelector('.fc', { timeout: 10000 });
+  test('should handle scheduler navigation', async ({ page }) => {
+    // Wait for scheduler
+    await page.waitForSelector('.dp-scheduler', { timeout: 10000 });
     await page.waitForTimeout(1000);
     
-    // Try to find navigation buttons (prev/next/today)
-    const navButtons = page.locator('.fc-button');
-    const navCount = await navButtons.count();
+    // Find navigation buttons (prev/next)
+    const prevButton = page.locator('.nav-btn').first();
+    const nextButton = page.locator('.nav-btn').last();
     
     // Should have navigation buttons
-    expect(navCount).toBeGreaterThan(0);
+    await expect(prevButton).toBeVisible();
+    await expect(nextButton).toBeVisible();
     
-    // Try clicking next button if available
-    const nextButton = page.locator('.fc-button').filter({ hasText: /next|наступ/i });
-    if (await nextButton.count() > 0) {
-      await nextButton.click();
-      await page.waitForTimeout(1000);
-      // Calendar should still be visible
-      await expect(page.locator('.fc')).toBeVisible();
-    }
+    // Try clicking next button
+    await nextButton.click();
+    await page.waitForTimeout(1000);
+    // Scheduler should still be visible
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
+    
+    // Try clicking previous button
+    await prevButton.click();
+    await page.waitForTimeout(1000);
+    await expect(page.locator('.dp-scheduler')).toBeVisible();
   });
 });

@@ -50,62 +50,6 @@
   box-sizing: border-box;
 }
 
-.view-buttons {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.main-tabs {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.main-tab {
-  padding: 0.75rem 1.5rem;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--text-secondary);
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: -1px;
-}
-
-.main-tab:hover {
-  color: var(--text-primary);
-}
-
-.main-tab.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-  font-weight: 500;
-}
-
-.view-btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--border-color);
-  background: var(--bg-primary);
-  border-radius: 0.375rem;
-  cursor: pointer;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-  color: var(--text-primary);
-}
-
-.view-btn:hover {
-  background: var(--bg-secondary);
-  border-color: var(--primary);
-}
-
-.view-btn.active {
-  background: var(--primary);
-  color: var(--bg-primary);
-  border-color: var(--primary);
-}
-
 .view-toggle-panel {
   margin-bottom: 1rem;
   margin-left: 0;
@@ -162,13 +106,6 @@
   background: var(--bg-secondary);
   border-color: var(--primary);
   color: var(--primary);
-}
-
-.nav-today-btn {
-  font-size: 0.875rem;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  min-width: auto;
 }
 
 .view-toggle-btn {
@@ -347,60 +284,6 @@
   white-space: nowrap;
 }
 
-.schedule-content {
-  display: flex;
-  gap: 1.5rem;
-  flex: 1;
-  min-height: 0;
-}
-
-.schedule-sidebar {
-  width: 280px;
-  flex-shrink: 0;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  height: fit-content;
-  max-height: calc(100vh - 8rem);
-  overflow-y: auto;
-}
-
-.filter-section h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.filter-group {
-  margin-bottom: 1.5rem;
-}
-
-.filter-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.filter-select {
-  width: 100%;
-  padding: 0.5rem;
-  border: 1px solid var(--border-color);
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  background: var(--bg-primary);
-  color: var(--text-primary);
-}
-
-.filter-select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
-}
-
 .state-filters {
   display: flex;
   flex-direction: row;
@@ -447,7 +330,6 @@
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  /* Take all available space */
   height: 100%;
 }
 
@@ -459,7 +341,6 @@
   color: var(--text-secondary);
 }
 
-/* DayPilot Scheduler styles */
 :host ::ng-deep .dp-scheduler {
   height: 100% !important;
   width: 100% !important;
@@ -470,13 +351,11 @@
   min-width: 0;
 }
 
-/* Make scheduler table fill available width */
 :host ::ng-deep .dp-scheduler-table {
   width: 100% !important;
   table-layout: auto;
 }
 
-/* For day view, ensure cells expand to fill width */
 :host ::ng-deep .dp-scheduler-time-header-cell {
   min-width: 45px;
 }
@@ -485,33 +364,133 @@
   background: var(--bg-secondary);
   border-color: var(--border-color);
   color: var(--text-primary);
-  padding: 7px;
+  padding: 10px 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: background-color 0.2s ease;
 }
 
-/* Hierarchical tree styles */
 :host ::ng-deep .dp-row-department {
   font-weight: 600;
-  background: var(--bg-secondary) !important;
-  border-bottom: 2px solid var(--border-color);
-}
-
-/* Prevent interaction with department row cells - events cannot be placed here */
-:host ::ng-deep .dp-row-department .dp-scheduler-cell {
-  cursor: not-allowed;
-  opacity: 0.7;
-}
-
-:host ::ng-deep .dp-row-employee {
-  font-weight: 400;
-  padding-left: 1.5rem;
+  font-size: 15px;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+  border-bottom: 3px solid #475569;
+  border-top: 2px solid #475569;
+  color: #f1f5f9 !important;
+  padding: 12px 16px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) inset, 0 1px 2px rgba(0, 0, 0, 0.1);
+  position: relative;
 }
 
 :host ::ng-deep .dp-resource-department {
   font-weight: 600;
+  font-size: 15px;
+  color: #f1f5f9;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :host ::ng-deep .dp-row-department {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    color: #e2e8f0 !important;
+    border-bottom-color: #334155;
+    border-top-color: #334155;
+  }
+}
+
+:host ::ng-deep .dp-row-department .dp-scheduler-cell {
+  cursor: not-allowed;
+  opacity: 0.6;
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+}
+
+:host ::ng-deep .dp-row-employee {
+  font-weight: 400;
+  font-size: 14px;
+  padding-left: 2rem !important;
+  padding-top: 10px !important;
+  padding-bottom: 10px !important;
+  background: var(--bg-primary) !important;
+  color: var(--text-primary);
+  border-left: 3px solid transparent;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+:host ::ng-deep .dp-row-employee:hover {
+  background: var(--bg-secondary) !important;
+  border-left-color: #3b82f6;
+  padding-left: 2.25rem !important;
 }
 
 :host ::ng-deep .dp-resource-employee {
-  font-weight: 400;
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color 0.2s ease;
+}
+
+:host ::ng-deep .dp-row-employee:hover .dp-resource-employee {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+:host ::ng-deep .dp-scheduler-row-header-cell {
+  padding: 10px 12px;
+  vertical-align: middle;
+  border-right: 1px solid var(--border-color);
+}
+
+:host ::ng-deep .dp-row-employee + .dp-row-employee {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+:host ::ng-deep .dp-row-department + .dp-row-employee {
+  border-top: none;
+  margin-top: 4px;
+}
+
+:host ::ng-deep .dp-scheduler-row {
+  transition: background-color 0.2s ease;
+}
+
+:host ::ng-deep .dp-row-department .dp-scheduler-row-header {
+  color: #f1f5f9 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+:host ::ng-deep .dp-scheduler-row-header,
+:host ::ng-deep .dp-row-employee,
+:host ::ng-deep .dp-row-department {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+:host ::ng-deep .dp-scheduler-row-header {
+  line-height: 1.6;
+}
+
+:host ::ng-deep .dp-resource-employee {
+  padding: 2px 0;
+}
+
+:host ::ng-deep .dp-resource-department,
+:host ::ng-deep .dp-resource-employee {
+  line-height: 1.5;
+}
+
+:host ::ng-deep .dp-row-employee:focus-within {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+  border-left-color: #3b82f6;
 }
 
 :host ::ng-deep .dp-scheduler-time-header {
@@ -521,7 +500,6 @@
   padding: 7px;
 }
 
-/* Hide hour labels in week view (only show day headers) */
 :host ::ng-deep .dp-time-header-hour-hidden {
   display: none !important;
   height: 0 !important;
@@ -529,7 +507,6 @@
   border: none !important;
 }
 
-/* Hide hour header cells in week view */
 :host ::ng-deep .dp-scheduler-time-header-cell[data-group="Hour"],
 :host ::ng-deep .dp-scheduler-time-header-cell.dp-time-header-hour-hidden {
   display: none !important;
@@ -544,27 +521,22 @@
   border-color: var(--border-color);
 }
 
-/* Make cells more compact in week view to fit all hours on screen */
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-cell {
   min-width: 5px;
   padding: 0;
   border-right-width: 1px;
 }
 
-/* Ensure scheduler table uses all available width without overflow */
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-table {
   width: 100% !important;
   table-layout: fixed !important;
 }
 
-/* Remove any extra spacing in week view */
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-time-header-cell {
   padding: 4px 2px;
   border-right-width: 1px;
 }
 
-/* Make borders between days much thicker in week view - very bold black lines */
-/* Every 24th cell (end of each day) should have a very thick border */
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-cell:nth-child(24n),
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-cell:nth-of-type(24n),
 :host ::ng-deep .dp-scheduler-scale-hour .dp-day-separator,
@@ -575,7 +547,6 @@
   border-right-style: solid !important;
 }
 
-/* Also make time header cells between days much thicker */
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-time-header-cell:nth-child(24n),
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-time-header-cell:nth-of-type(24n),
 :host ::ng-deep .dp-scheduler-scale-hour th:nth-child(24n) {
@@ -585,9 +556,6 @@
   border-right-style: solid !important;
 }
 
-/* Make line after 00:00 cell thicker in week view */
-/* Every 1st cell of each day (00:00) - cells at positions 1, 25, 49, 73, 97, 121, 145 */
-/* This makes the line between 00:00 and 01:00 thicker */
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-cell:nth-child(24n + 1),
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-cell:nth-of-type(24n + 1),
 :host ::ng-deep .dp-scheduler-scale-hour .dp-after-midnight {
@@ -596,7 +564,6 @@
   border-right-style: solid !important;
 }
 
-/* Also make time header cells after 00:00 thicker */
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-time-header-cell:nth-child(24n + 1),
 :host ::ng-deep .dp-scheduler-scale-hour .dp-scheduler-time-header-cell:nth-of-type(24n + 1) {
   border-right-width: 4px !important;
@@ -620,18 +587,6 @@
   border-color: var(--border-color);
 }
 
-.build-mode-placeholder {
-  padding: 2rem;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.build-mode-placeholder h2 {
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-}
-
-/* Delete Confirmation Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -646,7 +601,6 @@
   backdrop-filter: blur(2px);
 }
 
-/* Use CSS variable for modal overlay if available, fallback to rgba */
 @media (prefers-color-scheme: dark) {
   .modal-overlay {
     background: rgba(0, 0, 0, 0.7);
@@ -766,7 +720,6 @@
   background: #dc2626;
 }
 
-/* Use CSS variable for danger color if available */
 @media (prefers-color-scheme: dark) {
   .btn-danger {
     background: #ef4444;
@@ -777,7 +730,6 @@
   }
 }
 
-/* Delete button on events */
 :host ::ng-deep .dp-event-delete-btn {
   cursor: pointer;
   transition: opacity 0.2s, transform 0.2s;
@@ -788,24 +740,10 @@
   transform: scale(1.1);
 }
 
-/* Mobile responsiveness */
 @media (max-width: 768px) {
-  .schedule-content {
-    flex-direction: column;
-  }
-
-  .schedule-sidebar {
-    width: 100%;
-    max-height: none;
-  }
-
   .schedule-header {
     flex-direction: column;
     align-items: flex-start;
-  }
-  
-  .main-tabs {
-    flex-wrap: wrap;
   }
 
   .modal-container {
